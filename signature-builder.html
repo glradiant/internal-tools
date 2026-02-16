@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<title>Great Lakes Radiant — Email Signature Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f1f4;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #fff;
+    border-bottom: 3px solid #f37021;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .header-logo {
+    width: 4px;
+    height: 32px;
+    background: #f37021;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+
+  .header h1 span {
+    font-weight: 400;
+    color: #999;
+  }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 28px 24px 40px;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+
+  /* ── Card base ── */
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03);
+  }
+
+  /* ── Form Panel ── */
+  .form-panel {
+    padding: 24px 26px 28px;
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b0b0b0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 5px;
+  }
+
+  .field input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: #f37021;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(243,112,33,0.08);
+  }
+
+  .field input.invalid {
+    border-color: #e74c3c;
+    background: #fef9f8;
+  }
+
+  .field .hint {
+    font-size: 11px;
+    color: #bbb;
+    margin-top: 4px;
+    transition: color 0.15s;
+  }
+
+  .field .hint.error {
+    color: #e74c3c;
+  }
+
+  /* ── Custom Dropdowns ── */
+  .custom-dropdown {
+    position: relative;
+  }
+
+  .custom-dropdown input, .custom-dropdown .dropdown-trigger {
+    width: 100%;
+    padding: 9px 32px 9px 12px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    display: block;
+    position: relative;
+  }
+
+  .custom-dropdown input:focus, .custom-dropdown .dropdown-trigger:focus {
+    outline: none;
+    border-color: #f37021;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(243,112,33,0.08);
+  }
+
+  .custom-dropdown .dropdown-arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #aaa;
+    font-size: 10px;
+  }
+
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1.5px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .dropdown-menu.open {
+    display: block;
+  }
+
+  .dropdown-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.1s;
+  }
+
+  .dropdown-item:hover, .dropdown-item.active {
+    background: #fef5ef;
+  }
+
+  .dropdown-item .item-hint {
+    font-size: 11px;
+    color: #bbb;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 18px 0;
+  }
+
+  /* ── Toggle Group ── */
+  .toggle-group {
+    margin-bottom: 18px;
+  }
+
+  .toggle-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .toggle-options {
+    display: flex;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1.5px solid #e0e0e0;
+    background: #fafafa;
+  }
+
+  .toggle-options button {
+    flex: 1;
+    padding: 9px 16px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    white-space: nowrap;
+  }
+
+  .toggle-options button.active {
+    background: #f37021;
+    color: #fff;
+    font-weight: 600;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .toggle-options button:not(:last-child) {
+    border-right: 1.5px solid #e0e0e0;
+  }
+
+  .toggle-options button:not(.active):hover {
+    background: #f5f5f5;
+    color: #555;
+  }
+
+  /* ── Buttons ── */
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
+
+  .btn-reset {
+    padding: 7px 16px;
+    background: #fff;
+    border: 1.5px solid #e74c3c;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: #e74c3c;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-reset:hover {
+    background: #fef5f4;
+  }
+
+  .btn-reset.done {
+    border-color: #31BC9B;
+    color: #31BC9B;
+    background: #f0faf7;
+  }
+
+  .btn-reset svg {
+    width: 13px;
+    height: 13px;
+    fill: currentColor;
+  }
+
+  /* ── Preview Panel ── */
+  .preview-panel {
+    overflow: hidden;
+    animation: fadeUp 0.35s 0.08s ease both;
+  }
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 22px;
+    border-bottom: 1px solid #eee;
+  }
+
+  .preview-header h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b0b0b0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .btn-group {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-copy {
+    padding: 7px 18px;
+    background: #f37021;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-copy:hover { background: #e0641a; }
+
+  .btn-copy.copied {
+    background: #31BC9B;
+    pointer-events: none;
+  }
+
+  .btn-copy svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  .btn-html {
+    padding: 7px 14px;
+    background: #fff;
+    color: #f37021;
+    border: 1.5px solid #f37021;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-html:hover {
+    background: #fef5ef;
+  }
+
+  .btn-html.copied {
+    border-color: #31BC9B;
+    color: #31BC9B;
+    background: #f0faf7;
+  }
+
+  .btn-html svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+  }
+
+  .preview-body {
+    padding: 28px 28px 32px;
+    min-height: 180px;
+  }
+
+  /* ── Right Column ── */
+  .right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Instructions ── */
+  .instructions {
+    padding: 22px 26px;
+    animation: fadeUp 0.35s 0.16s ease both;
+  }
+
+  .instructions h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: #b0b0b0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 14px;
+  }
+
+  .steps {
+    display: flex;
+    gap: 0;
+  }
+
+  .steps-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .steps-sep {
+    width: 1px;
+    background: #e8e8e8;
+    margin: 0 18px;
+    flex-shrink: 0;
+  }
+
+  .steps-netsuite {
+  }
+
+  .step {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    background: #f37021;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .step p {
+    font-size: 12.5px;
+    color: #666;
+    line-height: 1.55;
+    padding-top: 3px;
+  }
+
+  .step strong { color: #333; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+
+  .btn-copy.error {
+    animation: shake 0.4s ease;
+    background: #e74c3c;
+  }
+
+  .btn-html.error {
+    animation: shake 0.4s ease;
+    border-color: #e74c3c;
+    color: #e74c3c;
+    background: #fef5f4;
+  }
+
+  .copy-error-msg {
+    font-size: 12px;
+    color: #e74c3c;
+    font-weight: 500;
+    padding: 8px 22px 0;
+    text-align: right;
+    display: none;
+  }
+
+  .copy-error-msg.show {
+    display: block;
+  }
+
+  .field input.highlight-error {
+    border-color: #e74c3c;
+    background: #fef9f8;
+    box-shadow: 0 0 0 3px rgba(231,76,60,0.12);
+  }
+
+  .version {
+    text-align: center;
+    font-size: 11px;
+    color: #ccc;
+    padding: 8px 0 0;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 840px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .header { padding: 16px 18px; }
+    .header h1 { font-size: 16px; }
+    .container { padding: 18px 14px 32px; gap: 18px; }
+    .form-panel, .instructions { padding: 20px 18px; }
+    .steps, .steps-netsuite { flex-direction: column; }
+    .steps-sep { display: none; }
+    .preview-body { padding: 20px 16px; }
+    .btn-group { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style="height: 36px; width: auto;">
+  <div class="header-logo"></div>
+  <h1>Email Signature Generator</h1>
+</div>
+
+<div class="container">
+
+  <!-- LEFT: Form -->
+  <div class="form-panel card">
+    <div class="section-label">Your Info</div>
+
+    <div class="toggle-group">
+      <label>Signature Version</label>
+      <div class="toggle-options" role="group" aria-label="Signature version">
+        <button class="active" onclick="setVersion('standard', this)" aria-pressed="true">Standard</button>
+        <button onclick="setVersion('carwash', this)" aria-pressed="false">Car Wash Show</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="name">Full Name</label>
+      <div class="custom-dropdown">
+        <input type="text" id="name" placeholder="John Doe" oninput="handleNameInput(this)" onfocus="showSuggestions()" autocomplete="off">
+        <span class="dropdown-arrow">▼</span>
+        <div class="dropdown-menu" id="nameSuggestions"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="company">Company</label>
+      <div class="custom-dropdown">
+        <div class="dropdown-trigger" id="companyTrigger" tabindex="0" onclick="toggleDropdown('company')" onkeydown="if(event.key==='Enter'||event.key===' ')toggleDropdown('company')">Great Lakes Radiant</div>
+        <span class="dropdown-arrow">▼</span>
+        <div class="dropdown-menu" id="companyMenu">
+          <div class="dropdown-item" onclick="selectCompany('Great Lakes Radiant')">Great Lakes Radiant</div>
+          <div class="dropdown-item" onclick="selectCompany('Great Lakes Radiant &amp; Industrials')">Great Lakes Radiant &amp; Industrials</div>
+          <div class="dropdown-item" onclick="selectCompany('Great Lakes Distributors MN')">Great Lakes Distributors MN</div>
+          <div class="dropdown-item" onclick="selectCompany('other')">Other</div>
+        </div>
+      </div>
+      <input type="hidden" id="company" value="Great Lakes Radiant">
+    </div>
+
+    <div class="field" id="customCompanyField" style="display:none;">
+      <label for="customCompany">Company Name</label>
+      <input type="text" id="customCompany" placeholder="Enter company name" oninput="render()">
+    </div>
+
+    <div class="field">
+      <label for="title">Job Title <span style="font-weight:400; color:#bbb;">(optional)</span></label>
+      <input type="text" id="title" placeholder="Heater Hustler" oninput="render()">
+    </div>
+
+    <div class="field">
+      <label for="office">Office Location</label>
+      <div class="custom-dropdown">
+        <div class="dropdown-trigger" id="officeTrigger" tabindex="0" onclick="toggleDropdown('office')" onkeydown="if(event.key==='Enter'||event.key===' ')toggleDropdown('office')">Minnesota</div>
+        <span class="dropdown-arrow">▼</span>
+        <div class="dropdown-menu" id="officeMenu">
+          <div class="dropdown-item" onclick="selectOffice('fl')">Florida</div>
+          <div class="dropdown-item" onclick="selectOffice('md')">Maryland</div>
+          <div class="dropdown-item" onclick="selectOffice('ma')">Massachusetts</div>
+          <div class="dropdown-item" onclick="selectOffice('mn')">Minnesota</div>
+          <div class="dropdown-item" onclick="selectOffice('oh')">Ohio</div>
+        </div>
+      </div>
+      <input type="hidden" id="office" value="mn">
+    </div>
+
+    <div class="field">
+      <label for="officePhone">Office Phone</label>
+      <input type="tel" id="officePhone" value="(952) 944-0023" oninput="handlePhoneInput(this); render()" onblur="validatePhone(this)" maxlength="14">
+      <div class="hint" id="officePhoneHint"></div>
+    </div>
+    <div class="field">
+      <label for="address">Address</label>
+      <input type="text" id="address" value="7665 Washington Ave S, Edina, MN 55439" oninput="render()">
+    </div>
+
+    <div class="field">
+      <label for="cell">Cell Phone <span style="font-weight:400; color:#bbb;">(optional)</span></label>
+      <input type="tel" id="cell" placeholder="(xxx) xxx-xxxx" oninput="handlePhoneInput(this); render()" onblur="validatePhone(this)" maxlength="14">
+      <div class="hint" id="cellHint"></div>
+    </div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" placeholder="you@glradiant.com" oninput="clearValidation(this); render()" onblur="validateEmail(this)">
+      <div class="hint" id="emailHint"></div>
+    </div>
+
+    <div class="field">
+      <label style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="linkedinToggle" checked onchange="toggleField('linkedin'); render()" style="width:auto; accent-color:#f37021;">
+        LinkedIn <span style="font-weight:400; color:#bbb;">(default company page)</span>
+      </label>
+      <input type="url" id="linkedin" value="https://www.linkedin.com/company/great-lakes-radiant" oninput="render()" style="margin-top:5px;">
+    </div>
+
+    <div class="field">
+      <label style="display:flex; align-items:center; gap:8px;">
+        <input type="checkbox" id="taglineToggle" checked onchange="toggleField('tagline'); render()" style="width:auto; accent-color:#f37021;">
+        Tagline <span style="font-weight:400; color:#bbb;">(standard version only)</span>
+      </label>
+      <input type="text" id="tagline" value="We help design LED Lighting layouts too!" oninput="render()" style="margin-top:5px;">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-reset" id="btnReset" onclick="resetForm()">
+        <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5l2.5-1.75L8 1z"/></svg>
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-column">
+
+  <!-- Preview -->
+  <div class="preview-panel card">
+    <div class="preview-header">
+      <h2>Preview</h2>
+      <div class="btn-group">
+        <button class="btn-html" id="btnHtml" onclick="copyHtmlDirect()" title="Copy raw HTML source">
+          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg>
+          Copy HTML
+        </button>
+        <button class="btn-copy" id="btnCopy" onclick="copySignature()">
+          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg>
+          Copy Signature
+        </button>
+      </div>
+    </div>
+    <div class="copy-error-msg" id="copyError"></div>
+    <div class="preview-body">
+      <div id="preview"></div>
+    </div>
+  </div>
+
+  <!-- Outlook Instructions -->
+  <div class="instructions card">
+    <h2>How to install in Outlook</h2>
+    <div class="steps">
+      <div class="steps-col">
+        <div class="step">
+          <div class="step-num">1</div>
+          <p>Fill in your info and pick your signature version.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <p>Click <strong>"Copy Signature"</strong> — this copies the formatted signature to your clipboard.</p>
+        </div>
+      </div>
+      <div class="steps-sep"></div>
+      <div class="steps-col">
+        <div class="step">
+          <div class="step-num">3</div>
+          <p>In Outlook, go to <strong>File → Settings → Account → Signatures</strong>.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <p>Click <strong>"+ Add Signature"</strong> or <strong>✏️ Edit</strong> an existing one. Select all (Ctrl+A) and <strong>paste</strong> (Ctrl+V).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NetSuite Instructions -->
+  <div class="instructions card">
+    <h2>How to install in NetSuite</h2>
+    <div class="steps steps-netsuite">
+      <div class="steps-col">
+        <div class="step">
+          <div class="step-num">1</div>
+          <p>Fill in your info and pick your signature version.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <p>Click <strong>"Copy HTML"</strong> to copy the raw HTML code.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <p>On the NetSuite homepage, under <strong>Settings</strong>, click <strong>"Set Preferences"</strong>.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <p>On the <strong>General</strong> tab, find the <strong>SIGNATURE</strong> box and paste the HTML code (Ctrl+V).</p>
+        </div>
+      </div>
+      <div class="steps-sep"></div>
+      <div class="steps-col">
+        <div class="step">
+          <div class="step-num">5</div>
+          <p>Check the <strong>"ADD SIGNATURE TO MESSAGES"</strong> box below the signature field.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <p>Click the <strong>"Transactions"</strong> tab at the top.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">7</div>
+          <p>Under <strong>TRANSACTION EMAIL ATTACHMENT FORMAT</strong>, select <strong>"PDF"</strong>.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">8</div>
+          <p>Click <strong>"Save"</strong>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="version">v1.0 · Feb 2026</div>
+
+  </div> <!-- /right-column -->
+
+</div>
+
+<script>
+let currentVersion = 'standard';
+
+/* ── Employee Directory ── */
+const employees = [
+  { name: 'Dustin Owens', email: 'dustin@glradiant.com', office: 'oh' },
+  { name: 'Ethan Pedersen', email: 'ethanp@glradiant.com', office: 'mn' },
+  { name: 'Jessica Wells', email: 'jessica@glradiant.com', office: 'fl' },
+  { name: 'Joe Pawelk', email: 'joe@glradiant.com', office: 'mn' },
+  { name: 'Josh Dunlap', email: 'josh@glradiant.com', office: 'mn' },
+  { name: 'Lori Guy', email: 'lori@glradiant.com', office: 'md' },
+  { name: 'Luke Angels', email: 'luke@glradiant.com', office: 'ma' },
+  { name: 'Mark Wells', email: 'mark@glradiant.com', office: 'fl' },
+  { name: 'Noah Gaskins', email: 'noah@glradiant.com', office: 'oh' },
+];
+
+function handleNameInput(input) {
+  input.classList.remove('highlight-error');
+  document.getElementById('copyError').classList.remove('show');
+  showSuggestions();
+
+  const match = employees.find(e => e.name.toLowerCase() === input.value.trim().toLowerCase());
+  if (match) {
+    applyEmployee(match);
+    closeSuggestions();
+  }
+
+  render();
+}
+
+function applyEmployee(emp) {
+  document.getElementById('email').value = emp.email;
+  document.getElementById('email').classList.remove('invalid', 'highlight-error');
+  const emailHint = document.getElementById('emailHint');
+  if (emailHint) { emailHint.textContent = ''; emailHint.classList.remove('error'); }
+
+  document.getElementById('office').value = emp.office;
+  const oLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
+  document.getElementById('officeTrigger').textContent = oLabels[emp.office];
+  fillOffice();
+}
+
+function showSuggestions() {
+  const input = document.getElementById('name');
+  const box = document.getElementById('nameSuggestions');
+  const query = input.value.trim().toLowerCase();
+
+  const officeLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
+
+  const matches = query === ''
+    ? employees
+    : employees.filter(e => e.name.toLowerCase().includes(query));
+
+  if (matches.length === 0 || (matches.length === 1 && matches[0].name.toLowerCase() === query)) {
+    closeSuggestions();
+    return;
+  }
+
+  box.innerHTML = matches.map(e =>
+    `<div class="dropdown-item" onmousedown="selectEmployee('${e.name}')">
+      <span>${e.name}</span>
+      <span class="item-hint">${officeLabels[e.office]}</span>
+    </div>`
+  ).join('');
+  box.classList.add('open');
+}
+
+function selectEmployee(name) {
+  const input = document.getElementById('name');
+  input.value = name;
+  const match = employees.find(e => e.name === name);
+  if (match) applyEmployee(match);
+  closeSuggestions();
+  render();
+}
+
+function closeSuggestions() {
+  document.getElementById('nameSuggestions').classList.remove('open');
+}
+
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
+}
+
+/* ── Generic Dropdown Toggle ── */
+function toggleDropdown(id) {
+  const menu = document.getElementById(id + 'Menu');
+  const isOpen = menu.classList.contains('open');
+  closeAllDropdowns();
+  if (!isOpen) menu.classList.add('open');
+}
+
+/* ── Company Dropdown ── */
+function selectCompany(value) {
+  const trigger = document.getElementById('companyTrigger');
+  const hidden = document.getElementById('company');
+  const customField = document.getElementById('customCompanyField');
+
+  if (value === 'other') {
+    trigger.textContent = 'Other';
+    hidden.value = 'other';
+    customField.style.display = '';
+    document.getElementById('customCompany').focus();
+  } else {
+    trigger.textContent = value;
+    hidden.value = value;
+    customField.style.display = 'none';
+  }
+
+  closeAllDropdowns();
+  render();
+}
+
+/* ── Office Dropdown ── */
+const officeLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
+
+function selectOffice(key) {
+  document.getElementById('officeTrigger').textContent = officeLabels[key];
+  document.getElementById('office').value = key;
+  fillOffice();
+  closeAllDropdowns();
+  render();
+}
+
+// Close all dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.custom-dropdown')) {
+    closeAllDropdowns();
+  }
+});
+
+/* ── Office Locations ── */
+const offices = {
+  mn: { phone: '(952) 944-0023', address: '7665 Washington Ave S, Edina, MN 55439' },
+  oh: { phone: '(330) 942-0396', address: '1191 George Washington Blvd, Akron, OH 44312' },
+  ma: { phone: '(508) 453-1900', address: '5 Centech Blvd #4, Shrewsbury, MA 01545' },
+  md: { phone: '(301) 327-1745', address: '26262 Three Notch Rd. #14, Mechanicsville, MD 20659' },
+  fl: { phone: '(813) 946-8533', address: '16703 Early Riser Ave #202, Land O\u2019 Lakes, FL 34638' },
+};
+
+function fillOffice() {
+  const key = document.getElementById('office').value;
+  const data = offices[key];
+  if (data) {
+    document.getElementById('officePhone').value = data.phone;
+    document.getElementById('address').value = data.address;
+  }
+}
+
+/* ── Company Toggle ── */
+function handleCompanyChange() {
+  const val = document.getElementById('company').value;
+  const customField = document.getElementById('customCompanyField');
+  if (val === 'other') {
+    customField.style.display = '';
+  } else {
+    customField.style.display = 'none';
+  }
+}
+
+function getCompanyName() {
+  const sel = document.getElementById('company').value;
+  if (sel === 'other') {
+    return document.getElementById('customCompany').value.trim() || 'Company Name';
+  }
+  return sel;
+}
+
+/* ── Field Toggles ── */
+function toggleField(field) {
+  const checkbox = document.getElementById(field + 'Toggle');
+  const input = document.getElementById(field);
+  input.disabled = !checkbox.checked;
+  input.style.opacity = checkbox.checked ? '1' : '0.4';
+}
+
+/* ── Version Toggle ── */
+function setVersion(version, btn) {
+  currentVersion = version;
+  const buttons = document.querySelectorAll('.toggle-options button');
+  buttons.forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-pressed', 'false');
+  });
+  btn.classList.add('active');
+  btn.setAttribute('aria-pressed', 'true');
+
+  // Tagline only applies to standard version
+  const taglineToggle = document.getElementById('taglineToggle');
+  const taglineInput = document.getElementById('tagline');
+  const taglineField = taglineInput.closest('.field');
+  if (version === 'carwash') {
+    taglineField.style.opacity = '0.4';
+    taglineField.style.pointerEvents = 'none';
+  } else {
+    taglineField.style.opacity = '1';
+    taglineField.style.pointerEvents = '';
+  }
+
+  render();
+}
+
+/* ── Escape HTML ── */
+function esc(str) {
+  const el = document.createElement('span');
+  el.textContent = str;
+  return el.innerHTML;
+}
+
+/* ── Phone auto-format ── */
+function handlePhoneInput(input) {
+  input.classList.remove('highlight-error');
+  document.getElementById('copyError').classList.remove('show');
+  let digits = input.value.replace(/\D/g, '').slice(0, 10);
+  let formatted = '';
+  if (digits.length > 6) {
+    formatted = '(' + digits.slice(0,3) + ') ' + digits.slice(3,6) + '-' + digits.slice(6);
+  } else if (digits.length > 3) {
+    formatted = '(' + digits.slice(0,3) + ') ' + digits.slice(3);
+  } else if (digits.length > 0) {
+    formatted = '(' + digits;
+  } else {
+    formatted = '';
+  }
+  input.value = formatted;
+
+  // Clear error once valid (but don't show new errors while typing)
+  if (digits.length === 10 || (digits.length === 0 && input.id === 'cell')) {
+    const hint = document.getElementById(input.id + 'Hint');
+    if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
+    input.classList.remove('invalid');
+  }
+}
+
+function clearValidation(input) {
+  input.classList.remove('highlight-error');
+  document.getElementById('copyError').classList.remove('show');
+  const val = input.value.trim();
+  const hint = document.getElementById(input.id + 'Hint') || document.getElementById('emailHint');
+  // Clear error once valid (but don't show new errors while typing)
+  if (input.type === 'email' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
+    input.classList.remove('invalid');
+  }
+}
+
+function validatePhone(input) {
+  const digits = input.value.replace(/\D/g, '');
+  const hint = document.getElementById(input.id + 'Hint');
+  // Cell is optional — only validate if something is entered
+  const isOptional = (input.id === 'cell');
+  if (digits.length === 0 && isOptional) {
+    if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
+    input.classList.remove('invalid');
+  } else if (digits.length > 0 && digits.length < 10) {
+    if (hint) { hint.textContent = `${10 - digits.length} more digit${10 - digits.length === 1 ? '' : 's'} needed`; hint.classList.add('error'); }
+    input.classList.add('invalid');
+  } else if (digits.length === 0 && !isOptional) {
+    if (hint) { hint.textContent = 'Required'; hint.classList.add('error'); }
+    input.classList.add('invalid');
+  } else {
+    if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
+    input.classList.remove('invalid');
+  }
+}
+
+/* ── Email validation ── */
+function validateEmail(input) {
+  const hint = document.getElementById('emailHint');
+  const val = input.value.trim();
+  if (val === '') {
+    hint.textContent = '';
+    hint.classList.remove('error');
+    input.classList.remove('invalid');
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    hint.textContent = 'Enter a valid email address';
+    hint.classList.add('error');
+    input.classList.add('invalid');
+  } else {
+    hint.textContent = '';
+    hint.classList.remove('error');
+    input.classList.remove('invalid');
+  }
+}
+
+/* ── Phone to tel: href ── */
+function formatPhoneTel(display) {
+  return '+1' + display.replace(/\D/g, '');
+}
+
+/* ── Build signature HTML ── */
+function buildSignatureHtml() {
+  const name    = document.getElementById('name').value.trim()   || 'John Doe';
+  const title   = document.getElementById('title').value.trim();
+  const cell    = document.getElementById('cell').value.trim();
+  const email   = document.getElementById('email').value.trim()  || 'you@glradiant.com';
+  const linkedin = document.getElementById('linkedinToggle').checked ? document.getElementById('linkedin').value.trim() : '';
+  const tagline  = document.getElementById('taglineToggle').checked ? document.getElementById('tagline').value.trim() : '';
+  const officePhone = document.getElementById('officePhone').value.trim() || '(952) 944-0023';
+  const address = document.getElementById('address').value.trim() || '7665 Washington Ave S, Edina, MN 55439';
+
+  const officeTel = formatPhoneTel(officePhone);
+
+  // Phone line: show cell only if provided
+  let phoneLine;
+  if (cell) {
+    const cellTel = formatPhoneTel(cell);
+    phoneLine = `O.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(officeTel)}">${esc(officePhone)}</a> &nbsp;&nbsp;|&nbsp;&nbsp; C.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(cellTel)}">${esc(cell)}</a>`;
+  } else {
+    phoneLine = `O.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(officeTel)}">${esc(officePhone)}</a>`;
+  }
+
+  const company = getCompanyName();
+  const nameLine = title
+    ? `${esc(name)} <span style="font-weight: normal; font-size: 11pt; color: #555555;">&nbsp;|&nbsp; ${esc(title)}</span>`
+    : esc(name);
+
+  let html = `<table style="font-family: Aptos, Calibri, Arial, Helvetica, sans-serif; color: #333333; line-height: 1.5;" border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td>
+<table border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td style="border-left: 4px solid #f37021; padding: 4px 0 4px 14px;">
+<table border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td style="font-size: 12pt; font-weight: bold; color: #000000; padding-bottom: 1px;">${nameLine}</td>
+</tr>
+<tr>
+<td style="font-size: 11pt; color: #555555; padding-bottom: 4px;"><strong>${esc(company)}</strong></td>
+</tr>
+</tbody>
+</table>
+<table style="font-size: 11pt; color: #555555;" border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td style="padding-bottom: 2px;">${esc(address)}</td>
+</tr>
+<tr>
+<td style="padding-bottom: 2px;">${phoneLine}</td>
+</tr>
+<tr>
+<td style="padding-bottom: 10px;"><a style="color: #07567d; text-decoration: none;" href="mailto:${esc(email)}">${esc(email)}</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a style="color: #07567d; text-decoration: none;" href="https://www.glradiant.com">glradiant.com</a>${linkedin ? ' &nbsp;&nbsp;|&nbsp;&nbsp; <a style="color: #07567d; text-decoration: none;" href="' + esc(linkedin) + '">LinkedIn</a>' : ''}</td>
+</tr>
+</tbody>
+</table>`;
+
+  if (currentVersion === 'standard' && tagline) {
+    html += `<table border="0" cellspacing="0" cellpadding="0">
+<tbody>
+<tr>
+<td style="font-size: 11pt; color: #0e9ecf; font-style: italic;">${esc(tagline)}</td>
+</tr>
+</tbody>
+</table>`;
+  }
+
+  html += `
+</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>`;
+
+  if (currentVersion === 'carwash') {
+    html += `
+<tr>
+<td style="padding: 14px 0;">
+<table border="0" cellspacing="0" cellpadding="0" width="500">
+<tbody>
+<tr>
+<td style="border-top: 2px solid #cccccc; font-size: 1px; line-height: 1px;">&nbsp;</td>
+</tr>
+</tbody>
+</table>
+</td>
+</tr>
+<tr>
+<td style="padding-bottom: 4px;">
+<strong style="font-size: 12pt; color: #31BC9B;">COME SEE US IN NASHVILLE!</strong>
+</td>
+</tr>
+<tr>
+<td style="padding-bottom: 2px; font-size: 11pt; color: #333333;">We&rsquo;ll be at <strong>The Car Wash Show</strong> &ndash; May 11&ndash;13, 2026</td>
+</tr>
+<tr>
+<td style="padding-bottom: 10px; font-size: 11pt; color: #333333;">Stop by and say hi at Booth #NCP608!</td>
+</tr>
+<tr>
+<td>
+<a href="https://www.thecarwashshow.com/" target="_blank" style="text-decoration: none;">
+<img src="https://www.glradiant.com/wp-content/uploads/2026/02/car_wash_email.png" alt="The Car Wash Show - May 11-13, 2026 - Nashville, TN" width="500" style="display: block; border: 0; outline: none; max-width: 500px;" />
+</a>
+</td>
+</tr>`;
+  }
+
+  html += `
+</tbody>
+</table>`;
+
+  return html;
+}
+
+/* ── Render preview ── */
+function render() {
+  document.getElementById('preview').innerHTML = buildSignatureHtml();
+}
+
+/* ── Validation check ── */
+function getValidationErrors() {
+  const errors = [];
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const cell = document.getElementById('cell').value.replace(/\D/g, '');
+  const officeDigits = document.getElementById('officePhone').value.replace(/\D/g, '');
+
+  if (!name) errors.push('Name is required');
+  if (!email) errors.push('Email is required');
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email is invalid');
+  if (cell.length > 0 && cell.length < 10) errors.push('Cell phone must be 10 digits');
+  if (officeDigits.length < 10) errors.push('Office phone must be 10 digits');
+
+  return errors;
+}
+
+/* ── Show validation errors visually ── */
+function showValidationErrors(errors, triggerBtn) {
+  const errorDiv = document.getElementById('copyError');
+  errorDiv.textContent = errors[0];
+  errorDiv.classList.add('show');
+
+  const btn = triggerBtn || document.getElementById('btnCopy');
+  btn.classList.add('error');
+
+  // Highlight first invalid field and scroll to it
+  document.querySelectorAll('.highlight-error').forEach(el => el.classList.remove('highlight-error'));
+  const fieldMap = {
+    'Name is required': 'name',
+    'Email is required': 'email',
+    'Email is invalid': 'email',
+    'Cell phone must be 10 digits': 'cell',
+    'Office phone must be 10 digits': 'officePhone',
+  };
+  const targetId = fieldMap[errors[0]];
+  if (targetId) {
+    const input = document.getElementById(targetId);
+    input.classList.add('highlight-error');
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    input.focus();
+  }
+
+  setTimeout(() => {
+    btn.classList.remove('error');
+  }, 600);
+}
+
+/* ── Copy signature (rich text via Clipboard API) ── */
+async function copySignature() {
+  const errors = getValidationErrors();
+  if (errors.length) {
+    showValidationErrors(errors, document.getElementById('btnCopy'));
+    return;
+  }
+
+  document.getElementById('copyError').classList.remove('show');
+  const html = buildSignatureHtml();
+  const btn = document.getElementById('btnCopy');
+
+  try {
+    // Modern Clipboard API — writes an HTML blob so Outlook receives formatted content
+    const blob = new Blob([html], { type: 'text/html' });
+    const item = new ClipboardItem({ 'text/html': blob });
+    await navigator.clipboard.write([item]);
+  } catch {
+    // Fallback for older browsers
+    const preview = document.getElementById('preview');
+    const range = document.createRange();
+    range.selectNodeContents(preview);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+  }
+
+  btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> Copied!`;
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg> Copy Signature`;
+    btn.classList.remove('copied');
+  }, 2200);
+}
+
+/* ── Copy HTML directly (no modal) ── */
+async function copyHtmlDirect() {
+  const errors = getValidationErrors();
+  if (errors.length) {
+    showValidationErrors(errors, document.getElementById('btnHtml'));
+    return;
+  }
+
+  const html = buildSignatureHtml().trim();
+  const btn = document.getElementById('btnHtml');
+
+  try {
+    await navigator.clipboard.writeText(html);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = html;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+
+  btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> Copied!`;
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg> Copy HTML`;
+    btn.classList.remove('copied');
+  }, 2200);
+}
+
+/* ── Reset ── */
+function resetForm() {
+  document.getElementById('name').value = '';
+  document.getElementById('company').value = 'Great Lakes Radiant';
+  document.getElementById('companyTrigger').textContent = 'Great Lakes Radiant';
+  document.getElementById('customCompany').value = '';
+  document.getElementById('customCompanyField').style.display = 'none';
+  document.getElementById('title').value = '';
+  document.getElementById('cell').value = '';
+  document.getElementById('email').value = '';
+  document.getElementById('linkedin').value = 'https://www.linkedin.com/company/great-lakes-radiant';
+  document.getElementById('linkedinToggle').checked = true;
+  document.getElementById('linkedin').disabled = false;
+  document.getElementById('linkedin').style.opacity = '1';
+  document.getElementById('tagline').value = 'We help design LED Lighting layouts too!';
+  document.getElementById('taglineToggle').checked = true;
+  document.getElementById('tagline').disabled = false;
+  document.getElementById('tagline').style.opacity = '1';
+  document.getElementById('tagline').closest('.field').style.opacity = '1';
+  document.getElementById('tagline').closest('.field').style.pointerEvents = '';
+  document.getElementById('office').value = 'mn';
+  document.getElementById('officeTrigger').textContent = 'Minnesota';
+  document.getElementById('officePhone').value = '(952) 944-0023';
+  document.getElementById('address').value = '7665 Washington Ave S, Edina, MN 55439';
+
+  // Clear validation states
+  document.querySelectorAll('.field input').forEach(i => {
+    i.classList.remove('invalid');
+    i.classList.remove('highlight-error');
+  });
+  document.getElementById('copyError').classList.remove('show');
+  closeSuggestions();
+  ['cellHint', 'officePhoneHint', 'emailHint'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = ''; el.classList.remove('error'); }
+  });
+
+  // Reset to standard
+  setVersion('standard', document.querySelector('.toggle-options button'));
+
+  render();
+
+  // Button feedback
+  const btn = document.getElementById('btnReset');
+  btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> Reset!`;
+  btn.classList.add('done');
+  setTimeout(() => {
+    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/><path d="M8 1v3.5l2.5-1.75L8 1z"/></svg> Reset`;
+    btn.classList.remove('done');
+  }, 1500);
+}
+
+/* ── Init ── */
+render();
+</script>
+
+</body>
+</html>
