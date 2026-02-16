@@ -403,6 +403,15 @@
     gap: 20px;
   }
 
+  .instructions-row {
+    display: flex;
+    gap: 20px;
+  }
+
+  .instructions-row .instructions {
+    flex: 1;
+  }
+
   /* ── Instructions ── */
   .instructions {
     padding: 22px 26px;
@@ -420,24 +429,8 @@
 
   .steps {
     display: flex;
-    gap: 0;
-  }
-
-  .steps-col {
-    flex: 1;
-    display: flex;
     flex-direction: column;
     gap: 12px;
-  }
-
-  .steps-sep {
-    width: 1px;
-    background: #e8e8e8;
-    margin: 0 18px;
-    flex-shrink: 0;
-  }
-
-  .steps-netsuite {
   }
 
   .step {
@@ -531,8 +524,8 @@
     .header h1 { font-size: 16px; }
     .container { padding: 18px 14px 32px; gap: 18px; }
     .form-panel, .instructions { padding: 20px 18px; }
-    .steps, .steps-netsuite { flex-direction: column; }
-    .steps-sep { display: none; }
+    .steps { flex-direction: column; }
+    .instructions-row { flex-direction: column; }
     .preview-body { padding: 20px 16px; }
     .btn-group { flex-direction: column; }
   }
@@ -680,30 +673,27 @@
     </div>
   </div>
 
+  <div class="instructions-row">
+
   <!-- Outlook Instructions -->
   <div class="instructions card">
     <h2>How to install in Outlook</h2>
     <div class="steps">
-      <div class="steps-col">
-        <div class="step">
-          <div class="step-num">1</div>
-          <p>Fill in your info and pick your signature version.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <p>Click <strong>"Copy Signature"</strong> — this copies the formatted signature to your clipboard.</p>
-        </div>
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Fill in your info and pick your signature version.</p>
       </div>
-      <div class="steps-sep"></div>
-      <div class="steps-col">
-        <div class="step">
-          <div class="step-num">3</div>
-          <p>In Outlook, go to <strong>File → Settings → Account → Signatures</strong>.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <p>Click <strong>"+ Add Signature"</strong> or <strong>✏️ Edit</strong> an existing one. Select all (Ctrl+A) and <strong>paste</strong> (Ctrl+V).</p>
-        </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Click <strong>"Copy Signature"</strong> — this copies the formatted signature to your clipboard.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>In Outlook, go to <strong>File → Settings → Account → Signatures</strong>.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Click <strong>"+ Add Signature"</strong> or <strong>✏️ Edit</strong> an existing one. Select all (Ctrl+A) and <strong>paste</strong> (Ctrl+V).</p>
       </div>
     </div>
   </div>
@@ -711,46 +701,43 @@
   <!-- NetSuite Instructions -->
   <div class="instructions card">
     <h2>How to install in NetSuite</h2>
-    <div class="steps steps-netsuite">
-      <div class="steps-col">
-        <div class="step">
-          <div class="step-num">1</div>
-          <p>Fill in your info and pick your signature version.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <p>Click <strong>"Copy HTML"</strong> to copy the raw HTML code.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <p>On the NetSuite homepage, under <strong>Settings</strong>, click <strong>"Set Preferences"</strong>.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <p>On the <strong>General</strong> tab, find the <strong>SIGNATURE</strong> box and paste the HTML code (Ctrl+V).</p>
-        </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Fill in your info and pick your signature version.</p>
       </div>
-      <div class="steps-sep"></div>
-      <div class="steps-col">
-        <div class="step">
-          <div class="step-num">5</div>
-          <p>Check the <strong>"ADD SIGNATURE TO MESSAGES"</strong> box below the signature field.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">6</div>
-          <p>Click the <strong>"Transactions"</strong> tab at the top.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">7</div>
-          <p>Under <strong>TRANSACTION EMAIL ATTACHMENT FORMAT</strong>, select <strong>"PDF"</strong>.</p>
-        </div>
-        <div class="step">
-          <div class="step-num">8</div>
-          <p>Click <strong>"Save"</strong>.</p>
-        </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Click <strong>"Copy HTML"</strong> to copy the raw HTML code.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>On the NetSuite homepage, under <strong>Settings</strong>, click <strong>"Set Preferences"</strong>.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>On the <strong>General</strong> tab, find the <strong>SIGNATURE</strong> box and paste the HTML code (Ctrl+V).</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <p>Check the <strong>"ADD SIGNATURE TO MESSAGES"</strong> box below the signature field.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <p>Click the <strong>"Transactions"</strong> tab at the top.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">7</div>
+        <p>Under <strong>TRANSACTION EMAIL ATTACHMENT FORMAT</strong>, select <strong>"PDF"</strong>.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">8</div>
+        <p>Click <strong>"Save"</strong>.</p>
       </div>
     </div>
   </div>
+
+  </div> <!-- /instructions-row -->
 
   <div class="version">v1.0 · Feb 2026</div>
 
