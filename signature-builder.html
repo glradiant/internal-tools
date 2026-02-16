@@ -555,11 +555,7 @@
 
     <div class="field">
       <label for="name">Full Name</label>
-      <div class="custom-dropdown">
-        <input type="text" id="name" placeholder="John Doe" oninput="handleNameInput(this)" onfocus="showSuggestions()" autocomplete="off">
-        <span class="dropdown-arrow">▼</span>
-        <div class="dropdown-menu" id="nameSuggestions"></div>
-      </div>
+      <input type="text" id="name" placeholder="John Doe" oninput="this.classList.remove('highlight-error'); document.getElementById('copyError').classList.remove('show'); render()">
     </div>
 
     <div class="field">
@@ -747,83 +743,6 @@
 
 <script>
 let currentVersion = 'standard';
-
-/* ── Employee Directory ── */
-const employees = [
-  { name: 'Dustin Owens', email: 'dustin@glradiant.com', office: 'oh' },
-  { name: 'Ethan Pedersen', email: 'ethanp@glradiant.com', office: 'mn' },
-  { name: 'Jessica Wells', email: 'jessica@glradiant.com', office: 'fl' },
-  { name: 'Joe Pawelk', email: 'joe@glradiant.com', office: 'mn' },
-  { name: 'Josh Dunlap', email: 'josh@glradiant.com', office: 'mn' },
-  { name: 'Lori Guy', email: 'lori@glradiant.com', office: 'md' },
-  { name: 'Luke Angels', email: 'luke@glradiant.com', office: 'ma' },
-  { name: 'Mark Wells', email: 'mark@glradiant.com', office: 'fl' },
-  { name: 'Noah Gaskins', email: 'noah@glradiant.com', office: 'oh' },
-];
-
-function handleNameInput(input) {
-  input.classList.remove('highlight-error');
-  document.getElementById('copyError').classList.remove('show');
-  showSuggestions();
-
-  const match = employees.find(e => e.name.toLowerCase() === input.value.trim().toLowerCase());
-  if (match) {
-    applyEmployee(match);
-    closeSuggestions();
-  }
-
-  render();
-}
-
-function applyEmployee(emp) {
-  document.getElementById('email').value = emp.email;
-  document.getElementById('email').classList.remove('invalid', 'highlight-error');
-  const emailHint = document.getElementById('emailHint');
-  if (emailHint) { emailHint.textContent = ''; emailHint.classList.remove('error'); }
-
-  document.getElementById('office').value = emp.office;
-  const oLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
-  document.getElementById('officeTrigger').textContent = oLabels[emp.office];
-  fillOffice();
-}
-
-function showSuggestions() {
-  const input = document.getElementById('name');
-  const box = document.getElementById('nameSuggestions');
-  const query = input.value.trim().toLowerCase();
-
-  const officeLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
-
-  const matches = query === ''
-    ? employees
-    : employees.filter(e => e.name.toLowerCase().includes(query));
-
-  if (matches.length === 0 || (matches.length === 1 && matches[0].name.toLowerCase() === query)) {
-    closeSuggestions();
-    return;
-  }
-
-  box.innerHTML = matches.map(e =>
-    `<div class="dropdown-item" onmousedown="selectEmployee('${e.name}')">
-      <span>${e.name}</span>
-      <span class="item-hint">${officeLabels[e.office]}</span>
-    </div>`
-  ).join('');
-  box.classList.add('open');
-}
-
-function selectEmployee(name) {
-  const input = document.getElementById('name');
-  input.value = name;
-  const match = employees.find(e => e.name === name);
-  if (match) applyEmployee(match);
-  closeSuggestions();
-  render();
-}
-
-function closeSuggestions() {
-  document.getElementById('nameSuggestions').classList.remove('open');
-}
 
 function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
@@ -1303,7 +1222,7 @@ function resetForm() {
     i.classList.remove('highlight-error');
   });
   document.getElementById('copyError').classList.remove('show');
-  closeSuggestions();
+  closeAllDropdowns();
   ['cellHint', 'officePhoneHint', 'emailHint'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = ''; el.classList.remove('error'); }
