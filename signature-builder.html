@@ -212,58 +212,6 @@
   }
 
   /* ── Toggle Group ── */
-  .toggle-group {
-    margin-bottom: 18px;
-  }
-
-  .toggle-group label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #444;
-    margin-bottom: 8px;
-    display: block;
-  }
-
-  .toggle-options {
-    display: flex;
-    gap: 0;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1.5px solid #e0e0e0;
-    background: #fafafa;
-  }
-
-  .toggle-options button {
-    flex: 1;
-    padding: 9px 16px;
-    border: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: 500;
-    color: #888;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    white-space: nowrap;
-  }
-
-  .toggle-options button.active {
-    background: #f37021;
-    color: #fff;
-    font-weight: 600;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
-  }
-
-  .toggle-options button:not(:last-child) {
-    border-right: 1.5px solid #e0e0e0;
-  }
-
-  .toggle-options button:not(.active):hover {
-    background: #f5f5f5;
-    color: #555;
-  }
-
   /* ── Buttons ── */
   .form-actions {
     display: flex;
@@ -304,6 +252,28 @@
   }
 
   /* ── Preview Panel ── */
+  .preview-row {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+
+  .preview-row .preview-panel {
+    flex: 1;
+    min-width: 0;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .preview-divider {
+    width: 1px;
+    background: #e8e8e8;
+    flex-shrink: 0;
+  }
+
   .preview-panel {
     overflow: hidden;
     animation: fadeUp 0.35s 0.08s ease both;
@@ -517,6 +487,13 @@
     .container {
       grid-template-columns: 1fr;
     }
+    .preview-row {
+      flex-direction: column;
+    }
+    .preview-divider {
+      width: auto;
+      height: 1px;
+    }
   }
 
   @media (max-width: 520px) {
@@ -545,17 +522,9 @@
   <div class="form-panel card">
     <div class="section-label">Your Info</div>
 
-    <div class="toggle-group">
-      <label>Signature Version</label>
-      <div class="toggle-options" role="group" aria-label="Signature version">
-        <button class="active" onclick="setVersion('standard', this)" aria-pressed="true">Standard</button>
-        <button onclick="setVersion('carwash', this)" aria-pressed="false">Car Wash Show</button>
-      </div>
-    </div>
-
     <div class="field">
       <label for="name">Full Name</label>
-      <input type="text" id="name" placeholder="John Doe" oninput="this.classList.remove('highlight-error'); document.getElementById('copyError').classList.remove('show'); render()">
+      <input type="text" id="name" placeholder="John Doe" oninput="this.classList.remove('highlight-error'); clearErrors(); render()">
     </div>
 
     <div class="field">
@@ -586,9 +555,10 @@
     <div class="field">
       <label for="office">Office Location</label>
       <div class="custom-dropdown">
-        <div class="dropdown-trigger" id="officeTrigger" tabindex="0" onclick="toggleDropdown('office')" onkeydown="if(event.key==='Enter'||event.key===' ')toggleDropdown('office')">Minnesota</div>
+        <div class="dropdown-trigger" id="officeTrigger" tabindex="0" onclick="toggleDropdown('office')" onkeydown="if(event.key==='Enter'||event.key===' ')toggleDropdown('office')" style="color:#999;">-- select --</div>
         <span class="dropdown-arrow">▼</span>
         <div class="dropdown-menu" id="officeMenu">
+          <div class="dropdown-item" onclick="selectOffice('')">-- select --</div>
           <div class="dropdown-item" onclick="selectOffice('fl')">Florida</div>
           <div class="dropdown-item" onclick="selectOffice('md')">Maryland</div>
           <div class="dropdown-item" onclick="selectOffice('ma')">Massachusetts</div>
@@ -596,17 +566,17 @@
           <div class="dropdown-item" onclick="selectOffice('oh')">Ohio</div>
         </div>
       </div>
-      <input type="hidden" id="office" value="mn">
+      <input type="hidden" id="office" value="">
     </div>
 
     <div class="field">
       <label for="officePhone">Office Phone</label>
-      <input type="tel" id="officePhone" value="(952) 944-0023" oninput="handlePhoneInput(this); render()" onblur="validatePhone(this)" maxlength="14">
+      <input type="tel" id="officePhone" placeholder="(xxx) xxx-xxxx" oninput="handlePhoneInput(this); render()" onblur="validatePhone(this)" maxlength="14">
       <div class="hint" id="officePhoneHint"></div>
     </div>
     <div class="field">
       <label for="address">Address</label>
-      <input type="text" id="address" value="7665 Washington Ave S, Edina, MN 55439" oninput="render()">
+      <input type="text" id="address" placeholder="1234 Main St, City, ST 00000" oninput="render()">
     </div>
 
     <div class="field">
@@ -622,11 +592,8 @@
     </div>
 
     <div class="field">
-      <label style="display:flex; align-items:center; gap:8px;">
-        <input type="checkbox" id="linkedinToggle" checked onchange="toggleField('linkedin'); render()" style="width:auto; accent-color:#f37021;">
-        LinkedIn <span style="font-weight:400; color:#bbb;">(default company page)</span>
-      </label>
-      <input type="url" id="linkedin" value="https://www.linkedin.com/company/great-lakes-radiant" oninput="render()" style="margin-top:5px;">
+      <label for="linkedin">LinkedIn URL <span style="font-weight:400; color:#bbb;">(defaults to company page, or replace with your own)</span></label>
+      <input type="url" id="linkedin" value="https://www.linkedin.com/company/great-lakes-radiant" oninput="render()">
     </div>
 
     <div class="field">
@@ -648,24 +615,48 @@
   <!-- RIGHT COLUMN -->
   <div class="right-column">
 
-  <!-- Preview -->
-  <div class="preview-panel card">
-    <div class="preview-header">
-      <h2>Preview</h2>
-      <div class="btn-group">
-        <button class="btn-html" id="btnHtml" onclick="copyHtmlDirect()" title="Copy raw HTML source">
-          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg>
-          Copy HTML
-        </button>
-        <button class="btn-copy" id="btnCopy" onclick="copySignature()">
-          <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg>
-          Copy Signature
-        </button>
+  <!-- Previews -->
+  <div class="preview-row" id="previewRow">
+    <div class="preview-panel">
+      <div class="preview-header">
+        <h2>Standard</h2>
+        <div class="btn-group">
+          <button class="btn-html" id="btnHtmlStandard" onclick="copyHtmlDirect('standard')" title="Copy raw HTML source">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg>
+            HTML
+          </button>
+          <button class="btn-copy" id="btnCopyStandard" onclick="copySignature('standard')">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="copy-error-msg" id="copyErrorStandard"></div>
+      <div class="preview-body">
+        <div id="previewStandard"></div>
       </div>
     </div>
-    <div class="copy-error-msg" id="copyError"></div>
-    <div class="preview-body">
-      <div id="preview"></div>
+
+    <div class="preview-divider"></div>
+
+    <div class="preview-panel" id="carwashPanel">
+      <div class="preview-header">
+        <h2>Car Wash Show</h2>
+        <div class="btn-group">
+          <button class="btn-html" id="btnHtmlCarwash" onclick="copyHtmlDirect('carwash')" title="Copy raw HTML source">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg>
+            HTML
+          </button>
+          <button class="btn-copy" id="btnCopyCarwash" onclick="copySignature('carwash')">
+            <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+      <div class="copy-error-msg" id="copyErrorCarwash"></div>
+      <div class="preview-body">
+        <div id="previewCarwash"></div>
+      </div>
     </div>
   </div>
 
@@ -677,7 +668,7 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <p>Fill in your info and pick your signature version.</p>
+        <p>Fill in your info on the left.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -700,7 +691,7 @@
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
-        <p>Fill in your info and pick your signature version.</p>
+        <p>Fill in your info on the left.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -742,7 +733,18 @@
 </div>
 
 <script>
-let currentVersion = 'standard';
+/* ── Car Wash Show expiry check ── */
+const showCarwash = new Date() < new Date('2026-05-14T00:00:00');
+if (!showCarwash) {
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('carwashPanel').style.display = 'none';
+    document.querySelector('.preview-divider').style.display = 'none';
+    const row = document.getElementById('previewRow');
+    if (row) {
+      row.querySelector('.preview-panel').style.borderRadius = '12px';
+    }
+  });
+}
 
 function closeAllDropdowns() {
   document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open'));
@@ -781,7 +783,14 @@ function selectCompany(value) {
 const officeLabels = { mn: 'Minnesota', oh: 'Ohio', ma: 'Massachusetts', md: 'Maryland', fl: 'Florida' };
 
 function selectOffice(key) {
-  document.getElementById('officeTrigger').textContent = officeLabels[key];
+  const trigger = document.getElementById('officeTrigger');
+  if (key) {
+    trigger.textContent = officeLabels[key];
+    trigger.style.color = '';
+  } else {
+    trigger.textContent = '-- select --';
+    trigger.style.color = '#999';
+  }
   document.getElementById('office').value = key;
   fillOffice();
   closeAllDropdowns();
@@ -810,6 +819,9 @@ function fillOffice() {
   if (data) {
     document.getElementById('officePhone').value = data.phone;
     document.getElementById('address').value = data.address;
+  } else {
+    document.getElementById('officePhone').value = '';
+    document.getElementById('address').value = '';
   }
 }
 
@@ -840,32 +852,6 @@ function toggleField(field) {
   input.style.opacity = checkbox.checked ? '1' : '0.4';
 }
 
-/* ── Version Toggle ── */
-function setVersion(version, btn) {
-  currentVersion = version;
-  const buttons = document.querySelectorAll('.toggle-options button');
-  buttons.forEach(b => {
-    b.classList.remove('active');
-    b.setAttribute('aria-pressed', 'false');
-  });
-  btn.classList.add('active');
-  btn.setAttribute('aria-pressed', 'true');
-
-  // Tagline only applies to standard version
-  const taglineToggle = document.getElementById('taglineToggle');
-  const taglineInput = document.getElementById('tagline');
-  const taglineField = taglineInput.closest('.field');
-  if (version === 'carwash') {
-    taglineField.style.opacity = '0.4';
-    taglineField.style.pointerEvents = 'none';
-  } else {
-    taglineField.style.opacity = '1';
-    taglineField.style.pointerEvents = '';
-  }
-
-  render();
-}
-
 /* ── Escape HTML ── */
 function esc(str) {
   const el = document.createElement('span');
@@ -876,7 +862,7 @@ function esc(str) {
 /* ── Phone auto-format ── */
 function handlePhoneInput(input) {
   input.classList.remove('highlight-error');
-  document.getElementById('copyError').classList.remove('show');
+  clearErrors();
   let digits = input.value.replace(/\D/g, '').slice(0, 10);
   let formatted = '';
   if (digits.length > 6) {
@@ -900,7 +886,7 @@ function handlePhoneInput(input) {
 
 function clearValidation(input) {
   input.classList.remove('highlight-error');
-  document.getElementById('copyError').classList.remove('show');
+  clearErrors();
   const val = input.value.trim();
   const hint = document.getElementById(input.id + 'Hint') || document.getElementById('emailHint');
   // Clear error once valid (but don't show new errors while typing)
@@ -913,16 +899,12 @@ function clearValidation(input) {
 function validatePhone(input) {
   const digits = input.value.replace(/\D/g, '');
   const hint = document.getElementById(input.id + 'Hint');
-  // Cell is optional — only validate if something is entered
-  const isOptional = (input.id === 'cell');
-  if (digits.length === 0 && isOptional) {
+  // Both phone fields are optional — only validate if something is entered
+  if (digits.length === 0) {
     if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
     input.classList.remove('invalid');
-  } else if (digits.length > 0 && digits.length < 10) {
+  } else if (digits.length < 10) {
     if (hint) { hint.textContent = `${10 - digits.length} more digit${10 - digits.length === 1 ? '' : 's'} needed`; hint.classList.add('error'); }
-    input.classList.add('invalid');
-  } else if (digits.length === 0 && !isOptional) {
-    if (hint) { hint.textContent = 'Required'; hint.classList.add('error'); }
     input.classList.add('invalid');
   } else {
     if (hint) { hint.textContent = ''; hint.classList.remove('error'); }
@@ -954,27 +936,42 @@ function formatPhoneTel(display) {
   return '+1' + display.replace(/\D/g, '');
 }
 
+/* ── Clear all error messages ── */
+function clearErrors() {
+  document.getElementById('copyErrorStandard').classList.remove('show');
+  document.getElementById('copyErrorCarwash').classList.remove('show');
+}
+
 /* ── Build signature HTML ── */
-function buildSignatureHtml() {
+function buildSignatureHtml(version) {
   const name    = document.getElementById('name').value.trim()   || 'John Doe';
   const title   = document.getElementById('title').value.trim();
   const cell    = document.getElementById('cell').value.trim();
   const email   = document.getElementById('email').value.trim()  || 'you@glradiant.com';
-  const linkedin = document.getElementById('linkedinToggle').checked ? document.getElementById('linkedin').value.trim() : '';
+  const linkedin = document.getElementById('linkedin').value.trim();
   const tagline  = document.getElementById('taglineToggle').checked ? document.getElementById('tagline').value.trim() : '';
-  const officePhone = document.getElementById('officePhone').value.trim() || '(952) 944-0023';
-  const address = document.getElementById('address').value.trim() || '7665 Washington Ave S, Edina, MN 55439';
+  const officePhone = document.getElementById('officePhone').value.trim();
+  const address = document.getElementById('address').value.trim();
 
-  const officeTel = formatPhoneTel(officePhone);
-
-  // Phone line: show cell only if provided
-  let phoneLine;
+  // Contact line: phone(s) + email
+  let contactParts = [];
+  if (officePhone) {
+    const officeTel = formatPhoneTel(officePhone);
+    contactParts.push(`O.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(officeTel)}">${esc(officePhone)}</a>`);
+  }
   if (cell) {
     const cellTel = formatPhoneTel(cell);
-    phoneLine = `O.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(officeTel)}">${esc(officePhone)}</a> &nbsp;&nbsp;|&nbsp;&nbsp; C.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(cellTel)}">${esc(cell)}</a>`;
-  } else {
-    phoneLine = `O.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(officeTel)}">${esc(officePhone)}</a>`;
+    contactParts.push(`C.&nbsp;<a style="color: #555555; text-decoration: none;" href="tel:${esc(cellTel)}">${esc(cell)}</a>`);
   }
+  contactParts.push(`<a style="color: #07567d; text-decoration: none;" href="mailto:${esc(email)}">${esc(email)}</a>`);
+  const contactLine = contactParts.join(' &nbsp;&nbsp;|&nbsp;&nbsp; ');
+
+  // Links line: website, linkedin, youtube (only if filled)
+  const links = [];
+  links.push('<a style="color: #07567d; text-decoration: none;" href="https://www.glradiant.com">glradiant.com</a>');
+  if (linkedin) links.push('<a style="color: #07567d; text-decoration: none;" href="' + esc(linkedin) + '">LinkedIn</a>');
+  links.push('<a style="color: #07567d; text-decoration: none;" href="https://www.youtube.com/@glradiant">YouTube</a>');
+  const linksLine = links.join(' &nbsp;&nbsp;|&nbsp;&nbsp; ');
 
   const company = getCompanyName();
   const nameLine = title
@@ -1001,19 +998,19 @@ function buildSignatureHtml() {
 </table>
 <table style="font-size: 11pt; color: #555555;" border="0" cellspacing="0" cellpadding="0">
 <tbody>
-<tr>
+${address ? `<tr>
 <td style="padding-bottom: 2px;">${esc(address)}</td>
+</tr>` : ''}
+<tr>
+<td style="padding-bottom: 2px;">${contactLine}</td>
 </tr>
 <tr>
-<td style="padding-bottom: 2px;">${phoneLine}</td>
-</tr>
-<tr>
-<td style="padding-bottom: 10px;"><a style="color: #07567d; text-decoration: none;" href="mailto:${esc(email)}">${esc(email)}</a> &nbsp;&nbsp;|&nbsp;&nbsp; <a style="color: #07567d; text-decoration: none;" href="https://www.glradiant.com">glradiant.com</a>${linkedin ? ' &nbsp;&nbsp;|&nbsp;&nbsp; <a style="color: #07567d; text-decoration: none;" href="' + esc(linkedin) + '">LinkedIn</a>' : ''}</td>
+<td style="padding-bottom: 2px;">${linksLine}</td>
 </tr>
 </tbody>
 </table>`;
 
-  if (currentVersion === 'standard' && tagline) {
+  if (version === 'standard' && tagline) {
     html += `<table border="0" cellspacing="0" cellpadding="0">
 <tbody>
 <tr>
@@ -1031,11 +1028,11 @@ function buildSignatureHtml() {
 </td>
 </tr>`;
 
-  if (currentVersion === 'carwash') {
+  if (version === 'carwash') {
     html += `
 <tr>
-<td style="padding: 14px 0;">
-<table border="0" cellspacing="0" cellpadding="0" width="500">
+<td style="padding: 6px 0;">
+<table border="0" cellspacing="0" cellpadding="0" width="350">
 <tbody>
 <tr>
 <td style="border-top: 2px solid #cccccc; font-size: 1px; line-height: 1px;">&nbsp;</td>
@@ -1053,13 +1050,11 @@ function buildSignatureHtml() {
 <td style="padding-bottom: 2px; font-size: 11pt; color: #333333;">We&rsquo;ll be at <strong>The Car Wash Show</strong> &ndash; May 11&ndash;13, 2026</td>
 </tr>
 <tr>
-<td style="padding-bottom: 10px; font-size: 11pt; color: #333333;">Stop by and say hi at Booth #NCP608!</td>
+<td style="padding-bottom: 10px; font-size: 11pt; color: #333333;">Stop by and say hi at Booth <strong>#NCP608</strong></td>
 </tr>
 <tr>
 <td>
-<a href="https://www.thecarwashshow.com/" target="_blank" style="text-decoration: none;">
-<img src="https://www.glradiant.com/wp-content/uploads/2026/02/car_wash_email.png" alt="The Car Wash Show - May 11-13, 2026 - Nashville, TN" width="500" style="display: block; border: 0; outline: none; max-width: 500px;" />
-</a>
+<img src="https://www.glradiant.com/wp-content/uploads/2026/02/car_wash_email.png" alt="The Car Wash Show - May 11-13, 2026 - Nashville, TN" width="350" style="display: block; border: 0; outline: none; max-width: 350px;" />
 </td>
 </tr>`;
   }
@@ -1073,7 +1068,10 @@ function buildSignatureHtml() {
 
 /* ── Render preview ── */
 function render() {
-  document.getElementById('preview').innerHTML = buildSignatureHtml();
+  document.getElementById('previewStandard').innerHTML = buildSignatureHtml('standard');
+  if (showCarwash) {
+    document.getElementById('previewCarwash').innerHTML = buildSignatureHtml('carwash');
+  }
 }
 
 /* ── Validation check ── */
@@ -1088,18 +1086,20 @@ function getValidationErrors() {
   if (!email) errors.push('Email is required');
   else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.push('Email is invalid');
   if (cell.length > 0 && cell.length < 10) errors.push('Cell phone must be 10 digits');
-  if (officeDigits.length < 10) errors.push('Office phone must be 10 digits');
+  if (officeDigits.length > 0 && officeDigits.length < 10) errors.push('Office phone must be 10 digits');
 
   return errors;
 }
 
 /* ── Show validation errors visually ── */
-function showValidationErrors(errors, triggerBtn) {
-  const errorDiv = document.getElementById('copyError');
+function showValidationErrors(errors, version, btnType) {
+  const suffix = version === 'carwash' ? 'Carwash' : 'Standard';
+  const errorDiv = document.getElementById('copyError' + suffix);
   errorDiv.textContent = errors[0];
   errorDiv.classList.add('show');
 
-  const btn = triggerBtn || document.getElementById('btnCopy');
+  const btnId = btnType === 'html' ? 'btnHtml' + suffix : 'btnCopy' + suffix;
+  const btn = document.getElementById(btnId);
   btn.classList.add('error');
 
   // Highlight first invalid field and scroll to it
@@ -1125,25 +1125,25 @@ function showValidationErrors(errors, triggerBtn) {
 }
 
 /* ── Copy signature (rich text via Clipboard API) ── */
-async function copySignature() {
+async function copySignature(version) {
+  const suffix = version === 'carwash' ? 'Carwash' : 'Standard';
   const errors = getValidationErrors();
   if (errors.length) {
-    showValidationErrors(errors, document.getElementById('btnCopy'));
+    showValidationErrors(errors, version, 'copy');
     return;
   }
 
-  document.getElementById('copyError').classList.remove('show');
-  const html = buildSignatureHtml();
-  const btn = document.getElementById('btnCopy');
+  clearErrors();
+  const html = buildSignatureHtml(version);
+  const btn = document.getElementById('btnCopy' + suffix);
+  const previewId = 'preview' + suffix;
 
   try {
-    // Modern Clipboard API — writes an HTML blob so Outlook receives formatted content
     const blob = new Blob([html], { type: 'text/html' });
     const item = new ClipboardItem({ 'text/html': blob });
     await navigator.clipboard.write([item]);
   } catch {
-    // Fallback for older browsers
-    const preview = document.getElementById('preview');
+    const preview = document.getElementById(previewId);
     const range = document.createRange();
     range.selectNodeContents(preview);
     const sel = window.getSelection();
@@ -1156,21 +1156,22 @@ async function copySignature() {
   btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> Copied!`;
   btn.classList.add('copied');
   setTimeout(() => {
-    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg> Copy Signature`;
+    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M4 2a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V2zm2-.5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h6a.5.5 0 0 0 .5-.5V2a.5.5 0 0 0-.5-.5H6zM2 4a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-1h-1v1H2V5h1V4H2z"/></svg> Copy`;
     btn.classList.remove('copied');
   }, 2200);
 }
 
 /* ── Copy HTML directly (no modal) ── */
-async function copyHtmlDirect() {
+async function copyHtmlDirect(version) {
+  const suffix = version === 'carwash' ? 'Carwash' : 'Standard';
   const errors = getValidationErrors();
   if (errors.length) {
-    showValidationErrors(errors, document.getElementById('btnHtml'));
+    showValidationErrors(errors, version, 'html');
     return;
   }
 
-  const html = buildSignatureHtml().trim();
-  const btn = document.getElementById('btnHtml');
+  const html = buildSignatureHtml(version).trim();
+  const btn = document.getElementById('btnHtml' + suffix);
 
   try {
     await navigator.clipboard.writeText(html);
@@ -1186,7 +1187,7 @@ async function copyHtmlDirect() {
   btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0z"/></svg> Copied!`;
   btn.classList.add('copied');
   setTimeout(() => {
-    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg> Copy HTML`;
+    btn.innerHTML = `<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M10.478 1.647a.5.5 0 1 0-.956-.294l-4 13a.5.5 0 0 0 .956.294l4-13zM4.854 4.146a.5.5 0 0 1 0 .708L1.707 8l3.147 3.146a.5.5 0 0 1-.708.708l-3.5-3.5a.5.5 0 0 1 0-.708l3.5-3.5a.5.5 0 0 1 .708 0zm6.292 0a.5.5 0 0 0 0 .708L14.293 8l-3.147 3.146a.5.5 0 0 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 0 0-.708 0z"/></svg> HTML`;
     btn.classList.remove('copied');
   }, 2200);
 }
@@ -1202,34 +1203,29 @@ function resetForm() {
   document.getElementById('cell').value = '';
   document.getElementById('email').value = '';
   document.getElementById('linkedin').value = 'https://www.linkedin.com/company/great-lakes-radiant';
-  document.getElementById('linkedinToggle').checked = true;
-  document.getElementById('linkedin').disabled = false;
-  document.getElementById('linkedin').style.opacity = '1';
   document.getElementById('tagline').value = 'We help design LED Lighting layouts too!';
   document.getElementById('taglineToggle').checked = true;
   document.getElementById('tagline').disabled = false;
   document.getElementById('tagline').style.opacity = '1';
   document.getElementById('tagline').closest('.field').style.opacity = '1';
   document.getElementById('tagline').closest('.field').style.pointerEvents = '';
-  document.getElementById('office').value = 'mn';
-  document.getElementById('officeTrigger').textContent = 'Minnesota';
-  document.getElementById('officePhone').value = '(952) 944-0023';
-  document.getElementById('address').value = '7665 Washington Ave S, Edina, MN 55439';
+  document.getElementById('office').value = '';
+  document.getElementById('officeTrigger').textContent = '-- select --';
+  document.getElementById('officeTrigger').style.color = '#999';
+  document.getElementById('officePhone').value = '';
+  document.getElementById('address').value = '';
 
   // Clear validation states
   document.querySelectorAll('.field input').forEach(i => {
     i.classList.remove('invalid');
     i.classList.remove('highlight-error');
   });
-  document.getElementById('copyError').classList.remove('show');
+  clearErrors();
   closeAllDropdowns();
   ['cellHint', 'officePhoneHint', 'emailHint'].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.textContent = ''; el.classList.remove('error'); }
   });
-
-  // Reset to standard
-  setVersion('standard', document.querySelector('.toggle-options button'));
 
   render();
 
