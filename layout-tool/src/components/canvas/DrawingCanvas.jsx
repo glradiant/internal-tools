@@ -721,7 +721,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             refY="4"
             orient="auto"
           >
-            <path d="M8,0 L0,4 L8,8" fill="none" stroke="#C74A1A" strokeWidth="1" />
+            <path d="M8,0 L0,4 L8,8" fill="none" stroke="#f37021" strokeWidth="1" />
           </marker>
           <marker
             id="dimArrowEnd"
@@ -731,7 +731,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             refY="4"
             orient="auto"
           >
-            <path d="M0,0 L8,4 L0,8" fill="none" stroke="#C74A1A" strokeWidth="1" />
+            <path d="M0,0 L8,4 L0,8" fill="none" stroke="#f37021" strokeWidth="1" />
           </marker>
         </defs>
 
@@ -799,7 +799,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                 <polygon
                   points={pointStr}
                   fill="none"
-                  stroke={isSelected ? '#60A5FA' : isOffsetTarget ? '#FF6B35' : COLORS.wallStroke}
+                  stroke={isSelected ? '#60A5FA' : isOffsetTarget ? '#f37021' : COLORS.wallStroke}
                   strokeWidth={isSelected ? 4 : isOffsetTarget ? 4 : 3.5}
                   strokeLinejoin="round"
                   style={{ cursor: isOffsetTarget ? 'crosshair' : 'pointer' }}
@@ -985,13 +985,13 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                     <line
                       x1={pt.x - 4} y1={pt.y}
                       x2={pt.x + 4} y2={pt.y}
-                      stroke={isHovered ? '#FF6B35' : '#C74A1A'}
+                      stroke={isHovered ? '#f37021' : '#f37021'}
                       strokeWidth={isHovered ? 2 : 1}
                     />
                     <line
                       x1={pt.x} y1={pt.y - 4}
                       x2={pt.x} y2={pt.y + 4}
-                      stroke={isHovered ? '#FF6B35' : '#C74A1A'}
+                      stroke={isHovered ? '#f37021' : '#f37021'}
                       strokeWidth={isHovered ? 2 : 1}
                     />
                   </g>
@@ -1007,13 +1007,13 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                     <line
                       x1={pt.x - 4} y1={pt.y}
                       x2={pt.x + 4} y2={pt.y}
-                      stroke={isHovered ? '#FF6B35' : '#1B3557'}
+                      stroke={isHovered ? '#f37021' : '#1B3557'}
                       strokeWidth={isHovered ? 2 : 1}
                     />
                     <line
                       x1={pt.x} y1={pt.y - 4}
                       x2={pt.x} y2={pt.y + 4}
-                      stroke={isHovered ? '#FF6B35' : '#1B3557'}
+                      stroke={isHovered ? '#f37021' : '#1B3557'}
                       strokeWidth={isHovered ? 2 : 1}
                     />
                   </g>
@@ -1031,11 +1031,11 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               y1={dimensionStart.y}
               x2={hoverSnapPoint?.x || hoverPos.x}
               y2={hoverSnapPoint?.y || hoverPos.y}
-              stroke="#C74A1A"
+              stroke="#f37021"
               strokeWidth={1.5}
               strokeDasharray="6,3"
             />
-            <circle cx={dimensionStart.x} cy={dimensionStart.y} r={5} fill="#FF6B35" />
+            <circle cx={dimensionStart.x} cy={dimensionStart.y} r={5} fill="#f37021" />
           </g>
         )}
 

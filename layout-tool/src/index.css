@@ -3,13 +3,14 @@
 @theme {
   --color-navy: #0F1E30;
   --color-navy-mid: #1B3557;
-  --color-orange: #FF6B35;
-  --color-heater: #C74A1A;
-  --color-heater-preview: #FF8C5A;
+  --color-orange: #f37021;
+  --color-heater: #f37021;
+  --color-heater-preview: #ff8c5a;
   --font-mono: 'DM Mono', 'Courier New', monospace;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
 }
 
 body {
   margin: 0;
-  font-family: 'DM Mono', 'Courier New', monospace;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }

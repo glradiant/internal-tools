@@ -20,12 +20,12 @@ export default function ToolPanel() {
               width: '100%',
               marginBottom: 4,
               padding: '8px 10px',
-              background: isActive ? 'rgba(255,107,53,0.15)' : 'rgba(255,255,255,0.03)',
+              background: isActive ? 'rgba(243,112,33,0.15)' : 'rgba(255,255,255,0.03)',
               border: isActive
-                ? '1px solid rgba(255,107,53,0.6)'
+                ? '1px solid rgba(243,112,33,0.6)'
                 : '1px solid rgba(255,255,255,0.07)',
               borderRadius: 4,
-              color: isActive ? '#FF6B35' : 'rgba(255,255,255,0.55)',
+              color: isActive ? '#f37021' : 'rgba(255,255,255,0.55)',
               cursor: 'pointer',
               textAlign: 'left',
               fontFamily: 'inherit',

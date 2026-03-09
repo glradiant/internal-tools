@@ -70,10 +70,10 @@ export default function HeaterModelPicker() {
                 style={{
                   width: '100%',
                   padding: '8px 10px',
-                  background: hasSelectedModel ? 'rgba(255,107,53,0.08)' : 'rgba(255,255,255,0.03)',
+                  background: hasSelectedModel ? 'rgba(243,112,33,0.08)' : 'rgba(255,255,255,0.03)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 4,
-                  color: hasSelectedModel ? '#FF6B35' : 'rgba(255,255,255,0.7)',
+                  color: hasSelectedModel ? '#f37021' : 'rgba(255,255,255,0.7)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   fontFamily: 'inherit',
@@ -128,12 +128,12 @@ export default function HeaterModelPicker() {
                           width: '100%',
                           marginBottom: 2,
                           padding: '5px 8px',
-                          background: isSelected ? 'rgba(255,107,53,0.15)' : 'transparent',
+                          background: isSelected ? 'rgba(243,112,33,0.15)' : 'transparent',
                           border: isSelected
-                            ? '1px solid rgba(255,107,53,0.5)'
+                            ? '1px solid rgba(243,112,33,0.5)'
                             : '1px solid rgba(255,255,255,0.05)',
                           borderRadius: 3,
-                          color: isSelected ? '#FF6B35' : 'rgba(255,255,255,0.45)',
+                          color: isSelected ? '#f37021' : 'rgba(255,255,255,0.45)',
                           cursor: 'pointer',
                           textAlign: 'left',
                           fontFamily: 'inherit',
@@ -177,7 +177,7 @@ export default function HeaterModelPicker() {
             style={{
               flex: 1,
               padding: '5px 0',
-              background: heaterAngle === a ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+              background: heaterAngle === a ? '#f37021' : 'rgba(255,255,255,0.05)',
               border: 'none',
               borderRadius: 3,
               color: heaterAngle === a ? 'white' : 'rgba(255,255,255,0.4)',
@@ -220,7 +220,7 @@ export default function HeaterModelPicker() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: heaterFlipH ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: heaterFlipH ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: heaterFlipH ? 'white' : 'rgba(255,255,255,0.4)',
@@ -236,7 +236,7 @@ export default function HeaterModelPicker() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: heaterFlipV ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: heaterFlipV ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: heaterFlipV ? 'white' : 'rgba(255,255,255,0.4)',

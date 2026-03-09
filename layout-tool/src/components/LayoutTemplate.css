@@ -45,7 +45,7 @@
   align-items: center;
   justify-content: center;
   padding: 8px 16px 6px;
-  border-right: 3px solid #FF6B35;
+  border-right: 3px solid #f37021;
   gap: 5px;
 }
 
@@ -235,7 +235,7 @@
   display: inline-block;
   width: 14px;
   height: 3px;
-  background: #C74A1A;
+  background: #f37021;
   border-radius: 2px;
   margin-right: 7px;
   flex-shrink: 0;

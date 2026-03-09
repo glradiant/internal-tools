@@ -24,9 +24,9 @@ export const HEATER_MODELS_LEGACY = [
 export const COLORS = {
   navy: '#0F1E30',
   navyMid: '#1B3557',
-  orange: '#FF6B35',
-  heaterNormal: '#C74A1A',
-  heaterPreview: '#FF8C5A',
+  orange: '#f37021',
+  heaterNormal: '#f37021',
+  heaterPreview: '#ff8c5a',
   wallStroke: '#1B3557',
   wallFill: 'rgba(27,53,87,0.04)',
   wallHatch: 'rgba(27,53,87,0.15)',

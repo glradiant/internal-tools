@@ -93,11 +93,11 @@ export default function LoginPage() {
 
   const inputStyle = {
     width: '100%',
-    padding: '10px 12px',
-    background: 'rgba(255,255,255,0.1)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: 4,
-    color: 'white',
+    padding: '12px 14px',
+    background: '#f5f7fa',
+    border: '1px solid #e0e4ea',
+    borderRadius: 6,
+    color: '#1B3557',
     fontSize: 14,
     fontFamily: 'inherit',
     outline: 'none',
@@ -106,10 +106,11 @@ export default function LoginPage() {
 
   const labelStyle = {
     display: 'block',
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+    color: '#8AAABF',
     marginBottom: 6,
     letterSpacing: 1,
+    fontWeight: 500,
   };
 
   return (
@@ -120,39 +121,29 @@ export default function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         background: '#0F1E30',
-        fontFamily: "'DM Mono', 'Courier New', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
     >
       <div
         style={{
-          background: '#1B3557',
-          borderRadius: 8,
+          background: 'white',
+          borderRadius: 12,
           padding: 40,
-          width: 340,
-          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+          width: 360,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}
       >
         {/* Logo / Title */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 48, marginBottom: 12, display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
           <div
             style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: 'white',
-              letterSpacing: 2,
+              fontSize: 14,
+              color: '#1B3557',
+              fontWeight: 500,
             }}
           >
-            GLR
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: 1,
-              marginTop: 4,
-            }}
-          >
-            LAYOUT TOOL
+            Heater Layout Tool
           </div>
         </div>
 
@@ -188,7 +179,7 @@ export default function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'rgba(255,255,255,0.5)',
+                  color: '#8AAABF',
                   fontSize: 11,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -207,7 +198,7 @@ export default function LoginPage() {
                   background: 'rgba(255,107,53,0.2)',
                   border: '1px solid rgba(255,107,53,0.4)',
                   borderRadius: 4,
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 12,
                 }}
               >
@@ -221,7 +212,7 @@ export default function LoginPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',
@@ -237,7 +228,7 @@ export default function LoginPage() {
             </button>
 
             <div style={{ marginTop: 24, textAlign: 'center' }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ fontSize: 11, color: '#8AAABF' }}>
                 Don't have an account?{' '}
               </span>
               <button
@@ -246,7 +237,7 @@ export default function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 11,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -272,7 +263,7 @@ export default function LoginPage() {
                 placeholder="you@glradiant.com"
                 style={inputStyle}
               />
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+              <div style={{ fontSize: 9, color: '#a0b0c0', marginTop: 4 }}>
                 Only @glradiant.com addresses allowed
               </div>
             </div>
@@ -308,7 +299,7 @@ export default function LoginPage() {
                   background: 'rgba(255,107,53,0.2)',
                   border: '1px solid rgba(255,107,53,0.4)',
                   borderRadius: 4,
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 12,
                 }}
               >
@@ -338,7 +329,7 @@ export default function LoginPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',
@@ -354,7 +345,7 @@ export default function LoginPage() {
             </button>
 
             <div style={{ marginTop: 24, textAlign: 'center' }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+              <span style={{ fontSize: 11, color: '#8AAABF' }}>
                 Already have an account?{' '}
               </span>
               <button
@@ -363,7 +354,7 @@ export default function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 11,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -379,10 +370,10 @@ export default function LoginPage() {
         {/* Forgot Password Form */}
         {mode === 'forgot' && (
           <form onSubmit={handleForgotPassword}>
-            <div style={{ marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>
+            <div style={{ marginBottom: 8, fontSize: 13, color: '#5A7A9A' }}>
               Reset Password
             </div>
-            <div style={{ marginBottom: 24, fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+            <div style={{ marginBottom: 24, fontSize: 11, color: '#8AAABF' }}>
               Enter your email and we'll send you a reset link.
             </div>
 
@@ -405,7 +396,7 @@ export default function LoginPage() {
                   background: 'rgba(255,107,53,0.2)',
                   border: '1px solid rgba(255,107,53,0.4)',
                   borderRadius: 4,
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 12,
                 }}
               >
@@ -435,7 +426,7 @@ export default function LoginPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',
@@ -457,7 +448,7 @@ export default function LoginPage() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 11,
                   cursor: 'pointer',
                   fontFamily: 'inherit',

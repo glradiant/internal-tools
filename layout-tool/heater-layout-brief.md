@@ -173,7 +173,7 @@ export const HEATER_MODELS = [
 - Mounting hanger dashes above tube
 - End cap circle on right
 - Model label below
-- Color: `#C74A1A` (normal), `#FF8C5A` (preview/ghost)
+- Color: `#f37021` (normal), `#ff8c5a` (preview/ghost)
 
 ---
 
@@ -280,11 +280,11 @@ Use `jsPDF` + `svg2pdf.js` to export the SVG canvas directly.
 
 Follow the POC's aesthetic:
 - **Canvas**: white background, light blue-grey grid
-- **Sidebar**: dark navy `#0F1E30`, orange accent `#FF6B35`
+- **Sidebar**: dark navy `#0F1E30`, orange accent `#f37021`
 - **Toolbar strip**: `#1B3557`
 - **Walls**: `#1B3557`
-- **Heaters**: `#C74A1A`
-- **Font**: `DM Mono` (import from Google Fonts) for all UI text — monospaced fits the technical/drafting aesthetic
+- **Heaters**: `#f37021`
+- **Font**: `DM Sans` (import from Google Fonts) for all UI text
 - Active tool: orange border + tinted background in sidebar button
 - Overlays (wall input, door input): small white floating panels with subtle shadow, `DM Mono`, positioned near cursor
 

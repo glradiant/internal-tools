@@ -86,7 +86,7 @@ export default function LayoutCard({ layout, onClick, onDelete }) {
               y="26"
               width="10"
               height="8"
-              fill="#C74A1A"
+              fill="#f37021"
               opacity="0.5"
             />
           </svg>
@@ -151,7 +151,7 @@ export default function LayoutCard({ layout, onClick, onDelete }) {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 14,
-            color: '#C74A1A',
+            color: '#f37021',
           }}
           title="Delete layout"
         >

@@ -25,16 +25,14 @@ export default function Sidebar({ onExportPDF }) {
         flexDirection: 'column',
         padding: 0,
         flexShrink: 0,
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
     >
       {/* Logo / Header */}
       <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div style={{ fontSize: 9, letterSpacing: 3, color: '#FF6B35', marginBottom: 4 }}>
-          GREAT LAKES RADIANT
-        </div>
-        <div style={{ fontSize: 15, color: 'white', fontWeight: 700, letterSpacing: 1 }}>
-          LAYOUT TOOL
+        <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 28, marginBottom: 8 }} />
+        <div style={{ fontSize: 13, color: 'white', fontWeight: 600 }}>
+          Heater Layout Tool
         </div>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
           v1.0

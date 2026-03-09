@@ -74,7 +74,7 @@ export default function DoorInputOverlay({ liveWidthFt, screenPos, onConfirm, on
   const inputStyle = (highlighted) => ({
     width: 40,
     padding: '2px 4px',
-    border: `1px solid ${highlighted ? '#FF6B35' : '#ddd'}`,
+    border: `1px solid ${highlighted ? '#f37021' : '#ddd'}`,
     borderRadius: 3,
     fontFamily: 'inherit',
     fontSize: 11,

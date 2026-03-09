@@ -61,7 +61,7 @@ export default function HomePage() {
       style={{
         minHeight: '100vh',
         background: '#F7F9FC',
-        fontFamily: "'DM Mono', 'Courier New', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
     >
       {/* Header */}
@@ -74,25 +74,11 @@ export default function HomePage() {
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div
-            style={{
-              fontSize: 20,
-              fontWeight: 700,
-              color: 'white',
-              letterSpacing: 2,
-            }}
-          >
-            GLR
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: 1,
-            }}
-          >
-            LAYOUT TOOL
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 32 }} />
+          <div style={{ width: 3, height: 24, background: '#f37021', borderRadius: 2 }} />
+          <div style={{ fontSize: 14, color: 'white', fontWeight: 600 }}>
+            Heater Layout Tool
           </div>
         </div>
         <button
@@ -138,7 +124,7 @@ export default function HomePage() {
             onClick={() => setShowNewModal(true)}
             style={{
               padding: '10px 20px',
-              background: '#C74A1A',
+              background: '#f37021',
               border: 'none',
               borderRadius: 4,
               color: 'white',
@@ -271,7 +257,7 @@ export default function HomePage() {
                 onClick={() => handleDelete(deleteConfirm)}
                 style={{
                   padding: '8px 16px',
-                  background: '#C74A1A',
+                  background: '#f37021',
                   border: 'none',
                   borderRadius: 4,
                   color: 'white',

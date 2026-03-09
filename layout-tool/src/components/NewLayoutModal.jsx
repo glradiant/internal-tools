@@ -183,7 +183,7 @@ export default function NewLayoutModal({ onClose, onCreated }) {
                 background: 'rgba(199,74,26,0.1)',
                 border: '1px solid rgba(199,74,26,0.3)',
                 borderRadius: 4,
-                color: '#C74A1A',
+                color: '#f37021',
                 fontSize: 12,
               }}
             >
@@ -215,7 +215,7 @@ export default function NewLayoutModal({ onClose, onCreated }) {
               disabled={loading}
               style={{
                 padding: '10px 20px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',

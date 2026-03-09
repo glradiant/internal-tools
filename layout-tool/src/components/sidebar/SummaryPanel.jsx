@@ -112,7 +112,7 @@ export default function SummaryPanel({ onExportPDF }) {
           }}
         >
           <span style={{ color: 'rgba(255,255,255,0.35)' }}>{label}</span>
-          <span style={{ color: val > 0 ? '#FF6B35' : 'rgba(255,255,255,0.2)' }}>{val}</span>
+          <span style={{ color: val > 0 ? '#f37021' : 'rgba(255,255,255,0.2)' }}>{val}</span>
         </div>
       ))}
 
@@ -125,7 +125,7 @@ export default function SummaryPanel({ onExportPDF }) {
           style={{
             flex: 2,
             padding: '6px',
-            background: '#FF6B35',
+            background: '#f37021',
             border: 'none',
             color: 'white',
             cursor: 'pointer',

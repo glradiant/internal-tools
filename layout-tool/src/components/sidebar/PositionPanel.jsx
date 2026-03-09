@@ -136,8 +136,8 @@ export default function PositionPanel() {
           style={{
             flex: 1,
             padding: '6px 8px',
-            background: isInOffsetMode ? '#FF6B35' : 'rgba(255,255,255,0.05)',
-            border: isInOffsetMode ? '1px solid #FF6B35' : '1px solid rgba(255,255,255,0.1)',
+            background: isInOffsetMode ? '#f37021' : 'rgba(255,255,255,0.05)',
+            border: isInOffsetMode ? '1px solid #f37021' : '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             color: isInOffsetMode ? 'white' : 'rgba(255,255,255,0.7)',
             cursor: 'pointer',
@@ -152,9 +152,9 @@ export default function PositionPanel() {
       {isInOffsetMode && (
         <div style={{
           fontSize: 9,
-          color: '#FF6B35',
+          color: '#f37021',
           padding: '8px',
-          background: 'rgba(255,107,53,0.1)',
+          background: 'rgba(243,112,33,0.1)',
           borderRadius: 4,
           marginBottom: 8,
         }}>
@@ -174,7 +174,7 @@ export default function PositionPanel() {
             style={{
               flex: 1,
               padding: '5px 0',
-              background: selectedHeater.angleDeg === a ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+              background: selectedHeater.angleDeg === a ? '#f37021' : 'rgba(255,255,255,0.05)',
               border: 'none',
               borderRadius: 3,
               color: selectedHeater.angleDeg === a ? 'white' : 'rgba(255,255,255,0.4)',
@@ -206,7 +206,7 @@ export default function PositionPanel() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: selectedHeater.flipH ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: selectedHeater.flipH ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: selectedHeater.flipH ? 'white' : 'rgba(255,255,255,0.4)',
@@ -222,7 +222,7 @@ export default function PositionPanel() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: selectedHeater.flipV ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: selectedHeater.flipV ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: selectedHeater.flipV ? 'white' : 'rgba(255,255,255,0.4)',

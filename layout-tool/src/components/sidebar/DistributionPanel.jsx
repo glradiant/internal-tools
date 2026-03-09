@@ -162,7 +162,7 @@ export default function DistributionPanel() {
       )}
 
       {selectedWalls.length > 0 && (
-        <div style={{ fontSize: 8, color: '#FF6B35', marginBottom: 8, opacity: 0.8 }}>
+        <div style={{ fontSize: 8, color: '#f37021', marginBottom: 8, opacity: 0.8 }}>
           Using selected wall(s) as boundaries
         </div>
       )}

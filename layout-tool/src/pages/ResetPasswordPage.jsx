@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
         alignItems: 'center',
         justifyContent: 'center',
         background: '#0F1E30',
-        fontFamily: "'DM Mono', 'Courier New', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
     >
       <div
@@ -101,25 +101,15 @@ export default function ResetPasswordPage() {
       >
         {/* Logo / Title */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 36, marginBottom: 12 }} />
           <div
             style={{
-              fontSize: 24,
-              fontWeight: 700,
-              color: 'white',
-              letterSpacing: 2,
+              fontSize: 13,
+              color: 'rgba(255,255,255,0.7)',
+              fontWeight: 500,
             }}
           >
-            GLR
-          </div>
-          <div
-            style={{
-              fontSize: 11,
-              color: 'rgba(255,255,255,0.5)',
-              letterSpacing: 1,
-              marginTop: 4,
-            }}
-          >
-            RESET PASSWORD
+            Reset Password
           </div>
         </div>
 
@@ -138,7 +128,7 @@ export default function ResetPasswordPage() {
                 background: 'rgba(255,107,53,0.2)',
                 border: '1px solid rgba(255,107,53,0.4)',
                 borderRadius: 4,
-                color: '#FF6B35',
+                color: '#f37021',
                 fontSize: 12,
               }}
             >
@@ -149,7 +139,7 @@ export default function ResetPasswordPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',
@@ -199,7 +189,7 @@ export default function ResetPasswordPage() {
                   background: 'rgba(255,107,53,0.2)',
                   border: '1px solid rgba(255,107,53,0.4)',
                   borderRadius: 4,
-                  color: '#FF6B35',
+                  color: '#f37021',
                   fontSize: 12,
                 }}
               >
@@ -229,7 +219,7 @@ export default function ResetPasswordPage() {
               style={{
                 width: '100%',
                 padding: '12px 16px',
-                background: '#C74A1A',
+                background: '#f37021',
                 border: 'none',
                 borderRadius: 4,
                 color: 'white',

@@ -28,7 +28,7 @@ export default function ManDoorSettings() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: doorHingeSide === 'left' ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: doorHingeSide === 'left' ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: doorHingeSide === 'left' ? 'white' : 'rgba(255,255,255,0.4)',
@@ -44,7 +44,7 @@ export default function ManDoorSettings() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: doorHingeSide === 'right' ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: doorHingeSide === 'right' ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: doorHingeSide === 'right' ? 'white' : 'rgba(255,255,255,0.4)',
@@ -67,7 +67,7 @@ export default function ManDoorSettings() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: doorSwingIn ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: doorSwingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: doorSwingIn ? 'white' : 'rgba(255,255,255,0.4)',
@@ -83,7 +83,7 @@ export default function ManDoorSettings() {
           style={{
             flex: 1,
             padding: '6px 0',
-            background: !doorSwingIn ? '#FF6B35' : 'rgba(255,255,255,0.05)',
+            background: !doorSwingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
             border: 'none',
             borderRadius: 3,
             color: !doorSwingIn ? 'white' : 'rgba(255,255,255,0.4)',

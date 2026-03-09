@@ -15,7 +15,7 @@ function invertColorForWhiteBg(color) {
 
   // Yellow -> heater orange (common in CAD drawings)
   if (colorLower === '#ffff00' || colorLower === 'yellow') {
-    return '#C74A1A'; // Heater orange
+    return '#f37021'; // Heater orange
   }
 
   // Light gray -> darker gray
@@ -161,7 +161,7 @@ export default function HeaterGlyph({ model, lengthPx, selected, preview, flipH 
       // Replace white/light colors in CSS
       css = css.replace(/stroke:\s*#fff(?:fff)?(?![0-9a-f])/gi, 'stroke: #1B3557');
       css = css.replace(/stroke:\s*white/gi, 'stroke: #1B3557');
-      css = css.replace(/stroke:\s*#ffff00/gi, 'stroke: #C74A1A'); // Yellow to heater orange
+      css = css.replace(/stroke:\s*#ffff00/gi, 'stroke: #f37021'); // Yellow to heater orange
       css = css.replace(/fill:\s*#fff(?:fff)?(?![0-9a-f])/gi, 'fill: #1B3557');
       css = css.replace(/fill:\s*white/gi, 'fill: #1B3557');
       styleEl.textContent = css;
@@ -227,7 +227,7 @@ export default function HeaterGlyph({ model, lengthPx, selected, preview, flipH 
             y={offsetY}
             width={displayWidth}
             height={displayHeight}
-            fill="rgba(255,107,53,0.08)"
+            fill="rgba(243,112,33,0.08)"
             stroke={stroke}
             strokeWidth={1}
             strokeDasharray="4,2"
@@ -240,8 +240,8 @@ export default function HeaterGlyph({ model, lengthPx, selected, preview, flipH 
 
   // Fallback: procedural drawing if no SVG content
   const hl = lengthPx / 2;
-  const fillBody = preview ? 'rgba(255,107,53,0.15)' : 'rgba(199,74,26,0.12)';
-  const fillBurner = preview ? 'rgba(255,107,53,0.2)' : 'rgba(199,74,26,0.2)';
+  const fillBody = preview ? 'rgba(243,112,33,0.15)' : 'rgba(243,112,33,0.12)';
+  const fillBurner = preview ? 'rgba(243,112,33,0.2)' : 'rgba(243,112,33,0.2)';
 
   return (
     <g transform={flipTransform}>

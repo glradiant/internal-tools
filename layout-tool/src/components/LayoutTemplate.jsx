@@ -106,7 +106,7 @@ export default function LayoutTemplate({ store, svgMarkup }) {
               fontFamily="Barlow Condensed, sans-serif"
               fontSize="30"
               fontWeight="700"
-              fill="#C74A1A"
+              fill="#f37021"
             >{totalKbtu}</text>
             <text
               x="42" y="72"

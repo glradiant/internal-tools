@@ -54,7 +54,7 @@ function HeaterGlyph({ len, selected, preview }) {
       <path
         d={`M ${-hl} -8 Q 0 -18 ${hl} -8`}
         fill="none"
-        stroke={preview ? "#FF8C5A" : "#C74A1A"}
+        stroke={preview ? "#FF8C5A" : "#f37021"}
         strokeWidth={1.5}
         strokeLinecap="round"
       />
@@ -66,7 +66,7 @@ function HeaterGlyph({ len, selected, preview }) {
         height={8}
         rx={4}
         fill={preview ? "rgba(255,107,53,0.15)" : "rgba(199,74,26,0.12)"}
-        stroke={preview ? "#FF8C5A" : "#C74A1A"}
+        stroke={preview ? "#FF8C5A" : "#f37021"}
         strokeWidth={1.5}
       />
       {/* Burner head */}
@@ -77,7 +77,7 @@ function HeaterGlyph({ len, selected, preview }) {
         height={12}
         rx={2}
         fill={preview ? "rgba(255,107,53,0.2)" : "rgba(199,74,26,0.2)"}
-        stroke={preview ? "#FF8C5A" : "#C74A1A"}
+        stroke={preview ? "#FF8C5A" : "#f37021"}
         strokeWidth={1.5}
       />
       {/* Flame icon hint */}
@@ -85,7 +85,7 @@ function HeaterGlyph({ len, selected, preview }) {
         cx={-hl - 2}
         cy={0}
         r={2.5}
-        fill={preview ? "#FF8C5A" : "#C74A1A"}
+        fill={preview ? "#FF8C5A" : "#f37021"}
         opacity={0.7}
       />
       {/* End cap */}
@@ -94,7 +94,7 @@ function HeaterGlyph({ len, selected, preview }) {
         cy={0}
         r={3.5}
         fill="none"
-        stroke={preview ? "#FF8C5A" : "#C74A1A"}
+        stroke={preview ? "#FF8C5A" : "#f37021"}
         strokeWidth={1.5}
       />
       {/* Mounting hangers */}
@@ -105,7 +105,7 @@ function HeaterGlyph({ len, selected, preview }) {
           y1={-4}
           x2={x}
           y2={-13}
-          stroke={preview ? "#FF8C5A" : "#C74A1A"}
+          stroke={preview ? "#FF8C5A" : "#f37021"}
           strokeWidth={1}
           opacity={0.5}
           strokeDasharray="2,2"
@@ -317,7 +317,7 @@ export default function LayoutTool() {
             borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}
         >
-          <div style={{ fontSize: 9, letterSpacing: 3, color: "#FF6B35", marginBottom: 4 }}>
+          <div style={{ fontSize: 9, letterSpacing: 3, color: "#f37021", marginBottom: 4 }}>
             GREAT LAKES RADIANT
           </div>
           <div style={{ fontSize: 15, color: "white", fontWeight: 700, letterSpacing: 1 }}>
@@ -368,7 +368,7 @@ export default function LayoutTool() {
                   ? "1px solid rgba(255,107,53,0.6)"
                   : "1px solid rgba(255,255,255,0.07)",
                 borderRadius: 4,
-                color: mode === t.id ? "#FF6B35" : "rgba(255,255,255,0.55)",
+                color: mode === t.id ? "#f37021" : "rgba(255,255,255,0.55)",
                 cursor: "pointer",
                 textAlign: "left",
                 fontFamily: "inherit",
@@ -413,7 +413,7 @@ export default function LayoutTool() {
                     ? "1px solid rgba(255,107,53,0.5)"
                     : "1px solid rgba(255,255,255,0.07)",
                   borderRadius: 3,
-                  color: selectedModel.id === m.id ? "#FF6B35" : "rgba(255,255,255,0.45)",
+                  color: selectedModel.id === m.id ? "#f37021" : "rgba(255,255,255,0.45)",
                   cursor: "pointer",
                   textAlign: "left",
                   fontFamily: "inherit",
@@ -438,7 +438,7 @@ export default function LayoutTool() {
                   style={{
                     flex: 1,
                     padding: "5px 0",
-                    background: heaterAngle === a ? "#FF6B35" : "rgba(255,255,255,0.05)",
+                    background: heaterAngle === a ? "#f37021" : "rgba(255,255,255,0.05)",
                     border: "none",
                     borderRadius: 3,
                     color: heaterAngle === a ? "white" : "rgba(255,255,255,0.4)",
@@ -465,7 +465,7 @@ export default function LayoutTool() {
               lineHeight: 1.6,
             }}
           >
-            <div style={{ color: "#FF6B35", marginBottom: 4 }}>
+            <div style={{ color: "#f37021", marginBottom: 4 }}>
               {currentPath.length} point{currentPath.length !== 1 ? "s" : ""} placed
             </div>
             {currentPath.length >= 3 && "Click the first point (orange) to close shape."}
@@ -511,7 +511,7 @@ export default function LayoutTool() {
               }}
             >
               <span style={{ color: "rgba(255,255,255,0.35)" }}>{label}</span>
-              <span style={{ color: val > 0 ? "#FF6B35" : "rgba(255,255,255,0.2)" }}>{val}</span>
+              <span style={{ color: val > 0 ? "#f37021" : "rgba(255,255,255,0.2)" }}>{val}</span>
             </div>
           ))}
 
@@ -542,7 +542,7 @@ export default function LayoutTool() {
               style={{
                 flex: 2,
                 padding: "6px",
-                background: "#FF6B35",
+                background: "#f37021",
                 border: "none",
                 color: "white",
                 cursor: "pointer",
@@ -593,7 +593,7 @@ export default function LayoutTool() {
               type="checkbox"
               checked={showDimensions}
               onChange={(e) => setShowDimensions(e.target.checked)}
-              style={{ accentColor: "#FF6B35" }}
+              style={{ accentColor: "#f37021" }}
             />
             DIMENSIONS
           </label>
@@ -739,7 +739,7 @@ export default function LayoutTool() {
                   y={h.model.len / 2 + 12}
                   textAnchor="middle"
                   fontSize={7}
-                  fill="#C74A1A"
+                  fill="#f37021"
                   fontFamily="'DM Mono', monospace"
                   transform={`rotate(0)`}
                 >
@@ -785,7 +785,7 @@ export default function LayoutTool() {
                       cy={currentPath[0].y}
                       r={10}
                       fill="rgba(255,107,53,0.2)"
-                      stroke="#FF6B35"
+                      stroke="#f37021"
                       strokeWidth={1.5}
                       strokeDasharray="3,2"
                     />
@@ -795,7 +795,7 @@ export default function LayoutTool() {
                   <g key={i}>
                     <circle cx={p.x} cy={p.y} r={i === 0 ? 7 : 4} fill="white" stroke="#1B3557" strokeWidth={2} />
                     {i === 0 && (
-                      <circle cx={p.x} cy={p.y} r={4} fill="#FF6B35" />
+                      <circle cx={p.x} cy={p.y} r={4} fill="#f37021" />
                     )}
                   </g>
                 ))}
@@ -805,7 +805,7 @@ export default function LayoutTool() {
             {/* Hover snap indicator */}
             {hoverPos && mode !== "select" && (
               <g>
-                <circle cx={hoverPos.x} cy={hoverPos.y} r={3} fill="#FF6B35" opacity={0.4} />
+                <circle cx={hoverPos.x} cy={hoverPos.y} r={3} fill="#f37021" opacity={0.4} />
               </g>
             )}
 
@@ -830,7 +830,7 @@ export default function LayoutTool() {
                       y1={a.y}
                       x2={b.x}
                       y2={b.y}
-                      stroke="#FF6B35"
+                      stroke="#f37021"
                       strokeWidth={4}
                       opacity={0.5}
                     />

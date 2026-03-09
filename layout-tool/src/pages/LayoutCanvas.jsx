@@ -92,7 +92,7 @@ export default function LayoutCanvas() {
           height: '100vh',
           alignItems: 'center',
           justifyContent: 'center',
-          fontFamily: "'DM Mono', 'Courier New', monospace",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
           background: '#0F1E30',
           color: 'white',
         }}
@@ -112,12 +112,12 @@ export default function LayoutCanvas() {
           justifyContent: 'center',
           flexDirection: 'column',
           gap: 16,
-          fontFamily: "'DM Mono', 'Courier New', monospace",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
           background: '#0F1E30',
           color: 'white',
         }}
       >
-        <div style={{ color: '#FF6B35' }}>{error}</div>
+        <div style={{ color: '#f37021' }}>{error}</div>
         <button
           onClick={() => navigate('/')}
           style={{
@@ -140,7 +140,7 @@ export default function LayoutCanvas() {
       style={{
         display: 'flex',
         height: '100vh',
-        fontFamily: "'DM Mono', 'Courier New', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
         background: '#0F1E30',
         overflow: 'hidden',
       }}

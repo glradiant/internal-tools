@@ -38,7 +38,7 @@ export default function Toolbar({ onBack, saveStatus }) {
         gap: 16,
         borderBottom: '1px solid rgba(0,0,0,0.2)',
         flexShrink: 0,
-        fontFamily: "'DM Mono', monospace",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
       }}
     >
       {onBack && (
@@ -70,7 +70,7 @@ export default function Toolbar({ onBack, saveStatus }) {
         <span
           style={{
             fontSize: 9,
-            color: saveStatus === 'error' ? '#FF6B35' : 'rgba(255,255,255,0.3)',
+            color: saveStatus === 'error' ? '#f37021' : 'rgba(255,255,255,0.3)',
             fontStyle: 'italic',
           }}
         >
@@ -139,7 +139,7 @@ export default function Toolbar({ onBack, saveStatus }) {
           type="checkbox"
           checked={showGrid}
           onChange={toggleGrid}
-          style={{ accentColor: '#FF6B35' }}
+          style={{ accentColor: '#f37021' }}
         />
         GRID
       </label>
@@ -157,7 +157,7 @@ export default function Toolbar({ onBack, saveStatus }) {
           type="checkbox"
           checked={showDimensions}
           onChange={toggleDimensions}
-          style={{ accentColor: '#FF6B35' }}
+          style={{ accentColor: '#f37021' }}
         />
         DIMENSIONS
       </label>
