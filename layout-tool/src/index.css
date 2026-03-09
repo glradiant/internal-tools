@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy: #0F1E30;
+  --color-navy-mid: #1B3557;
+  --color-orange: #FF6B35;
+  --color-heater: #C74A1A;
+  --color-heater-preview: #FF8C5A;
+  --font-mono: 'DM Mono', 'Courier New', monospace;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Mono', 'Courier New', monospace;
+}
