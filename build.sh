@@ -7,6 +7,15 @@ echo "Building GLR Internal Tools..."
 rm -rf dist
 mkdir -p dist
 
+# Build dashboard (root app with auth)
+echo "Building dashboard..."
+cd dashboard
+npm install
+npm run build
+cd ..
+# Move dashboard build to dist root
+cp -r dashboard/dist/* dist/
+
 # Build layout tool (Vite)
 echo "Building layout tool..."
 cd layout-tool
@@ -20,17 +29,15 @@ echo "Copying signature builder..."
 mkdir -p dist/signatures
 cp signature-builder/index.html dist/signatures/index.html
 
-# Copy root landing page
-echo "Copying landing page..."
-cp index.html dist/index.html
-
 # Write Netlify redirects for React client-side routing
 cat > dist/_redirects << 'EOF'
 # Layout tool — send all /layout/* paths to the React app
 /layout/*  /layout/index.html  200
 
-# Everything else falls through to static files
-/*  /:splat  200
+# Signatures — static, no redirect needed
+
+# Dashboard (root) — send all other paths to root index for React routing
+/*  /index.html  200
 EOF
 
 echo "Build complete. Output in dist/"

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import LoginPage from '../pages/LoginPage';
 
 export default function AuthGuard({ children }) {
   const [session, setSession] = useState(null);
@@ -17,6 +16,10 @@ export default function AuthGuard({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
+        if (!session) {
+          // Redirect to root login if session ends
+          window.location.href = '/';
+        }
       }
     );
 
@@ -32,22 +35,17 @@ export default function AuthGuard({ children }) {
           alignItems: 'center',
           justifyContent: 'center',
           background: '#0F1E30',
-          fontFamily: "'DM Mono', 'Courier New', monospace",
+          fontFamily: "'DM Sans', system-ui, sans-serif",
           color: 'white',
         }}
       >
         <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              letterSpacing: 2,
-              marginBottom: 16,
-            }}
-          >
-            GLR
-          </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+          <img
+            src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png"
+            alt="Great Lakes Radiant"
+            style={{ height: 40, marginBottom: 16 }}
+          />
+          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
             Loading...
           </div>
         </div>
@@ -56,7 +54,9 @@ export default function AuthGuard({ children }) {
   }
 
   if (!session) {
-    return <LoginPage />;
+    // Redirect to root login
+    window.location.href = '/';
+    return null;
   }
 
   return children;
