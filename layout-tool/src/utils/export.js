@@ -12,10 +12,10 @@ function getHeaterDisplayWidth(model) {
 }
 
 /**
- * Compute the bounding box of all entities with margin for dimension lines.
+ * Compute the bounding box of all entities including dimension labels.
  * Returns { x, y, w, h } in SVG coordinates, or null if nothing to export.
  */
-function computeExtents(walls, heaters, dimensions) {
+function computeExtents(walls, heaters, dimensions, labelScale = 1) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
   const expand = (x, y) => {
@@ -25,8 +25,62 @@ function computeExtents(walls, heaters, dimensions) {
     if (y > maxY) maxY = y;
   };
 
+  // Dimension label constants (must match DimensionLabel.jsx)
+  const BASE_GAP = 4;
+  const BASE_EXTEND = 20;
+  const BASE_OVERSHOOT = 3;
+  const BASE_FONT_SIZE = 7;
+  const BASE_TEXT_PAD = 2;
+  const dimOffset = (BASE_GAP + BASE_EXTEND + BASE_OVERSHOOT + BASE_FONT_SIZE + BASE_TEXT_PAD) * labelScale;
+
   walls.forEach((wall) => {
-    wall.points.forEach((p) => expand(p.x, p.y));
+    const pts = wall.points;
+    // Include wall points
+    pts.forEach((p) => expand(p.x, p.y));
+
+    // Calculate centroid for determining dimension label direction
+    if (pts.length >= 3) {
+      const cx = pts.reduce((s, p) => s + p.x, 0) / pts.length;
+      const cy = pts.reduce((s, p) => s + p.y, 0) / pts.length;
+
+      // For each wall segment, calculate where dimension label extends
+      for (let i = 0; i < pts.length; i++) {
+        const a = pts[i];
+        const b = pts[(i + 1) % pts.length];
+        const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+        if (segLen === 0) continue;
+
+        // Perpendicular normal (left-hand)
+        let nx = -(b.y - a.y) / segLen;
+        let ny = (b.x - a.x) / segLen;
+
+        // Push to outside (away from centroid)
+        const mx = (a.x + b.x) / 2;
+        const my = (a.y + b.y) / 2;
+        const dot = (cx - mx) * nx + (cy - my) * ny;
+        if (dot > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+
+        // Expand to include dimension label endpoints
+        expand(a.x + nx * dimOffset, a.y + ny * dimOffset);
+        expand(b.x + nx * dimOffset, b.y + ny * dimOffset);
+      }
+    } else if (pts.length === 2) {
+      // Single wall segment - expand in both perpendicular directions
+      const a = pts[0];
+      const b = pts[1];
+      const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+      if (segLen > 0) {
+        const nx = -(b.y - a.y) / segLen;
+        const ny = (b.x - a.x) / segLen;
+        expand(a.x + nx * dimOffset, a.y + ny * dimOffset);
+        expand(b.x + nx * dimOffset, b.y + ny * dimOffset);
+        expand(a.x - nx * dimOffset, a.y - ny * dimOffset);
+        expand(b.x - nx * dimOffset, b.y - ny * dimOffset);
+      }
+    }
   });
 
   heaters.forEach((h) => {
@@ -45,7 +99,7 @@ function computeExtents(walls, heaters, dimensions) {
 
   if (minX === Infinity) return null;
 
-  const margin = 80; // Extra margin for dimension labels
+  const margin = 20; // Small extra margin for safety
   return {
     x: minX - margin,
     y: minY - margin,
@@ -58,14 +112,14 @@ function computeExtents(walls, heaters, dimensions) {
  * Prepare the SVG for export: clone, strip UI elements, set viewBox to extents.
  * Returns the SVG element ready for svg2pdf.
  */
-function prepareSvgElement(svgElement, walls, heaters, dimensions, targetWidth, targetHeight) {
+function prepareSvgElement(svgElement, walls, heaters, dimensions, targetWidth, targetHeight, labelScale) {
   const svgClone = svgElement.cloneNode(true);
 
   // Strip UI-only elements
   svgClone.querySelectorAll('[data-no-print]').forEach((el) => el.remove());
 
   // Compute extents and set viewBox to fit all entities
-  const extents = computeExtents(walls, heaters, dimensions);
+  const extents = computeExtents(walls, heaters, dimensions, labelScale);
   if (extents) {
     // Calculate scale to fit within target area while maintaining aspect ratio
     const scaleX = targetWidth / extents.w;
@@ -124,6 +178,9 @@ export async function exportPDF(svgElement) {
   const DRAW_W = PAGE_W - MARGIN * 2;
   const DRAW_H = PAGE_H - MARGIN * 2 - HEADER_H - FOOTER_H;
 
+  // Get label scale for proper dimension extents
+  const labelScale = store.getLabelScale ? store.getLabelScale() : 1;
+
   // Prepare SVG for the drawing area (convert px to mm: 1px ≈ 0.264583mm)
   const svgClone = prepareSvgElement(
     svgElement,
@@ -131,7 +188,8 @@ export async function exportPDF(svgElement) {
     store.heaters || [],
     store.dimensions || [],
     DRAW_W / 0.264583,
-    DRAW_H / 0.264583
+    DRAW_H / 0.264583,
+    labelScale
   );
 
   // Create landscape 11x17 PDF
