@@ -3,10 +3,11 @@ export const CANVAS_W = 880;
 export const CANVAS_H = 620;
 
 // Scale factor for heater SVGs
-// SVGs have dimensions in mm, converted to px (mm * 3.78)
-// This scale converts from SVG px to canvas units where GRID = 20px per foot
-// Calculated: actual_feet / displayed_feet (e.g., 30/66.55 ≈ 0.45)
-export const HEATER_SCALE = 0.45;
+// SVG dimensions are labeled as mm but actually represent inches
+// Code converts mm → px at 3.78, so we need to correct:
+// HEATER_SCALE = (1/12 * GRID) / 3.78 = (20/12) / 3.78 = 0.441
+// This gives: 30' unit → 31' 7 3/8", 20' unit → 21' 11 3/8"
+export const HEATER_SCALE = 0.441;
 
 export const snap = (v) => Math.round(v / GRID) * GRID;
 
