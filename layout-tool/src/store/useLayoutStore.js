@@ -26,8 +26,9 @@ const getWallsBoundingBox = (walls) => {
 };
 
 // Calculate label scale factor based on drawing size
-// Base: 50 foot drawing = scale 1.0, larger drawings get larger labels
-const BASE_EXTENT_FT = 50;
+// Base: 25 foot drawing = scale 1.0, larger drawings get larger labels
+// This ensures readable labels on large commercial/industrial buildings
+const BASE_EXTENT_FT = 25;
 const calcLabelScale = (walls) => {
   const bbox = getWallsBoundingBox(walls);
   if (!bbox) return 1;

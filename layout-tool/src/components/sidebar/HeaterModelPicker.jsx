@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import useLayoutStore from '../../store/useLayoutStore';
-import { HEATER_CATEGORIES, hasSvgHeaters } from '../../utils/heaterCatalog';
+import { HEATER_TREE, hasSvgHeaters } from '../../utils/heaterCatalog';
 
 export default function HeaterModelPicker() {
   const selectedModelId = useLayoutStore((s) => s.selectedModelId);
@@ -12,21 +12,152 @@ export default function HeaterModelPicker() {
   const toggleHeaterFlipH = useLayoutStore((s) => s.toggleHeaterFlipH);
   const toggleHeaterFlipV = useLayoutStore((s) => s.toggleHeaterFlipV);
 
-  // Track expanded categories
-  const [expandedCategories, setExpandedCategories] = useState(() => {
-    // Default: expand the first category
-    const categoryIds = Object.keys(HEATER_CATEGORIES);
-    return categoryIds.length > 0 ? { [categoryIds[0]]: true } : {};
-  });
+  // Track expanded nodes by ID
+  const [expandedNodes, setExpandedNodes] = useState({});
 
-  const toggleCategory = (categoryId) => {
-    setExpandedCategories(prev => ({
+  const toggleNode = (nodeId) => {
+    setExpandedNodes(prev => ({
       ...prev,
-      [categoryId]: !prev[categoryId]
+      [nodeId]: !prev[nodeId]
     }));
   };
 
-  const categories = Object.values(HEATER_CATEGORIES);
+  // Check if any descendant has the selected model
+  const hasSelectedDescendant = (node) => {
+    if (node.models?.some(m => m.id === selectedModelId)) return true;
+    if (node.children) {
+      return Object.values(node.children).some(hasSelectedDescendant);
+    }
+    return false;
+  };
+
+  // Count total models in a node and its descendants
+  const countModels = (node) => {
+    let count = node.models?.length || 0;
+    if (node.children) {
+      count += Object.values(node.children).reduce((sum, child) => sum + countModels(child), 0);
+    }
+    return count;
+  };
+
+  // Render a tree node recursively
+  const renderNode = (node, depth = 0) => {
+    const isExpanded = expandedNodes[node.id];
+    const hasSelected = hasSelectedDescendant(node);
+    const hasChildren = node.children && Object.keys(node.children).length > 0;
+    const hasModels = node.models && node.models.length > 0;
+    const modelCount = countModels(node);
+
+    return (
+      <div key={node.id} style={{ marginBottom: depth === 0 ? 4 : 2 }}>
+        {/* Node Header (Folder) */}
+        <button
+          onClick={() => toggleNode(node.id)}
+          style={{
+            width: '100%',
+            padding: depth === 0 ? '8px 10px' : '6px 8px',
+            paddingLeft: 10 + depth * 12,
+            background: hasSelected ? 'rgba(243,112,33,0.08)' : 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 4,
+            color: hasSelected ? '#f37021' : 'rgba(255,255,255,0.7)',
+            cursor: 'pointer',
+            textAlign: 'left',
+            fontFamily: 'inherit',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: depth === 0 ? 11 : 10,
+            fontWeight: depth === 0 ? 500 : 400,
+          }}
+        >
+          {/* Folder icon */}
+          <span style={{ fontSize: depth === 0 ? 12 : 10, opacity: 0.7 }}>
+            {isExpanded ? '\u{1F4C2}' : '\u{1F4C1}'}
+          </span>
+          <span style={{ flex: 1 }}>{node.label}</span>
+          {/* Model count */}
+          <span style={{
+            fontSize: 9,
+            opacity: 0.5,
+            background: 'rgba(255,255,255,0.1)',
+            padding: '2px 6px',
+            borderRadius: 10,
+          }}>
+            {modelCount}
+          </span>
+          {/* Chevron */}
+          <span style={{
+            fontSize: 10,
+            opacity: 0.5,
+            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+            transition: 'transform 0.15s ease',
+          }}>
+            {'\u25B6'}
+          </span>
+        </button>
+
+        {/* Children and Models */}
+        {isExpanded && (
+          <div style={{
+            paddingLeft: 12,
+            paddingTop: 4,
+            borderLeft: '2px solid rgba(255,255,255,0.05)',
+            marginLeft: 10 + depth * 6,
+          }}>
+            {/* Render child folders */}
+            {hasChildren && Object.values(node.children)
+              .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+              .map(child => renderNode(child, depth + 1))
+            }
+            {/* Render models at this level */}
+            {hasModels && node.models.map((model) => {
+              const isSelected = selectedModelId === model.id;
+              return (
+                <button
+                  key={model.id}
+                  onClick={() => setSelectedModel(model.id)}
+                  style={{
+                    width: '100%',
+                    marginBottom: 2,
+                    padding: '5px 8px',
+                    background: isSelected ? 'rgba(243,112,33,0.15)' : 'transparent',
+                    border: isSelected
+                      ? '1px solid rgba(243,112,33,0.5)'
+                      : '1px solid rgba(255,255,255,0.05)',
+                    borderRadius: 3,
+                    color: isSelected ? '#f37021' : 'rgba(255,255,255,0.45)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontFamily: 'inherit',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: 9,
+                    gap: 8,
+                  }}
+                >
+                  <span style={{
+                    flex: 1,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {model.label}
+                  </span>
+                  <span style={{ opacity: 0.5, fontSize: 8, flexShrink: 0 }}>
+                    {model.kbtu}kBTU
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const treeNodes = Object.values(HEATER_TREE);
 
   if (!hasSvgHeaters()) {
     return (
@@ -56,113 +187,12 @@ export default function HeaterModelPicker() {
         HEATER MODELS
       </div>
 
-      {/* Categories */}
+      {/* Nested Tree */}
       <div style={{ maxHeight: 300, overflowY: 'auto', marginBottom: 10 }}>
-        {categories.map((category) => {
-          const isExpanded = expandedCategories[category.id];
-          const hasSelectedModel = category.models.some(m => m.id === selectedModelId);
-
-          return (
-            <div key={category.id} style={{ marginBottom: 4 }}>
-              {/* Category Header (Folder) */}
-              <button
-                onClick={() => toggleCategory(category.id)}
-                style={{
-                  width: '100%',
-                  padding: '8px 10px',
-                  background: hasSelectedModel ? 'rgba(243,112,33,0.08)' : 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 4,
-                  color: hasSelectedModel ? '#f37021' : 'rgba(255,255,255,0.7)',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontFamily: 'inherit',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 11,
-                  fontWeight: 500,
-                }}
-              >
-                {/* Folder icon */}
-                <span style={{ fontSize: 12, opacity: 0.7 }}>
-                  {isExpanded ? '\u{1F4C2}' : '\u{1F4C1}'}
-                </span>
-                <span style={{ flex: 1 }}>{category.label}</span>
-                {/* Model count */}
-                <span style={{
-                  fontSize: 9,
-                  opacity: 0.5,
-                  background: 'rgba(255,255,255,0.1)',
-                  padding: '2px 6px',
-                  borderRadius: 10,
-                }}>
-                  {category.models.length}
-                </span>
-                {/* Chevron */}
-                <span style={{
-                  fontSize: 10,
-                  opacity: 0.5,
-                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                  transition: 'transform 0.15s ease',
-                }}>
-                  {'\u25B6'}
-                </span>
-              </button>
-
-              {/* Models in category */}
-              {isExpanded && (
-                <div style={{
-                  paddingLeft: 12,
-                  paddingTop: 4,
-                  borderLeft: '2px solid rgba(255,255,255,0.05)',
-                  marginLeft: 10,
-                }}>
-                  {category.models.map((model) => {
-                    const isSelected = selectedModelId === model.id;
-                    return (
-                      <button
-                        key={model.id}
-                        onClick={() => setSelectedModel(model.id)}
-                        style={{
-                          width: '100%',
-                          marginBottom: 2,
-                          padding: '5px 8px',
-                          background: isSelected ? 'rgba(243,112,33,0.15)' : 'transparent',
-                          border: isSelected
-                            ? '1px solid rgba(243,112,33,0.5)'
-                            : '1px solid rgba(255,255,255,0.05)',
-                          borderRadius: 3,
-                          color: isSelected ? '#f37021' : 'rgba(255,255,255,0.45)',
-                          cursor: 'pointer',
-                          textAlign: 'left',
-                          fontFamily: 'inherit',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          fontSize: 9,
-                          gap: 8,
-                        }}
-                      >
-                        <span style={{
-                          flex: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}>
-                          {model.label}
-                        </span>
-                        <span style={{ opacity: 0.5, fontSize: 8, flexShrink: 0 }}>
-                          {model.lengthFt}ft
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        {treeNodes
+          .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
+          .map(node => renderNode(node, 0))
+        }
       </div>
 
       {/* Rotation Controls */}

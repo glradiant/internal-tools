@@ -17,11 +17,12 @@ const svgModulesRelative = import.meta.glob('../../../heater_svgs/**/*.svg', {
 // Merge both sources
 const svgModules = { ...svgModulesRoot, ...svgModulesRelative };
 
-// Parse folder structure and create catalog
-// New structure: heater_svgs/HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg
-//                heater_svgs/HL3_Series_Drawings/U-Bend/30ft/HL3-30U-100.svg
+// Parse folder structure and create nested catalog tree
+// Structure: heater_svgs/HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg
+// Creates nested tree: Series -> Type -> Length -> Models
 function buildHeaterCatalog() {
-  const categories = {};
+  const flatCategories = {}; // Flat lookup for backwards compatibility
+  const nestedTree = {}; // Nested tree structure for UI
 
   for (const [path, svgContent] of Object.entries(svgModules)) {
     // Normalize path - remove leading ../.. or /heater_svgs/
@@ -33,76 +34,101 @@ function buildHeaterCatalog() {
     }
 
     const parts = normalizedPath.split('/');
-
-    if (parts.length < 2) continue; // Skip files not in a subfolder
+    if (parts.length < 2) continue;
 
     const fileName = parts[parts.length - 1];
     const fileNameWithoutExt = fileName.replace('.svg', '');
 
-    // Determine category from folder structure
-    // New structure: Series/Type/Length/file.svg (e.g., HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg)
-    // Old structure: Series/file.svg (e.g., HL3_Series_Drawings/HL3-20-65.svg)
-    let categoryId, categoryLabel;
-    if (parts.length >= 4) {
-      // New nested structure: Series/Type/Length
-      const seriesFolder = parts[0]; // "HL3_Series_Drawings"
-      const heaterType = parts[1]; // "Straight" or "U-Bend"
-      const lengthFolder = parts[2]; // "20ft", "30ft", etc.
-      categoryId = `${seriesFolder}__${heaterType}__${lengthFolder}`;
-      // Extract series name (e.g., "HL3" from "HL3_Series_Drawings")
-      const seriesName = seriesFolder.split('_')[0];
-      categoryLabel = `${seriesName} ${heaterType} ${lengthFolder}`;
-    } else {
-      // Fallback for flat structure
-      categoryId = parts[0];
-      categoryLabel = parts[0].replace(/_/g, ' ');
-    }
-
     // Extract dimensions from SVG for proper scaling
     const dimensions = extractSvgDimensions(svgContent);
-
-    // Create formatted label from filename
     const label = formatHeaterLabel(fileNameWithoutExt);
 
-    // Create category if it doesn't exist
-    if (!categories[categoryId]) {
-      categories[categoryId] = {
-        id: categoryId,
-        label: categoryLabel,
-        models: []
-      };
+    // Build nested tree and flat category
+    let categoryId, seriesName, typeName, lengthName;
+
+    if (parts.length >= 4) {
+      // Nested structure: Series/Type/Length/file.svg
+      const seriesFolder = parts[0]; // "HL3_Series_Drawings"
+      typeName = parts[1]; // "Straight" or "U-Bend"
+      lengthName = parts[2]; // "20ft", "30ft", etc.
+      seriesName = seriesFolder.split('_')[0]; // "HL3"
+      categoryId = `${seriesFolder}__${typeName}__${lengthName}`;
+
+      // Build nested tree
+      if (!nestedTree[seriesName]) {
+        nestedTree[seriesName] = { id: seriesName, label: seriesName, children: {} };
+      }
+      if (!nestedTree[seriesName].children[typeName]) {
+        nestedTree[seriesName].children[typeName] = { id: `${seriesName}__${typeName}`, label: typeName, children: {} };
+      }
+      if (!nestedTree[seriesName].children[typeName].children[lengthName]) {
+        nestedTree[seriesName].children[typeName].children[lengthName] = {
+          id: categoryId,
+          label: lengthName,
+          models: []
+        };
+      }
+    } else {
+      // Flat structure fallback
+      categoryId = parts[0];
+      seriesName = parts[0].replace(/_/g, ' ');
+
+      if (!nestedTree[seriesName]) {
+        nestedTree[seriesName] = { id: seriesName, label: seriesName, models: [] };
+      }
     }
 
-    // Create unique ID from full path
+    // Create model object
     const modelId = `${categoryId}__${fileNameWithoutExt}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-    // Add model to category
-    categories[categoryId].models.push({
+    const model = {
       id: modelId,
       label: label,
       categoryId: categoryId,
       svgContent: svgContent,
       svgPath: path,
       dimensions: dimensions,
-      // Extract metadata from filename
       kbtu: extractKbtu(fileNameWithoutExt),
       lengthFt: extractLengthFt(fileNameWithoutExt, dimensions),
-    });
+    };
+
+    // Add to nested tree
+    if (parts.length >= 4) {
+      nestedTree[seriesName].children[typeName].children[lengthName].models.push(model);
+    } else {
+      nestedTree[seriesName].models = nestedTree[seriesName].models || [];
+      nestedTree[seriesName].models.push(model);
+    }
+
+    // Add to flat categories for backwards compatibility
+    if (!flatCategories[categoryId]) {
+      flatCategories[categoryId] = {
+        id: categoryId,
+        label: parts.length >= 4 ? `${seriesName} ${typeName} ${lengthName}` : seriesName,
+        models: []
+      };
+    }
+    flatCategories[categoryId].models.push(model);
   }
 
-  // Sort categories by label, then sort models within each category
-  const sortedCategories = {};
-  const sortedKeys = Object.keys(categories).sort((a, b) => {
-    return categories[a].label.localeCompare(categories[b].label, undefined, { numeric: true });
-  });
+  // Sort models within each leaf node
+  const sortModels = (node) => {
+    if (node.models) {
+      node.models.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+    }
+    if (node.children) {
+      Object.values(node.children).forEach(sortModels);
+    }
+  };
+  Object.values(nestedTree).forEach(sortModels);
 
-  for (const key of sortedKeys) {
-    sortedCategories[key] = categories[key];
-    sortedCategories[key].models.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
-  }
-
-  return sortedCategories;
+  return { flatCategories, nestedTree };
 }
+
+// Build catalog on module load
+const { flatCategories, nestedTree } = buildHeaterCatalog();
+
+// Export nested tree for UI
+export const HEATER_TREE = nestedTree;
 
 // Extract viewBox and dimensions from SVG content
 function extractSvgDimensions(svgContent) {
@@ -207,11 +233,11 @@ function extractLengthFt(fileName, dimensions) {
   return 0; // Default - no length found
 }
 
-// Build the catalog on module load
-export const HEATER_CATEGORIES = buildHeaterCatalog();
+// Flat categories for backwards compatibility
+export const HEATER_CATEGORIES = flatCategories;
 
 // Flatten to array for backwards compatibility
-export const HEATER_MODELS_FROM_SVG = Object.values(HEATER_CATEGORIES)
+export const HEATER_MODELS_FROM_SVG = Object.values(flatCategories)
   .flatMap(cat => cat.models);
 
 // Get model by ID
