@@ -12,7 +12,8 @@ export default function HomePage() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
 
@@ -24,8 +25,9 @@ export default function HomePage() {
 
   async function loadUserName() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (user?.user_metadata?.full_name) {
-      setFullName(user.user_metadata.full_name);
+    if (user?.user_metadata) {
+      setFirstName(user.user_metadata.first_name || '');
+      setLastName(user.user_metadata.last_name || '');
     }
   }
 
@@ -33,18 +35,21 @@ export default function HomePage() {
     setSaving(true);
     setSaveMessage(null);
 
-    const formattedName = formatName(fullName);
+    const formattedFirst = formatName(firstName);
+    const formattedLast = formatName(lastName);
+    const fullName = `${formattedFirst} ${formattedLast}`.trim();
 
     const { error } = await supabase.auth.updateUser({
-      data: { full_name: formattedName },
+      data: { first_name: formattedFirst, last_name: formattedLast },
     });
 
     if (error) {
       setSaveMessage({ type: 'error', text: error.message });
     } else {
-      setFullName(formattedName);
+      setFirstName(formattedFirst);
+      setLastName(formattedLast);
       // Also update localStorage so it's used for new layouts
-      localStorage.setItem('glr_last_prepared_by', formattedName);
+      localStorage.setItem('glr_last_prepared_by', fullName);
       setSaveMessage({ type: 'success', text: 'Name saved successfully!' });
       setTimeout(() => setSaveMessage(null), 2000);
     }
@@ -88,6 +93,55 @@ export default function HomePage() {
     setDeleteConfirm(null);
   }
 
+  async function handleDuplicate(id) {
+    try {
+      // Fetch the full layout data
+      const { data: original, error: fetchError } = await supabase
+        .from('layouts')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching layout:', fetchError);
+        return;
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create a copy with modified name
+      const newProjectName = `${original.project_name || 'Layout'} (Copy)`;
+      const layoutJson = original.layout_json || {};
+      layoutJson.projectName = newProjectName;
+
+      const { data: newLayout, error: insertError } = await supabase
+        .from('layouts')
+        .insert({
+          user_id: user.id,
+          project_name: newProjectName,
+          customer_name: original.customer_name,
+          customer_address: original.customer_address,
+          prepared_by: original.prepared_by,
+          quote_number: original.quote_number,
+          date: new Date().toISOString().slice(0, 10),
+          layout_json: layoutJson,
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Error duplicating layout:', insertError);
+        return;
+      }
+
+      // Navigate to the new layout
+      navigate(`/layout/${newLayout.id}`);
+    } catch (err) {
+      console.error('Error duplicating layout:', err);
+    }
+  }
+
   function handleLayoutCreated(newLayout) {
     navigate(`/layout/${newLayout.id}`);
   }
@@ -118,9 +172,9 @@ export default function HomePage() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {fullName && (
+          {(firstName || lastName) && (
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
-              {fullName}
+              {`${firstName} ${lastName}`.trim()}
             </span>
           )}
           <button
@@ -258,6 +312,7 @@ export default function HomePage() {
                 layout={layout}
                 onClick={() => navigate(`/layout/${layout.id}`)}
                 onDelete={() => setDeleteConfirm(layout.id)}
+                onDuplicate={() => handleDuplicate(layout.id)}
               />
             ))}
           </div>
@@ -369,31 +424,56 @@ export default function HomePage() {
               Settings
             </h2>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 10, color: '#8AAABF', marginBottom: 6, letterSpacing: 1 }}>
-                FULL NAME
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  background: '#F7F9FC',
-                  border: '1px solid #E5E9EF',
-                  borderRadius: 4,
-                  color: '#1B3557',
-                  fontSize: 13,
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-              <div style={{ fontSize: 10, color: '#8AAABF', marginTop: 6 }}>
-                This will be used as the default "Prepared by" name in new layouts.
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 10, color: '#8AAABF', marginBottom: 6, letterSpacing: 1 }}>
+                  FIRST NAME
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#F7F9FC',
+                    border: '1px solid #E5E9EF',
+                    borderRadius: 4,
+                    color: '#1B3557',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 10, color: '#8AAABF', marginBottom: 6, letterSpacing: 1 }}>
+                  LAST NAME
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#F7F9FC',
+                    border: '1px solid #E5E9EF',
+                    borderRadius: 4,
+                    color: '#1B3557',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ fontSize: 10, color: '#8AAABF', marginBottom: 20 }}>
+              This will be used as the default "Prepared by" name in new layouts.
             </div>
 
             {saveMessage && (

@@ -4,7 +4,8 @@ import { formatName } from '../utils/formatName';
 
 export default function Dashboard({ session }) {
   const [showSettings, setShowSettings] = useState(false);
-  const [fullName, setFullName] = useState(session.user.user_metadata?.full_name || '');
+  const [firstName, setFirstName] = useState(session.user.user_metadata?.first_name || '');
+  const [lastName, setLastName] = useState(session.user.user_metadata?.last_name || '');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
 
@@ -16,16 +17,18 @@ export default function Dashboard({ session }) {
     setSaving(true);
     setSaveMessage(null);
 
-    const formattedName = formatName(fullName);
+    const formattedFirst = formatName(firstName);
+    const formattedLast = formatName(lastName);
 
     const { error } = await supabase.auth.updateUser({
-      data: { full_name: formattedName },
+      data: { first_name: formattedFirst, last_name: formattedLast },
     });
 
     if (error) {
       setSaveMessage({ type: 'error', text: error.message });
     } else {
-      setFullName(formattedName);
+      setFirstName(formattedFirst);
+      setLastName(formattedLast);
       setSaveMessage({ type: 'success', text: 'Name saved successfully!' });
       setTimeout(() => setSaveMessage(null), 2000);
     }
@@ -261,31 +264,56 @@ export default function Dashboard({ session }) {
               Settings
             </h2>
 
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: 'block', fontSize: 11, color: '#888', marginBottom: 6, letterSpacing: 1, fontWeight: 500 }}>
-                FULL NAME
-              </label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  background: '#f5f7fa',
-                  border: '1px solid #e0e4ea',
-                  borderRadius: 6,
-                  color: '#1a1a1a',
-                  fontSize: 14,
-                  fontFamily: 'inherit',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-              />
-              <div style={{ fontSize: 11, color: '#999', marginTop: 6 }}>
-                This will be used as the default "Prepared by" name in layouts.
+            <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#888', marginBottom: 6, letterSpacing: 1, fontWeight: 500 }}>
+                  FIRST NAME
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="First"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: '#f5f7fa',
+                    border: '1px solid #e0e4ea',
+                    borderRadius: 6,
+                    color: '#1a1a1a',
+                    fontSize: 14,
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', fontSize: 11, color: '#888', marginBottom: 6, letterSpacing: 1, fontWeight: 500 }}>
+                  LAST NAME
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Last"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    background: '#f5f7fa',
+                    border: '1px solid #e0e4ea',
+                    borderRadius: 6,
+                    color: '#1a1a1a',
+                    fontSize: 14,
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div style={{ fontSize: 11, color: '#999', marginBottom: 20 }}>
+              This will be used as the default "Prepared by" name in layouts.
             </div>
 
             {saveMessage && (

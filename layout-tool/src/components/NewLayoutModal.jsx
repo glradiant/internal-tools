@@ -11,7 +11,7 @@ export default function NewLayoutModal({ onClose, onCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Pre-fill preparedBy from localStorage, or fallback to user's full_name from profile
+  // Pre-fill preparedBy from localStorage, or fallback to user's name from profile
   useEffect(() => {
     async function loadPreparedBy() {
       // First try localStorage
@@ -21,10 +21,14 @@ export default function NewLayoutModal({ onClose, onCreated }) {
         return;
       }
 
-      // Fallback to user's full_name from metadata
+      // Fallback to user's name from metadata
       const { data: { user } } = await supabase.auth.getUser();
-      if (user?.user_metadata?.full_name) {
-        setPreparedBy(user.user_metadata.full_name);
+      if (user?.user_metadata) {
+        const { first_name, last_name } = user.user_metadata;
+        const fullName = `${first_name || ''} ${last_name || ''}`.trim();
+        if (fullName) {
+          setPreparedBy(fullName);
+        }
       }
     }
     loadPreparedBy();

@@ -5,7 +5,8 @@ import { formatName } from '../utils/formatName';
 export default function LoginPage() {
   const [mode, setMode] = useState('signin');
   const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -40,8 +41,8 @@ export default function LoginPage() {
       return;
     }
 
-    if (!fullName.trim()) {
-      setError('Please enter your full name.');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Please enter your first and last name.');
       setLoading(false);
       return;
     }
@@ -58,15 +59,17 @@ export default function LoginPage() {
       return;
     }
 
-    // Format the name properly
-    const formattedName = formatName(fullName);
+    // Format the names properly
+    const formattedFirst = formatName(firstName);
+    const formattedLast = formatName(lastName);
 
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: formattedName,
+          first_name: formattedFirst,
+          last_name: formattedLast,
         },
       },
     });
@@ -77,7 +80,8 @@ export default function LoginPage() {
       setMessage('Check your email to confirm your account.');
       setPassword('');
       setConfirmPassword('');
-      setFullName('');
+      setFirstName('');
+      setLastName('');
     }
     setLoading(false);
   };
@@ -255,16 +259,29 @@ export default function LoginPage() {
 
         {mode === 'signup' && (
           <form onSubmit={handleSignUp}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>FULL NAME</label>
-              <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
-                placeholder="John Smith"
-                style={inputStyle}
-              />
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>FIRST NAME</label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  placeholder="John"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>LAST NAME</label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  placeholder="Smith"
+                  style={inputStyle}
+                />
+              </div>
             </div>
 
             <div style={{ marginBottom: 16 }}>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function LayoutCard({ layout, onClick, onDelete }) {
+export default function LayoutCard({ layout, onClick, onDelete, onDuplicate }) {
   const [showMenu, setShowMenu] = useState(false);
 
   const formattedDate = layout.updated_at
@@ -130,33 +130,56 @@ export default function LayoutCard({ layout, onClick, onDelete }) {
         </div>
       </div>
 
-      {/* Delete button (shows on hover) */}
+      {/* Action buttons (show on hover) */}
       {showMenu && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            width: 28,
-            height: 28,
-            background: 'rgba(255,255,255,0.9)',
-            border: '1px solid #E5E9EF',
-            borderRadius: 4,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 14,
-            color: '#f37021',
-          }}
-          title="Delete layout"
-        >
-          &times;
-        </button>
+        <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 4 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
+            style={{
+              width: 28,
+              height: 28,
+              background: 'rgba(255,255,255,0.9)',
+              border: '1px solid #E5E9EF',
+              borderRadius: 4,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#1B3557',
+            }}
+            title="Duplicate layout"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            </svg>
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            style={{
+              width: 28,
+              height: 28,
+              background: 'rgba(255,255,255,0.9)',
+              border: '1px solid #E5E9EF',
+              borderRadius: 4,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 14,
+              color: '#f37021',
+            }}
+            title="Delete layout"
+          >
+            &times;
+          </button>
+        </div>
       )}
     </div>
   );
