@@ -116,7 +116,7 @@ export async function exportPDF(svgElement) {
   const PAGE_H = 279.4;
   const MARGIN = 4;
   const HEADER_H = 20;
-  const FOOTER_H = 42; // Increased for notes section
+  const FOOTER_H = 32;
 
   // Drawing area
   const DRAW_X = MARGIN;
@@ -207,14 +207,13 @@ export async function exportPDF(svgElement) {
     doc.line(metaX, headerY + headerH / 2, PAGE_W - MARGIN - 0.5, headerY + headerH / 2);
 
     // Meta labels and values (3 cols x 2 rows)
-    const scaleValue = store.showGrid ? `1 div = ${store.gridDivisionFt} ft` : 'Not to scale';
     const metaCells = [
       { label: 'PREPARED BY', value: store.preparedBy || '—', x: metaX + 2, y: headerY + 1.5 },
       { label: 'DATE', value: store.date || '—', x: metaX + colW + 2, y: headerY + 1.5 },
       { label: 'REVISION', value: store.revision || '—', x: metaX + colW * 2 + 2, y: headerY + 1.5 },
       { label: 'QUOTE NO.', value: store.quoteNumber || '—', x: metaX + 2, y: headerY + headerH / 2 + 0.5 },
       { label: 'GAS TYPE', value: store.gasType || '—', x: metaX + colW + 2, y: headerY + headerH / 2 + 0.5 },
-      { label: 'SCALE', value: scaleValue, x: metaX + colW * 2 + 2, y: headerY + headerH / 2 + 0.5 },
+      { label: 'SCALE', value: 'Not to scale', x: metaX + colW * 2 + 2, y: headerY + headerH / 2 + 0.5 },
     ];
 
     metaCells.forEach(({ label, value, x, y }) => {
@@ -255,13 +254,13 @@ export async function exportPDF(svgElement) {
     doc.line(MARGIN, footerY, PAGE_W - MARGIN, footerY);
 
     // Equipment Schedule (left)
-    const scheduleW = 50;
+    const scheduleW = 65;
     doc.setLineWidth(0.3);
     doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
-    doc.setFontSize(5);
+    doc.setFontSize(6);
     doc.setTextColor(...GRAY);
-    doc.text('EQUIPMENT SCHEDULE', MARGIN + 4, footerY + 5);
+    doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, footerY + 6);
 
     // Group heaters by model
     const schedule = Object.values(
@@ -273,80 +272,47 @@ export async function exportPDF(svgElement) {
       }, {})
     );
 
-    doc.setFontSize(7);
-    let schedY = footerY + 10;
+    doc.setFontSize(8);
+    let schedY = footerY + 13;
     if (schedule.length === 0) {
       doc.setTextColor(...GRAY);
-      doc.text('No heaters placed', MARGIN + 4, schedY);
+      doc.text('No heaters placed', MARGIN + 5, schedY);
     } else {
       schedule.forEach(({ model, count }) => {
         // Orange swatch
         doc.setFillColor(...ORANGE);
-        doc.rect(MARGIN + 4, schedY - 2, 5, 2, 'F');
+        doc.rect(MARGIN + 5, schedY - 2.5, 6, 3, 'F');
         doc.setTextColor(...NAVY);
-        doc.text(`${count}× ${model.label}`, MARGIN + 11, schedY);
-        schedY += 5;
+        doc.text(`${count}× ${model.label}`, MARGIN + 13, schedY);
+        schedY += 6;
       });
     }
 
     // Total Output (center-left)
     const totalX = MARGIN + scheduleW;
-    const totalW = 28;
+    const totalW = 36;
     doc.setDrawColor(...NAVY);
     doc.line(totalX + totalW, footerY + 0.5, totalX + totalW, PAGE_H - MARGIN - 0.5);
 
     const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + h.model.kbtu, 0);
 
-    doc.setFontSize(5);
+    doc.setFontSize(6);
     doc.setTextColor(...GRAY);
-    doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 6, { align: 'center' });
+    doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 7, { align: 'center' });
 
-    doc.setFontSize(22);
+    doc.setFontSize(28);
     doc.setTextColor(...ORANGE);
     doc.setFont('helvetica', 'bold');
-    doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 16, { align: 'center' });
+    doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 20, { align: 'center' });
 
-    doc.setFontSize(5.5);
+    doc.setFontSize(7);
     doc.setTextColor(...GRAY);
     doc.setFont('helvetica', 'normal');
-    doc.text('kBTU / HR', totalX + totalW / 2, footerY + 22, { align: 'center' });
+    doc.text('kBTU / HR', totalX + totalW / 2, footerY + 27, { align: 'center' });
 
-    // Notes section (right side)
-    const notesW = 120;
-    const notesX = PAGE_W - MARGIN - notesW;
-    doc.setDrawColor(...NAVY);
-    doc.setLineWidth(0.3);
-    doc.line(notesX, footerY + 0.5, notesX, PAGE_H - MARGIN - 0.5);
-
-    doc.setFontSize(5);
-    doc.setTextColor(...GRAY);
-    doc.text('NOTES', notesX + 3, footerY + 5);
-
-    const notesText = [
-      'Installation must comply with all applicable local, state, and national codes. Refer to ANSI Z223.1 / NFPA 54 (US)',
-      'or CAN/CGA B149.1 (Canada) in the absence of local codes.',
-      '',
-      'All heaters must be installed and serviced by trained, qualified gas installation and service personnel only.',
-      '',
-      'Minimum clearances to combustibles and recommended mounting heights must be maintained. Refer to Series',
-      'Insert Manual for model-specific requirements.',
-      '',
-      'Gas supply type and pressure must match the heater rating plate. A flexible gas connector of approved type is required.',
-      '',
-      'This layout is provided as a design aid. Installer is responsible for verifying all dimensions, clearances, and code',
-      'compliance prior to installation.',
-    ];
-
-    doc.setFontSize(5);
-    doc.setTextColor(...MID_GRAY);
-    doc.setFont('helvetica', 'normal');
-    notesText.forEach((line, i) => {
-      doc.text(line, notesX + 3, footerY + 9 + i * 3);
-    });
-
-    // Offices (between total output and notes)
+    // Offices (fills remaining space)
     const officesX = totalX + totalW;
-    const officeW = (notesX - officesX) / OFFICES.length;
+    const officeW = (PAGE_W - MARGIN - officesX) / OFFICES.length;
 
     OFFICES.forEach((office, i) => {
       const ox = officesX + i * officeW;
@@ -356,16 +322,16 @@ export async function exportPDF(svgElement) {
         doc.line(ox, footerY + 3, ox, PAGE_H - MARGIN - 3);
       }
 
-      doc.setFontSize(6);
+      doc.setFontSize(8);
       doc.setTextColor(...NAVY);
       doc.setFont('helvetica', 'bold');
-      doc.text(office.name, ox + 2, footerY + 5);
+      doc.text(office.name, ox + 3, footerY + 7);
 
-      doc.setFontSize(5);
+      doc.setFontSize(6);
       doc.setTextColor(...MID_GRAY);
       doc.setFont('helvetica', 'normal');
       office.lines.forEach((line, j) => {
-        doc.text(line, ox + 2, footerY + 9 + j * 3.5);
+        doc.text(line, ox + 3, footerY + 13 + j * 4.5);
       });
     });
 
