@@ -63,31 +63,30 @@ export default function DoorGlyph({ door, walls, selected }) {
         data-entity-id={door.id}
         data-entity-type="door"
       >
-        {/* Invisible hit area for easier clicking */}
-        <rect
-          x={-hw - 10}
-          y={swingDir > 0 ? -doorLen - 15 : -15}
-          width={door.widthPx + 20}
-          height={doorLen + 30}
-          fill="transparent"
-          style={{ cursor: 'pointer' }}
-        />
-
-        {selected && (
-          <rect
-            x={-hw - 4} y={Math.min(-10, -doorLen - 4) * (swingDir > 0 ? 1 : -1) - 4}
-            width={door.widthPx + 8}
-            height={doorLen + 18}
-            rx={3}
-            fill="none"
-            stroke="#60A5FA"
-            strokeWidth={1.5}
-            strokeDasharray="4,3"
-          />
-        )}
-
-        {/* Door content with flip transform */}
+        {/* Door content with flip transform - includes hit area and selection */}
         <g transform={flipTransform}>
+          {/* Invisible hit area for easier clicking */}
+          <rect
+            x={-hw - 10}
+            y={swingDir > 0 ? -doorLen - 15 : -15}
+            width={door.widthPx + 20}
+            height={doorLen + 30}
+            fill="transparent"
+            style={{ cursor: 'pointer' }}
+          />
+
+          {selected && (
+            <rect
+              x={-hw - 4} y={Math.min(-10, -doorLen - 4) * (swingDir > 0 ? 1 : -1) - 4}
+              width={door.widthPx + 8}
+              height={doorLen + 18}
+              rx={3}
+              fill="none"
+              stroke="#60A5FA"
+              strokeWidth={1.5}
+              strokeDasharray="4,3"
+            />
+          )}
           {/* Door jamb lines */}
           <line x1={-hw} y1={-7} x2={-hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
           <line x1={hw} y1={-7} x2={hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
