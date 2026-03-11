@@ -60,6 +60,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const updateHeaterPosition = useLayoutStore((s) => s.updateHeaterPosition);
   const undo = useLayoutStore((s) => s.undo);
   const redo = useLayoutStore((s) => s.redo);
+  const getLabelScale = useLayoutStore((s) => s.getLabelScale);
+  const labelScale = getLabelScale();
 
   // Local ephemeral state
   const [hoverPos, setHoverPos] = useState(null);
@@ -841,7 +843,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           const displayWidth = getHeaterDisplayWidth(h.model);
           const aspectRatio = h.model.dimensions?.aspectRatio || 1;
           const displayHeight = displayWidth / aspectRatio;
-          const labelOffset = Math.max(14, displayHeight / 2 + 8);
+          const heaterFontSize = 7 * labelScale;
+          const labelOffset = Math.max(14 * labelScale, displayHeight / 2 + 8 * labelScale);
 
           return (
             <g
@@ -862,7 +865,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               <text
                 y={labelOffset}
                 textAnchor="middle"
-                fontSize={7}
+                fontSize={heaterFontSize}
                 fill={COLORS.heaterNormal}
                 fontFamily="'DM Mono', monospace"
               >

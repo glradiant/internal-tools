@@ -1,7 +1,9 @@
 import { GRID, COLORS } from '../../utils/constants';
 import { segmentAngleDeg } from '../../utils/geometry';
+import useLayoutStore from '../../store/useLayoutStore';
 
 export default function DoorGlyph({ door, walls, selected }) {
+  const labelScale = useLayoutStore((s) => s.getLabelScale());
   const wall = walls.find((w) => w.id === door.wallId);
   if (!wall) return null;
 
@@ -100,10 +102,11 @@ export default function DoorGlyph({ door, walls, selected }) {
           const widthFt = Math.round(door.widthPx / GRID);
           const label = `${widthFt}' MAN DOOR`;
           const maxWidth = door.widthPx * 1.5;
-          const charWidth = 4.5;
+          const charWidth = 4.5 * labelScale;
           const naturalWidth = label.length * charWidth;
-          const fontSize = Math.min(7, (maxWidth / naturalWidth) * 7);
-          const baseY = swingDir > 0 ? -doorLen - 8 : doorLen + 8;
+          const baseFontSize = 7 * labelScale;
+          const fontSize = Math.min(baseFontSize, (maxWidth / naturalWidth) * baseFontSize);
+          const baseY = swingDir > 0 ? -doorLen - 8 * labelScale : doorLen + 8 * labelScale;
           const localY = flip ? -baseY : baseY;
 
           return (
@@ -180,10 +183,11 @@ export default function DoorGlyph({ door, walls, selected }) {
           ? `${door.heightFt}' x ${widthFt}' OVERHEAD DOOR`
           : `${widthFt}' OVERHEAD DOOR`;
         const maxWidth = door.widthPx - 6;
-        const charWidth = 0.62;
+        const charWidth = 0.62 * labelScale;
         const naturalWidth = label.length * charWidth;
-        const fontSize = Math.min(7, maxWidth / naturalWidth);
-        const baseY = inwardSign > 0 ? 14 : -9;
+        const baseFontSize = 7 * labelScale;
+        const fontSize = Math.min(baseFontSize, maxWidth / naturalWidth);
+        const baseY = inwardSign > 0 ? 14 * labelScale : -9 * labelScale;
         const localY = flip ? -baseY : baseY;
 
         return (

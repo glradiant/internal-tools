@@ -1,9 +1,12 @@
 import { GRID, COLORS } from '../../utils/constants';
+import useLayoutStore from '../../store/useLayoutStore';
 
 /**
  * Renders a manual dimension line between two points.
  */
 export default function ManualDimension({ x1, y1, x2, y2, selected }) {
+  const labelScale = useLayoutStore((s) => s.getLabelScale());
+
   const dx = x2 - x1;
   const dy = y2 - y1;
   const dist = Math.hypot(dx, dy);
@@ -17,8 +20,8 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
   const midX = (x1 + x2) / 2;
   const midY = (y1 + y2) / 2;
 
-  // Offset perpendicular to the line for the dimension line
-  const offset = 15;
+  // Offset perpendicular to the line for the dimension line (scaled)
+  const offset = 15 * labelScale;
   const perpX = -Math.sin(angle) * offset;
   const perpY = Math.cos(angle) * offset;
 
@@ -28,12 +31,20 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
   const dimX2 = x2 + perpX;
   const dimY2 = y2 + perpY;
 
-  // Extension lines
-  const extLen = offset + 5;
+  // Extension lines (scaled)
+  const extLen = offset + 5 * labelScale;
   const ext1X = x1 + (-Math.sin(angle) * extLen);
   const ext1Y = y1 + (Math.cos(angle) * extLen);
   const ext2X = x2 + (-Math.sin(angle) * extLen);
   const ext2Y = y2 + (Math.cos(angle) * extLen);
+
+  // Scaled visual parameters
+  const fontSize = 9 * labelScale;
+  const strokeW = 0.75 * labelScale;
+  const dimStrokeW = 1 * labelScale;
+  const labelW = 36 * labelScale;
+  const labelH = 14 * labelScale;
+  const selectRadius = 4 * labelScale;
 
   // Label position (at midpoint of dimension line)
   const labelX = midX + perpX;
@@ -51,14 +62,14 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
         x1={x1} y1={y1}
         x2={ext1X} y2={ext1Y}
         stroke={strokeColor}
-        strokeWidth={0.75}
+        strokeWidth={strokeW}
         opacity={0.6}
       />
       <line
         x1={x2} y1={y2}
         x2={ext2X} y2={ext2Y}
         stroke={strokeColor}
-        strokeWidth={0.75}
+        strokeWidth={strokeW}
         opacity={0.6}
       />
 
@@ -67,7 +78,7 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
         x1={dimX1} y1={dimY1}
         x2={dimX2} y2={dimY2}
         stroke={strokeColor}
-        strokeWidth={1}
+        strokeWidth={dimStrokeW}
         markerStart="url(#dimArrowStart)"
         markerEnd="url(#dimArrowEnd)"
       />
@@ -83,10 +94,10 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
 
       {/* Label background */}
       <rect
-        x={labelX - 18}
-        y={labelY - 7}
-        width={36}
-        height={14}
+        x={labelX - labelW / 2}
+        y={labelY - labelH / 2}
+        width={labelW}
+        height={labelH}
         fill="white"
         transform={`rotate(${textAngle}, ${labelX}, ${labelY})`}
       />
@@ -97,7 +108,7 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
         y={labelY}
         textAnchor="middle"
         dominantBaseline="middle"
-        fontSize={9}
+        fontSize={fontSize}
         fontFamily="'DM Mono', monospace"
         fontWeight={600}
         fill={strokeColor}
@@ -109,8 +120,8 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
       {/* Selection indicator */}
       {selected && (
         <>
-          <circle cx={x1} cy={y1} r={4} fill="#60A5FA" />
-          <circle cx={x2} cy={y2} r={4} fill="#60A5FA" />
+          <circle cx={x1} cy={y1} r={selectRadius} fill="#60A5FA" />
+          <circle cx={x2} cy={y2} r={selectRadius} fill="#60A5FA" />
         </>
       )}
     </g>

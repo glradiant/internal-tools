@@ -1,13 +1,26 @@
 import { GRID, COLORS } from '../../utils/constants';
+import useLayoutStore from '../../store/useLayoutStore';
 
-const GAP = 4;        // gap between wall and start of extension line
-const EXTEND = 20;    // how far extension lines reach from the wall
-const OVERSHOOT = 3;  // extension line past the dimension line
-const ARROW = 3;      // arrowhead size
-const FONT_SIZE = 7;
-const TEXT_PAD = 2;    // padding around text on dimension line
+// Base values (for ~50ft drawings)
+const BASE_GAP = 4;        // gap between wall and start of extension line
+const BASE_EXTEND = 20;    // how far extension lines reach from the wall
+const BASE_OVERSHOOT = 3;  // extension line past the dimension line
+const BASE_ARROW = 3;      // arrowhead size
+const BASE_FONT_SIZE = 7;
+const BASE_TEXT_PAD = 2;   // padding around text on dimension line
+const BASE_STROKE = 0.5;   // line stroke width
 
 export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
+  const labelScale = useLayoutStore((s) => s.getLabelScale());
+
+  // Scale all visual dimensions
+  const GAP = BASE_GAP * labelScale;
+  const EXTEND = BASE_EXTEND * labelScale;
+  const OVERSHOOT = BASE_OVERSHOOT * labelScale;
+  const ARROW = BASE_ARROW * labelScale;
+  const FONT_SIZE = BASE_FONT_SIZE * labelScale;
+  const TEXT_PAD = BASE_TEXT_PAD * labelScale;
+  const strokeWidth = BASE_STROKE * labelScale;
   const segLen = Math.hypot(bx - ax, by - ay);
   if (segLen === 0) return null;
   const ft = Math.round(segLen / GRID);
@@ -92,17 +105,17 @@ export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
       {/* Extension lines */}
       <line
         x1={eA1x} y1={eA1y} x2={eA2x} y2={eA2y}
-        stroke={dimColor} strokeWidth={0.5} opacity={0.6}
+        stroke={dimColor} strokeWidth={strokeWidth} opacity={0.6}
       />
       <line
         x1={eB1x} y1={eB1y} x2={eB2x} y2={eB2y}
-        stroke={dimColor} strokeWidth={0.5} opacity={0.6}
+        stroke={dimColor} strokeWidth={strokeWidth} opacity={0.6}
       />
 
       {/* Dimension line */}
       <line
         x1={dAx} y1={dAy} x2={dBx} y2={dBy}
-        stroke={dimColor} strokeWidth={0.5} opacity={0.6}
+        stroke={dimColor} strokeWidth={strokeWidth} opacity={0.6}
       />
 
       {/* Arrowheads */}

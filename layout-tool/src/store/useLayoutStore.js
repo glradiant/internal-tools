@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { HEATER_MODELS_FROM_SVG } from '../utils/heaterCatalog';
+import { GRID } from '../utils/constants';
 
 // Get the first available model ID, or null if no models
 const getDefaultModelId = () => {
@@ -7,6 +8,33 @@ const getDefaultModelId = () => {
     return HEATER_MODELS_FROM_SVG[0].id;
   }
   return null;
+};
+
+// Calculate bounding box of all walls
+const getWallsBoundingBox = (walls) => {
+  if (!walls || walls.length === 0) return null;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  walls.forEach(wall => {
+    wall.points.forEach(pt => {
+      minX = Math.min(minX, pt.x);
+      minY = Math.min(minY, pt.y);
+      maxX = Math.max(maxX, pt.x);
+      maxY = Math.max(maxY, pt.y);
+    });
+  });
+  return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+};
+
+// Calculate label scale factor based on drawing size
+// Base: 50 foot drawing = scale 1.0, larger drawings get larger labels
+const BASE_EXTENT_FT = 50;
+const calcLabelScale = (walls) => {
+  const bbox = getWallsBoundingBox(walls);
+  if (!bbox) return 1;
+  const maxExtentPx = Math.max(bbox.width, bbox.height);
+  const maxExtentFt = maxExtentPx / GRID;
+  // Scale proportionally, minimum 1.0
+  return Math.max(1, maxExtentFt / BASE_EXTENT_FT);
 };
 
 // Helper to extract entity state for history
@@ -105,6 +133,9 @@ const useLayoutStore = create((set, get) => ({
   // Check if undo/redo is available
   canUndo: () => get().past.length > 0,
   canRedo: () => get().future.length > 0,
+
+  // Get label scale factor based on drawing size
+  getLabelScale: () => calcLabelScale(get().walls),
 
   // Metadata actions
   setProjectName: (name) => set({ projectName: name }),

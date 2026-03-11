@@ -18,6 +18,8 @@ const svgModulesRelative = import.meta.glob('../../../heater_svgs/**/*.svg', {
 const svgModules = { ...svgModulesRoot, ...svgModulesRelative };
 
 // Parse folder structure and create catalog
+// New structure: heater_svgs/HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg
+//                heater_svgs/HL3_Series_Drawings/U-Bend/30ft/HL3-30U-100.svg
 function buildHeaterCatalog() {
   const categories = {};
 
@@ -34,9 +36,24 @@ function buildHeaterCatalog() {
 
     if (parts.length < 2) continue; // Skip files not in a subfolder
 
-    const categoryFolder = parts[0];
     const fileName = parts[parts.length - 1];
     const fileNameWithoutExt = fileName.replace('.svg', '');
+
+    // Determine category from folder structure
+    // New structure: Series/Type/Length/file.svg (e.g., HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg)
+    // Old structure: Series/file.svg (e.g., HL3_Series_Drawings/HL3-20-65.svg)
+    let categoryId, categoryLabel;
+    if (parts.length >= 4) {
+      // New nested structure: use Type/Length as category (e.g., "Straight/20ft")
+      const heaterType = parts[1]; // "Straight" or "U-Bend"
+      const lengthFolder = parts[2]; // "20ft", "30ft", etc.
+      categoryId = `${parts[0]}__${heaterType}__${lengthFolder}`;
+      categoryLabel = `${heaterType} ${lengthFolder}`;
+    } else {
+      // Fallback for flat structure
+      categoryId = parts[0];
+      categoryLabel = parts[0].replace(/_/g, ' ');
+    }
 
     // Extract dimensions from SVG for proper scaling
     const dimensions = extractSvgDimensions(svgContent);
@@ -45,22 +62,22 @@ function buildHeaterCatalog() {
     const label = formatHeaterLabel(fileNameWithoutExt);
 
     // Create category if it doesn't exist
-    if (!categories[categoryFolder]) {
-      categories[categoryFolder] = {
-        id: categoryFolder,
-        label: categoryFolder.replace(/_/g, ' '),
+    if (!categories[categoryId]) {
+      categories[categoryId] = {
+        id: categoryId,
+        label: categoryLabel,
         models: []
       };
     }
 
-    // Create unique ID from category and filename
-    const modelId = `${categoryFolder}__${fileNameWithoutExt}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    // Create unique ID from full path
+    const modelId = `${categoryId}__${fileNameWithoutExt}`.replace(/[^a-zA-Z0-9_-]/g, '_');
 
     // Add model to category
-    categories[categoryFolder].models.push({
+    categories[categoryId].models.push({
       id: modelId,
       label: label,
-      categoryId: categoryFolder,
+      categoryId: categoryId,
       svgContent: svgContent,
       svgPath: path,
       dimensions: dimensions,
@@ -70,12 +87,18 @@ function buildHeaterCatalog() {
     });
   }
 
-  // Sort models within each category
-  for (const category of Object.values(categories)) {
-    category.models.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+  // Sort categories by label, then sort models within each category
+  const sortedCategories = {};
+  const sortedKeys = Object.keys(categories).sort((a, b) => {
+    return categories[a].label.localeCompare(categories[b].label, undefined, { numeric: true });
+  });
+
+  for (const key of sortedKeys) {
+    sortedCategories[key] = categories[key];
+    sortedCategories[key].models.sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
   }
 
-  return categories;
+  return sortedCategories;
 }
 
 // Extract viewBox and dimensions from SVG content
