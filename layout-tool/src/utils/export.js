@@ -205,11 +205,12 @@ export async function exportPDF(svgElement) {
     doc.line(metaX, headerY + headerH / 2, PAGE_W - MARGIN - 0.5, headerY + headerH / 2);
 
     // Meta labels and values
+    const scaleValue = store.showGrid ? `1 div = ${store.gridDivisionFt} ft` : 'Not to scale';
     const metaCells = [
       { label: 'PREPARED BY', value: store.preparedBy || '—', x: metaX + 2, y: headerY + 1.5 },
       { label: 'DATE', value: store.date || '—', x: metaX + metaW / 2 + 2, y: headerY + 1.5 },
       { label: 'QUOTE NO.', value: store.quoteNumber || '—', x: metaX + 2, y: headerY + headerH / 2 + 0.5 },
-      { label: 'SCALE', value: 'As noted', x: metaX + metaW / 2 + 2, y: headerY + headerH / 2 + 0.5 },
+      { label: 'SCALE', value: scaleValue, x: metaX + metaW / 2 + 2, y: headerY + headerH / 2 + 0.5 },
     ];
 
     metaCells.forEach(({ label, value, x, y }) => {
