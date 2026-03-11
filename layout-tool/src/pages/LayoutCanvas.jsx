@@ -9,6 +9,8 @@ import { supabase } from '../lib/supabase';
 import useLayoutStore from '../store/useLayoutStore';
 import useAutosave from '../hooks/useAutosave';
 
+const DEFAULT_SIDEBAR_WIDTH = 280;
+
 export default function LayoutCanvas() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -16,6 +18,7 @@ export default function LayoutCanvas() {
   const [hoverPos, setHoverPos] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
 
   const loadLayout = useLayoutStore((s) => s.loadLayout);
   const clearAll = useLayoutStore((s) => s.clearAll);
@@ -145,7 +148,7 @@ export default function LayoutCanvas() {
         overflow: 'hidden',
       }}
     >
-      <Sidebar onExportPDF={handleExportPDF} />
+      <Sidebar onExportPDF={handleExportPDF} width={sidebarWidth} onWidthChange={setSidebarWidth} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F9FC' }}>
         <Toolbar onBack={handleBack} saveStatus={saveStatus} />
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>

@@ -68,6 +68,7 @@ const useLayoutStore = create((set, get) => ({
   future: [],  // States we can redo to
 
   selectedIds: [], // Support multi-select
+  clipboard: null, // { heaters: [], doors: [], dimensions: [] }
   activeTool: 'select',
   wallOffsetMode: null, // { heaterId, offsetFt } when setting offset from wall
   showDimensions: true,
@@ -288,6 +289,62 @@ const useLayoutStore = create((set, get) => ({
     past: [],
     future: [],
   }),
+
+  // Copy selected items to clipboard
+  copySelected: () => {
+    const s = get();
+    const copiedHeaters = s.heaters.filter(h => s.selectedIds.includes(h.id));
+    const copiedDoors = s.doors.filter(d => s.selectedIds.includes(d.id));
+    const copiedDimensions = s.dimensions.filter(d => s.selectedIds.includes(d.id));
+
+    if (copiedHeaters.length === 0 && copiedDoors.length === 0 && copiedDimensions.length === 0) {
+      return false;
+    }
+
+    set({
+      clipboard: {
+        heaters: cloneEntityState(copiedHeaters),
+        doors: cloneEntityState(copiedDoors),
+        dimensions: cloneEntityState(copiedDimensions),
+      }
+    });
+    return true;
+  },
+
+  // Paste from clipboard with offset
+  paste: (offsetX = 20, offsetY = 20) => {
+    const s = get();
+    if (!s.clipboard) return false;
+
+    get().pushHistory();
+
+    const newIds = [];
+
+    // Paste heaters
+    const newHeaters = s.clipboard.heaters.map(h => {
+      const newId = crypto.randomUUID();
+      newIds.push(newId);
+      return { ...h, id: newId, x: h.x + offsetX, y: h.y + offsetY };
+    });
+
+    // Paste dimensions
+    const newDimensions = s.clipboard.dimensions.map(d => {
+      const newId = crypto.randomUUID();
+      newIds.push(newId);
+      return { ...d, id: newId, x1: d.x1 + offsetX, y1: d.y1 + offsetY, x2: d.x2 + offsetX, y2: d.y2 + offsetY };
+    });
+
+    // Note: doors are wall-dependent, so we only paste them if walls exist
+    // For now, skip door pasting as it requires wall context
+
+    set({
+      heaters: [...s.heaters, ...newHeaters],
+      dimensions: [...s.dimensions, ...newDimensions],
+      selectedIds: newIds,
+    });
+
+    return true;
+  },
 }));
 
 export default useLayoutStore;

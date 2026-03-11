@@ -60,6 +60,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const updateHeaterPosition = useLayoutStore((s) => s.updateHeaterPosition);
   const undo = useLayoutStore((s) => s.undo);
   const redo = useLayoutStore((s) => s.redo);
+  const copySelected = useLayoutStore((s) => s.copySelected);
+  const paste = useLayoutStore((s) => s.paste);
+  const updateHeatersPositions = useLayoutStore((s) => s.updateHeatersPositions);
+  const pushHistory = useLayoutStore((s) => s.pushHistory);
   const getLabelScale = useLayoutStore((s) => s.getLabelScale);
   const labelScale = getLabelScale();
 
@@ -73,6 +77,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const [dimensionStart, setDimensionStart] = useState(null);
   // Current snap point when hovering in dimension mode
   const [hoverSnapPoint, setHoverSnapPoint] = useState(null);
+
+  // Drag state for moving selected elements
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, entities: [] });
 
   // Pan/zoom state — viewBox model
   // The viewBox origin (top-left corner of visible area in SVG coords)
@@ -243,6 +251,33 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       return;
     }
 
+    // Handle dragging selected elements
+    if (isDragging && dragStart.current.entities.length > 0) {
+      const raw = getCoords(e);
+      const dx = raw.x - dragStart.current.x;
+      const dy = raw.y - dragStart.current.y;
+
+      // Update heater positions in real-time
+      const heaterUpdates = dragStart.current.entities
+        .filter(ent => ent.type === 'heater')
+        .map(ent => ({
+          id: ent.id,
+          x: ent.origX + dx,
+          y: ent.origY + dy,
+        }));
+
+      if (heaterUpdates.length > 0) {
+        // Direct state update without pushing history (we'll push on drag end)
+        useLayoutStore.setState((s) => ({
+          heaters: s.heaters.map((h) => {
+            const update = heaterUpdates.find((u) => u.id === h.id);
+            return update ? { ...h, x: update.x, y: update.y } : h;
+          })
+        }));
+      }
+      return;
+    }
+
     const raw = getCoords(e);
     let pos = raw;
 
@@ -298,9 +333,18 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [activeTool, currentPath, walls, doorPlacement, getCoords, applyLocks, onHoverPos, isPanning, zoom]);
 
+  // Track if we just finished dragging (to prevent click from firing)
+  const justDragged = useRef(false);
+
   // Click handler
   const handleClick = useCallback((e) => {
     if (isPanning) return;
+
+    // Skip click if we just finished dragging
+    if (justDragged.current) {
+      justDragged.current = false;
+      return;
+    }
 
     const pos = hoverPos || getCoords(e);
 
@@ -475,7 +519,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning]);
 
-  // Mouse down — pan only
+  // Mouse down — pan or drag
   const handleMouseDown = useCallback((e) => {
     // Middle mouse button or space+left click = pan
     if (e.button === 1 || (e.button === 0 && spaceHeld)) {
@@ -484,14 +528,49 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       panStart.current = { x: e.clientX, y: e.clientY, originX: viewOrigin.x, originY: viewOrigin.y };
       return;
     }
-  }, [viewOrigin]);
 
-  // Mouse up — pan
+    // Left click in select mode on a selected entity = start drag
+    if (e.button === 0 && activeTool === 'select' && !wallOffsetMode) {
+      const entityEl = e.target.closest('[data-entity-id]');
+      if (entityEl) {
+        const entityId = entityEl.dataset.entityId;
+        const entityType = entityEl.dataset.entityType;
+
+        // Check if clicked entity is already selected
+        if (selectedIds.includes(entityId)) {
+          e.preventDefault();
+          const pos = getCoords(e);
+
+          // Gather all selected entities that can be dragged (heaters for now)
+          const entities = [];
+          selectedIds.forEach(id => {
+            const heater = heaters.find(h => h.id === id);
+            if (heater) {
+              entities.push({ id, type: 'heater', origX: heater.x, origY: heater.y });
+            }
+          });
+
+          if (entities.length > 0) {
+            pushHistory(); // Save state before drag
+            setIsDragging(true);
+            dragStart.current = { x: pos.x, y: pos.y, entities };
+          }
+        }
+      }
+    }
+  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory]);
+
+  // Mouse up — pan or drag end
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
       setIsPanning(false);
     }
-  }, [isPanning]);
+    if (isDragging) {
+      justDragged.current = true;
+      setIsDragging(false);
+      dragStart.current = { x: 0, y: 0, entities: [] };
+    }
+  }, [isPanning, isDragging]);
 
   // Keep refs in sync so wheel handler reads current values
   const zoomRef = useRef(zoom);
@@ -533,31 +612,77 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Global mouseup listener for pan
+  // Global mouseup listener for pan and drag
   useEffect(() => {
-    if (!isPanning) return;
+    if (!isPanning && !isDragging) return;
     const handleGlobalMouseUp = () => {
+      if (isDragging) {
+        justDragged.current = true;
+      }
       setIsPanning(false);
+      setIsDragging(false);
+      dragStart.current = { x: 0, y: 0, entities: [] };
     };
     window.addEventListener('mouseup', handleGlobalMouseUp);
     return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
-  }, [isPanning]);
+  }, [isPanning, isDragging]);
 
-  // Global mousemove for panning when mouse leaves SVG
+  // Global mousemove for panning/dragging when mouse leaves SVG
   useEffect(() => {
-    if (!isPanning) return;
+    if (!isPanning && !isDragging) return;
     const handleGlobalMouseMove = (e) => {
       const curZoom = zoomRef.current;
-      const dx = (e.clientX - panStart.current.x) / curZoom;
-      const dy = (e.clientY - panStart.current.y) / curZoom;
-      setViewOrigin({
-        x: panStart.current.originX - dx,
-        y: panStart.current.originY - dy,
-      });
+      const curOrigin = viewOriginRef.current;
+
+      if (isPanning) {
+        const dx = (e.clientX - panStart.current.x) / curZoom;
+        const dy = (e.clientY - panStart.current.y) / curZoom;
+        setViewOrigin({
+          x: panStart.current.originX - dx,
+          y: panStart.current.originY - dy,
+        });
+      }
+
+      if (isDragging && dragStart.current.entities.length > 0) {
+        const container = containerRef.current;
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const screenX = e.clientX - rect.left;
+        const screenY = e.clientY - rect.top;
+        let svgX = curOrigin.x + screenX / curZoom;
+        let svgY = curOrigin.y + screenY / curZoom;
+
+        // Snap to grid if enabled
+        if (showGrid) {
+          const snapStep = GRID * gridDivisionFt;
+          svgX = Math.round(svgX / snapStep) * snapStep;
+          svgY = Math.round(svgY / snapStep) * snapStep;
+        }
+
+        const dx = svgX - dragStart.current.x;
+        const dy = svgY - dragStart.current.y;
+
+        const heaterUpdates = dragStart.current.entities
+          .filter(ent => ent.type === 'heater')
+          .map(ent => ({
+            id: ent.id,
+            x: ent.origX + dx,
+            y: ent.origY + dy,
+          }));
+
+        if (heaterUpdates.length > 0) {
+          useLayoutStore.setState((s) => ({
+            heaters: s.heaters.map((h) => {
+              const update = heaterUpdates.find((u) => u.id === h.id);
+              return update ? { ...h, x: update.x, y: update.y } : h;
+            })
+          }));
+        }
+      }
     };
     window.addEventListener('mousemove', handleGlobalMouseMove);
     return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
-  }, [isPanning]);
+  }, [isPanning, isDragging, showGrid, gridDivisionFt]);
 
   // Space key for pan mode
   useEffect(() => {
@@ -579,6 +704,22 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         if (isTyping) return;
         e.preventDefault();
         redo();
+        return;
+      }
+
+      // Copy: Ctrl+C (or Cmd+C on Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+        if (isTyping) return;
+        e.preventDefault();
+        copySelected();
+        return;
+      }
+
+      // Paste: Ctrl+V (or Cmd+V on Mac)
+      if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+        if (isTyping) return;
+        e.preventDefault();
+        paste(GRID, GRID); // Offset by 1 foot
         return;
       }
 
@@ -632,7 +773,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo]);
+  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, paste]);
 
   // Clear state when switching tools
   useEffect(() => {
@@ -653,6 +794,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   // Cursor style
   const cursor = isPanning ? 'grabbing'
+    : isDragging ? 'move'
     : spaceHeld ? 'grab'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
@@ -852,7 +994,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               transform={`translate(${h.x},${h.y}) rotate(${h.angleDeg})`}
               data-entity-id={h.id}
               data-entity-type="heater"
-              style={{ cursor: activeTool === 'select' ? 'pointer' : undefined }}
+              style={{ cursor: activeTool === 'select' ? (selectedIds.includes(h.id) ? 'move' : 'pointer') : undefined }}
             >
               <HeaterGlyph
                 model={h.model}
