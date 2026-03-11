@@ -54,6 +54,8 @@ export default function LayoutCanvas() {
             customerAddress: data.customer_address || layoutData.customerAddress || '',
             preparedBy: data.prepared_by || layoutData.preparedBy || '',
             quoteNumber: data.quote_number || layoutData.quoteNumber || '',
+            revision: layoutData.revision || 'A',
+            gasType: layoutData.gasType || '',
             date: data.date || layoutData.date || new Date().toISOString().slice(0, 10),
             walls: layoutData.walls || [],
             doors: layoutData.doors || [],
