@@ -133,12 +133,11 @@ export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
         />
         <text
           x={0}
-          y={0}
+          y={FONT_SIZE * 0.35}
           textAnchor="middle"
-          dominantBaseline="central"
           fontSize={FONT_SIZE}
           fill={dimColor}
-          fontFamily="'DM Mono', monospace"
+          fontFamily="Courier, monospace"
           fontWeight={600}
         >
           {label}

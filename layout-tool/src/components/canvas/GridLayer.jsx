@@ -51,5 +51,5 @@ export default function GridLayer({ viewX, viewY, viewW, viewH }) {
     );
   }
 
-  return <g>{lines}</g>;
+  return <g data-no-print="true">{lines}</g>;
 }

@@ -106,19 +106,21 @@ export default function DoorGlyph({ door, walls, selected }) {
           const naturalWidth = label.length * charWidth;
           const baseFontSize = 7 * labelScale;
           const fontSize = Math.min(baseFontSize, (maxWidth / naturalWidth) * baseFontSize);
-          const baseY = swingDir > 0 ? -doorLen - 8 * labelScale : doorLen + 8 * labelScale;
+          // Position label just past door swing, with fixed offset plus half font height
+          const offset = 8 + fontSize * 0.5;
+          const baseY = swingDir > 0 ? -doorLen - offset : doorLen + offset;
           const localY = flip ? -baseY : baseY;
 
           return (
             <g transform={flip ? `rotate(180, 0, 0)` : undefined}>
               <text
                 x={0}
-                y={localY}
+                y={localY + fontSize * 0.35}
                 textAnchor="middle"
-                dominantBaseline="central"
                 fontSize={fontSize}
                 fill={COLORS.doorLabel}
-                fontFamily="'DM Mono', monospace"
+                fontFamily="Courier, monospace"
+                fontWeight={600}
               >
                 {label}
               </text>
@@ -190,19 +192,21 @@ export default function DoorGlyph({ door, walls, selected }) {
         const fontSize = textWidthAtBaseFont > maxWidth
           ? maxWidth / (label.length * charWidthRatio)
           : baseFontSize;
-        const baseY = inwardSign > 0 ? 14 * labelScale : -9 * labelScale;
+        // Fixed offset from door (12px) plus half font height for proper centering
+        const offset = 12 + fontSize * 0.5;
+        const baseY = inwardSign > 0 ? offset : -offset;
         const localY = flip ? -baseY : baseY;
 
         return (
           <g transform={flip ? `rotate(180, 0, 0)` : undefined}>
             <text
               x={0}
-              y={localY}
+              y={localY + fontSize * 0.35}
               textAnchor="middle"
-              dominantBaseline="central"
               fontSize={fontSize}
               fill={COLORS.doorLabel}
-              fontFamily="'DM Mono', monospace"
+              fontFamily="Courier, monospace"
+              fontWeight={600}
             >
               {label}
             </text>
