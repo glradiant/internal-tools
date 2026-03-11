@@ -61,7 +61,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const undo = useLayoutStore((s) => s.undo);
   const redo = useLayoutStore((s) => s.redo);
   const copySelected = useLayoutStore((s) => s.copySelected);
-  const paste = useLayoutStore((s) => s.paste);
+  const startPaste = useLayoutStore((s) => s.startPaste);
+  const confirmPaste = useLayoutStore((s) => s.confirmPaste);
+  const cancelPaste = useLayoutStore((s) => s.cancelPaste);
+  const pasteMode = useLayoutStore((s) => s.pasteMode);
   const updateHeatersPositions = useLayoutStore((s) => s.updateHeatersPositions);
   const pushHistory = useLayoutStore((s) => s.pushHistory);
   const getLabelScale = useLayoutStore((s) => s.getLabelScale);
@@ -348,6 +351,12 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
     const pos = hoverPos || getCoords(e);
 
+    // Handle paste mode - click to place
+    if (pasteMode) {
+      confirmPaste(pos.x, pos.y);
+      return;
+    }
+
     if (activeTool === 'draw') {
       if (currentPath.length >= 3) {
         const first = currentPath[0];
@@ -517,7 +526,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         clearSelection();
       }
     }
-  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning]);
+  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste]);
 
   // Mouse down — pan or drag
   const handleMouseDown = useCallback((e) => {
@@ -719,7 +728,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
         if (isTyping) return;
         e.preventDefault();
-        paste(GRID, GRID); // Offset by 1 foot
+        startPaste(); // Enter paste placement mode
         return;
       }
 
@@ -729,7 +738,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         setSpaceHeld(true);
       }
       if (e.key === 'Escape') {
-        if (wallOffsetMode) {
+        if (pasteMode) {
+          cancelPaste();
+        } else if (wallOffsetMode) {
           clearWallOffsetMode();
         } else if (activeTool === 'draw') {
           // Immediately exit draw mode and go to select
@@ -773,7 +784,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, paste]);
+  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste]);
 
   // Clear state when switching tools
   useEffect(() => {
@@ -796,6 +807,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const cursor = isPanning ? 'grabbing'
     : isDragging ? 'move'
     : spaceHeld ? 'grab'
+    : pasteMode ? 'crosshair'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
     : activeTool === 'heater' ? 'cell'
@@ -1194,6 +1206,66 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           </g>
         )}
 
+        {/* Paste preview - items following cursor */}
+        {pasteMode && hoverPos && (() => {
+          const basePoint = pasteMode.basePoint || { x: 0, y: 0 };
+          const offsetX = hoverPos.x - basePoint.x;
+          const offsetY = hoverPos.y - basePoint.y;
+
+          return (
+            <g opacity={0.5} data-no-print="true">
+              {/* Preview walls */}
+              {(pasteMode.walls || []).map((wall, i) => {
+                const offsetPoints = wall.points.map(p => ({ x: p.x + offsetX, y: p.y + offsetY }));
+                const pointStr = offsetPoints.map(p => `${p.x},${p.y}`).join(' ');
+                return (
+                  <polygon
+                    key={`paste-wall-${i}`}
+                    points={pointStr}
+                    fill="rgba(96,165,250,0.1)"
+                    stroke="#60A5FA"
+                    strokeWidth={3}
+                    strokeDasharray="8,4"
+                    strokeLinejoin="round"
+                  />
+                );
+              })}
+              {/* Preview heaters */}
+              {(pasteMode.heaters || []).map((h, i) => {
+                const displayWidth = getHeaterDisplayWidth(h.model);
+                return (
+                  <g
+                    key={`paste-heater-${i}`}
+                    transform={`translate(${h.x + offsetX},${h.y + offsetY}) rotate(${h.angleDeg})`}
+                  >
+                    <HeaterGlyph
+                      model={h.model}
+                      lengthPx={displayWidth}
+                      selected={false}
+                      preview={true}
+                      flipH={h.flipH || false}
+                      flipV={h.flipV || false}
+                    />
+                  </g>
+                );
+              })}
+              {/* Preview dimensions */}
+              {(pasteMode.dimensions || []).map((d, i) => (
+                <line
+                  key={`paste-dim-${i}`}
+                  x1={d.x1 + offsetX}
+                  y1={d.y1 + offsetY}
+                  x2={d.x2 + offsetX}
+                  y2={d.y2 + offsetY}
+                  stroke="#60A5FA"
+                  strokeWidth={1.5}
+                  strokeDasharray="6,3"
+                />
+              ))}
+            </g>
+          );
+        })()}
+
         {/* Heater ghost preview */}
         {activeTool === 'heater' && hoverPos && selectedModel && (
           <g
@@ -1206,11 +1278,11 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         )}
 
         {/* Hover snap indicator */}
-        {hoverPos && activeTool !== 'select' && (
+        {hoverPos && (activeTool !== 'select' || pasteMode) && (
           <circle
             cx={hoverPos.x} cy={hoverPos.y}
             r={3}
-            fill={COLORS.orange}
+            fill={pasteMode ? '#60A5FA' : COLORS.orange}
             opacity={0.4}
             data-no-print="true"
           />

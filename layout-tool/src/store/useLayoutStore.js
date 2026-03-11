@@ -68,7 +68,8 @@ const useLayoutStore = create((set, get) => ({
   future: [],  // States we can redo to
 
   selectedIds: [], // Support multi-select
-  clipboard: null, // { heaters: [], doors: [], dimensions: [] }
+  clipboard: null, // { walls: [], doors: [], heaters: [], dimensions: [], basePoint: {x, y} }
+  pasteMode: null, // { walls, doors, heaters, dimensions, basePoint } when actively placing pasted items
   activeTool: 'select',
   wallOffsetMode: null, // { heaterId, offsetFt } when setting offset from wall
   showDimensions: true,
@@ -305,21 +306,60 @@ const useLayoutStore = create((set, get) => ({
       return false;
     }
 
+    // Calculate base point (centroid of all copied items)
+    let allPoints = [];
+    copiedWalls.forEach(w => w.points.forEach(p => allPoints.push(p)));
+    copiedHeaters.forEach(h => allPoints.push({ x: h.x, y: h.y }));
+    copiedDimensions.forEach(d => {
+      allPoints.push({ x: d.x1, y: d.y1 });
+      allPoints.push({ x: d.x2, y: d.y2 });
+    });
+
+    const basePoint = allPoints.length > 0
+      ? {
+          x: allPoints.reduce((sum, p) => sum + p.x, 0) / allPoints.length,
+          y: allPoints.reduce((sum, p) => sum + p.y, 0) / allPoints.length,
+        }
+      : { x: 0, y: 0 };
+
     set({
       clipboard: {
         walls: cloneEntityState(copiedWalls),
         doors: cloneEntityState(copiedDoors),
         heaters: cloneEntityState(copiedHeaters),
         dimensions: cloneEntityState(copiedDimensions),
+        basePoint,
       }
     });
     return true;
   },
 
-  // Paste from clipboard with offset
-  paste: (offsetX = 20, offsetY = 20) => {
+  // Start paste mode - items follow cursor until clicked
+  startPaste: () => {
     const s = get();
     if (!s.clipboard) return false;
+
+    set({
+      pasteMode: cloneEntityState(s.clipboard),
+      activeTool: 'select', // Ensure we're in select mode
+      selectedIds: [],
+    });
+    return true;
+  },
+
+  // Cancel paste mode
+  cancelPaste: () => {
+    set({ pasteMode: null });
+  },
+
+  // Confirm paste at specific position
+  confirmPaste: (targetX, targetY) => {
+    const s = get();
+    if (!s.pasteMode) return false;
+
+    const basePoint = s.pasteMode.basePoint || { x: 0, y: 0 };
+    const offsetX = targetX - basePoint.x;
+    const offsetY = targetY - basePoint.y;
 
     get().pushHistory();
 
@@ -327,7 +367,7 @@ const useLayoutStore = create((set, get) => ({
     const wallIdMap = {}; // Map old wall IDs to new wall IDs
 
     // Paste walls
-    const newWalls = (s.clipboard.walls || []).map(w => {
+    const newWalls = (s.pasteMode.walls || []).map(w => {
       const newId = crypto.randomUUID();
       wallIdMap[w.id] = newId;
       newIds.push(newId);
@@ -339,23 +379,22 @@ const useLayoutStore = create((set, get) => ({
     });
 
     // Paste doors (with updated wall references)
-    const newDoors = (s.clipboard.doors || []).map(d => {
+    const newDoors = (s.pasteMode.doors || []).map(d => {
       const newWallId = wallIdMap[d.wallId];
       if (!newWallId) return null; // Skip if parent wall wasn't copied
       const newId = crypto.randomUUID();
-      // Don't add door IDs to selection (walls are the parent)
       return { ...d, id: newId, wallId: newWallId };
     }).filter(Boolean);
 
     // Paste heaters
-    const newHeaters = (s.clipboard.heaters || []).map(h => {
+    const newHeaters = (s.pasteMode.heaters || []).map(h => {
       const newId = crypto.randomUUID();
       newIds.push(newId);
       return { ...h, id: newId, x: h.x + offsetX, y: h.y + offsetY };
     });
 
     // Paste dimensions
-    const newDimensions = (s.clipboard.dimensions || []).map(d => {
+    const newDimensions = (s.pasteMode.dimensions || []).map(d => {
       const newId = crypto.randomUUID();
       newIds.push(newId);
       return { ...d, id: newId, x1: d.x1 + offsetX, y1: d.y1 + offsetY, x2: d.x2 + offsetX, y2: d.y2 + offsetY };
@@ -367,6 +406,7 @@ const useLayoutStore = create((set, get) => ({
       heaters: [...s.heaters, ...newHeaters],
       dimensions: [...s.dimensions, ...newDimensions],
       selectedIds: newIds,
+      pasteMode: null,
     });
 
     return true;
