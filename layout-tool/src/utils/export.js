@@ -173,7 +173,8 @@ export async function exportPDF(svgElement) {
       }
     }
 
-    // Contact info under logo
+    // Contact info under logo (courier for mono style)
+    doc.setFont('courier', 'normal');
     doc.setFontSize(5.5);
     doc.setTextColor(...GRAY);
     doc.text('sales@glradiant.com  |  www.glradiant.com', MARGIN + logoAreaW / 2, headerY + 17.5, { align: 'center' });
@@ -190,8 +191,8 @@ export async function exportPDF(svgElement) {
     doc.setFont('helvetica', 'bold');
     doc.text(store.projectName || 'Untitled Layout', titleX, headerY + 9);
 
+    doc.setFont('courier', 'normal');
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...MID_GRAY);
     const customerInfo = [store.customerName, store.customerAddress].filter(Boolean).join('  ·  ');
     if (customerInfo) {
@@ -217,12 +218,13 @@ export async function exportPDF(svgElement) {
     ];
 
     metaCells.forEach(({ label, value, x, y }) => {
+      doc.setFont('courier', 'normal');
       doc.setFontSize(4.5);
       doc.setTextColor(...GRAY);
       doc.text(label, x, y + 3.5);
+      doc.setFont('courier', 'bold');
       doc.setFontSize(7);
       doc.setTextColor(...NAVY);
-      doc.setFont('helvetica', 'normal');
       doc.text(value, x, y + 8);
     });
 
@@ -258,6 +260,7 @@ export async function exportPDF(svgElement) {
     doc.setLineWidth(0.3);
     doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
+    doc.setFont('courier', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(...GRAY);
     doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, footerY + 6);
@@ -272,6 +275,7 @@ export async function exportPDF(svgElement) {
       }, {})
     );
 
+    doc.setFont('courier', 'normal');
     doc.setFontSize(8);
     let schedY = footerY + 13;
     if (schedule.length === 0) {
@@ -283,7 +287,7 @@ export async function exportPDF(svgElement) {
         doc.setFillColor(...ORANGE);
         doc.rect(MARGIN + 5, schedY - 2.5, 6, 3, 'F');
         doc.setTextColor(...NAVY);
-        doc.text(`${count}× ${model.label}`, MARGIN + 13, schedY);
+        doc.text(`${count}x ${model.label}`, MARGIN + 13, schedY);
         schedY += 6;
       });
     }
@@ -296,18 +300,19 @@ export async function exportPDF(svgElement) {
 
     const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + h.model.kbtu, 0);
 
+    doc.setFont('courier', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(...GRAY);
     doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 7, { align: 'center' });
 
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(28);
     doc.setTextColor(...ORANGE);
-    doc.setFont('helvetica', 'bold');
     doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 20, { align: 'center' });
 
+    doc.setFont('courier', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(...GRAY);
-    doc.setFont('helvetica', 'normal');
     doc.text('kBTU / HR', totalX + totalW / 2, footerY + 27, { align: 'center' });
 
     // Offices (fills remaining space)
@@ -322,14 +327,14 @@ export async function exportPDF(svgElement) {
         doc.line(ox, footerY + 3, ox, PAGE_H - MARGIN - 3);
       }
 
+      doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
       doc.setTextColor(...NAVY);
-      doc.setFont('helvetica', 'bold');
       doc.text(office.name, ox + 3, footerY + 7);
 
+      doc.setFont('courier', 'normal');
       doc.setFontSize(6);
       doc.setTextColor(...MID_GRAY);
-      doc.setFont('helvetica', 'normal');
       office.lines.forEach((line, j) => {
         doc.text(line, ox + 3, footerY + 13 + j * 4.5);
       });
