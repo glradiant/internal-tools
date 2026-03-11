@@ -398,7 +398,10 @@ export async function exportPDF(svgElement) {
       });
     });
 
-    doc.save(`${store.projectName || 'layout'}-layout.pdf`);
+    const fileName = store.quoteNumber
+      ? `${store.projectName || 'Layout'} Layout - ${store.quoteNumber}.pdf`
+      : `${store.projectName || 'Layout'} Layout.pdf`;
+    doc.save(fileName);
   } catch (err) {
     console.error('PDF export failed:', err);
     alert('PDF export failed: ' + err.message);
