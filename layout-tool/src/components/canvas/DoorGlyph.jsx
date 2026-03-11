@@ -150,6 +150,9 @@ export default function DoorGlyph({ door, walls, selected }) {
   }
 
   // Overhead door rendering (original)
+  // Apply flip to invert which side the height rectangle appears on
+  const effectiveInwardSign = door.flipV ? -inwardSign : inwardSign;
+
   return (
     <g
       transform={`translate(${centerX},${centerY}) rotate(${angle})`}
@@ -159,7 +162,7 @@ export default function DoorGlyph({ door, walls, selected }) {
       {/* Invisible hit area for easier clicking */}
       <rect
         x={-hw - 10}
-        y={heightPx > 0 ? (inwardSign > 0 ? -15 : -heightPx - 15) : -15}
+        y={heightPx > 0 ? (effectiveInwardSign > 0 ? -15 : -heightPx - 15) : -15}
         width={door.widthPx + 20}
         height={(heightPx > 0 ? heightPx : 0) + 30}
         fill="transparent"
@@ -182,7 +185,7 @@ export default function DoorGlyph({ door, walls, selected }) {
       {heightPx > 0 && (
         <rect
           x={-hw}
-          y={inwardSign > 0 ? 0 : -heightPx}
+          y={effectiveInwardSign > 0 ? 0 : -heightPx}
           width={door.widthPx}
           height={heightPx}
           fill="rgba(255,107,53,0.06)"
@@ -222,7 +225,7 @@ export default function DoorGlyph({ door, walls, selected }) {
           : baseFontSize;
         // Fixed offset from door (12px) plus half font height for proper centering
         const offset = 12 + fontSize * 0.5;
-        const baseY = inwardSign > 0 ? offset : -offset;
+        const baseY = effectiveInwardSign > 0 ? offset : -offset;
         const localY = flip ? -baseY : baseY;
 
         return (

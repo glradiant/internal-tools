@@ -21,9 +21,9 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
 
   // Check if multiple heaters are selected
   const selectedHeaterCount = heaters.filter((h) => selectedIds.includes(h.id)).length;
-  // Check if a man door is selected
-  const selectedManDoor = selectedIds.length === 1
-    ? doors.find((d) => d.id === selectedIds[0] && d.doorType === 'man')
+  // Check if a door is selected
+  const selectedDoor = selectedIds.length === 1
+    ? doors.find((d) => d.id === selectedIds[0])
     : null;
 
   const handleResizeStart = useCallback((e) => {
@@ -87,7 +87,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
       {activeTool === 'man-door' && <ManDoorSettings />}
       {selectedHeaterCount === 1 && <PositionPanel />}
       {selectedHeaterCount >= 2 && <DistributionPanel />}
-      {selectedManDoor && <DoorPositionPanel />}
+      {selectedDoor && <DoorPositionPanel />}
       <div style={{ marginTop: 'auto' }}>
         <SummaryPanel onExportPDF={onExportPDF} />
       </div>

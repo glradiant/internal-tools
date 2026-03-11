@@ -10,7 +10,14 @@ export default function DoorPositionPanel() {
     ? doors.find((d) => d.id === selectedIds[0])
     : null;
 
-  if (!selectedDoor || selectedDoor.doorType !== 'man') {
+  if (!selectedDoor) {
+    return null;
+  }
+
+  const isManDoor = selectedDoor.doorType === 'man';
+  const isOverheadDoor = selectedDoor.doorType === 'overhead';
+
+  if (!isManDoor && !isOverheadDoor) {
     return null;
   }
 
@@ -43,17 +50,19 @@ export default function DoorPositionPanel() {
         Orientation
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          onClick={() => updateDoor(selectedDoor.id, { flipH: !selectedDoor.flipH })}
-          style={buttonStyle}
-        >
-          {'\u2194'} Flip H
-        </button>
+        {isManDoor && (
+          <button
+            onClick={() => updateDoor(selectedDoor.id, { flipH: !selectedDoor.flipH })}
+            style={buttonStyle}
+          >
+            {'\u2194'} Flip H
+          </button>
+        )}
         <button
           onClick={() => updateDoor(selectedDoor.id, { flipV: !selectedDoor.flipV })}
           style={buttonStyle}
         >
-          {'\u2195'} Flip V
+          {'\u2195'} Flip {isOverheadDoor ? 'Side' : 'V'}
         </button>
       </div>
     </div>
