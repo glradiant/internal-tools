@@ -89,13 +89,13 @@ export async function exportPDF(svgElement) {
   const store = useLayoutStore.getState();
   const svgMarkup = prepareSvg(svgElement, store.walls || [], store.heaters || []);
 
-  // Create off-screen container
+  // Create off-screen container (11x17 landscape at 96dpi: 1632px × 1056px)
   const container = document.createElement('div');
   container.style.position = 'fixed';
   container.style.left = '-10000px';
   container.style.top = '0';
-  container.style.width = '1056px';
-  container.style.height = '816px';
+  container.style.width = '1632px';
+  container.style.height = '1056px';
   container.style.overflow = 'hidden';
   container.style.background = 'white';
   document.body.appendChild(container);
@@ -119,16 +119,16 @@ export async function exportPDF(svgElement) {
       logging: false,
     });
 
-    // Create landscape Letter PDF
+    // Create landscape 11x17 (Tabloid) PDF
     const doc = new jsPDF({
       orientation: 'landscape',
       unit: 'mm',
-      format: 'letter',
+      format: 'tabloid',
     });
 
-    // Letter landscape: 279.4mm × 215.9mm
+    // Tabloid landscape: 431.8mm × 279.4mm (17" × 11")
     const imgData = canvas.toDataURL('image/jpeg', 0.95);
-    doc.addImage(imgData, 'JPEG', 0, 0, 279.4, 215.9);
+    doc.addImage(imgData, 'JPEG', 0, 0, 431.8, 279.4);
 
     doc.save(`${store.projectName || 'layout'}-layout.pdf`);
   } catch (err) {

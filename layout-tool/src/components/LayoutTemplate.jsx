@@ -3,7 +3,7 @@ import './LayoutTemplate.css';
 
 /**
  * Full-sheet PDF template component.
- * Rendered off-screen at 1056x816px (11x8.5in at 96dpi) and captured by html2canvas.
+ * Rendered off-screen at 1632x1056px (17x11in at 96dpi) and captured by html2canvas.
  */
 export default function LayoutTemplate({ store, svgMarkup }) {
   // Group heaters by model, count each
