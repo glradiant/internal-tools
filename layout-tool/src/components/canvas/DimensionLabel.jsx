@@ -137,7 +137,7 @@ export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
           textAnchor="middle"
           fontSize={FONT_SIZE}
           fill={dimColor}
-          fontFamily="Helvetica, Arial, sans-serif"
+          fontFamily="courier"
           fontWeight="bold"
         >
           {label}

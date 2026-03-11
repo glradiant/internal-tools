@@ -119,7 +119,7 @@ export default function DoorGlyph({ door, walls, selected }) {
                 textAnchor="middle"
                 fontSize={fontSize}
                 fill={COLORS.doorLabel}
-                fontFamily="Helvetica, Arial, sans-serif"
+                fontFamily="courier"
                 fontWeight="bold"
               >
                 {label}
@@ -205,8 +205,8 @@ export default function DoorGlyph({ door, walls, selected }) {
               textAnchor="middle"
               fontSize={fontSize}
               fill={COLORS.doorLabel}
-              fontFamily="Courier, monospace"
-              fontWeight={600}
+              fontFamily="courier"
+              fontWeight="bold"
             >
               {label}
             </text>
