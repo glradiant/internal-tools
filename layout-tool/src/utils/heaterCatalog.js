@@ -44,11 +44,14 @@ function buildHeaterCatalog() {
     // Old structure: Series/file.svg (e.g., HL3_Series_Drawings/HL3-20-65.svg)
     let categoryId, categoryLabel;
     if (parts.length >= 4) {
-      // New nested structure: use Type/Length as category (e.g., "Straight/20ft")
+      // New nested structure: Series/Type/Length
+      const seriesFolder = parts[0]; // "HL3_Series_Drawings"
       const heaterType = parts[1]; // "Straight" or "U-Bend"
       const lengthFolder = parts[2]; // "20ft", "30ft", etc.
-      categoryId = `${parts[0]}__${heaterType}__${lengthFolder}`;
-      categoryLabel = `${heaterType} ${lengthFolder}`;
+      categoryId = `${seriesFolder}__${heaterType}__${lengthFolder}`;
+      // Extract series name (e.g., "HL3" from "HL3_Series_Drawings")
+      const seriesName = seriesFolder.split('_')[0];
+      categoryLabel = `${seriesName} ${heaterType} ${lengthFolder}`;
     } else {
       // Fallback for flat structure
       categoryId = parts[0];
