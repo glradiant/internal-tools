@@ -95,11 +95,12 @@ function prepareSvgElement(svgElement, walls, heaters, dimensions, targetWidth, 
   return svgClone;
 }
 
-// Colors
-const NAVY = '#1B3557';
-const ORANGE = '#f37021';
-const GRAY = '#8AAABF';
-const MID_GRAY = '#5A7A9A';
+// Colors (RGB values for jsPDF)
+const NAVY = [27, 53, 87];
+const ORANGE = [243, 112, 33];
+const GRAY = [138, 170, 191];
+const MID_GRAY = [90, 122, 154];
+const DARK_NAVY = [15, 30, 48];
 
 /**
  * Export the layout as a vector PDF using jsPDF + svg2pdf.js.
@@ -113,15 +114,15 @@ export async function exportPDF(svgElement) {
   // Page dimensions in mm (11x17 landscape)
   const PAGE_W = 431.8;
   const PAGE_H = 279.4;
-  const MARGIN = 5;
-  const HEADER_H = 18;
-  const FOOTER_H = 24;
+  const MARGIN = 4;
+  const HEADER_H = 20;
+  const FOOTER_H = 26;
 
   // Drawing area
   const DRAW_X = MARGIN;
-  const DRAW_Y = MARGIN + HEADER_H + 1;
+  const DRAW_Y = MARGIN + HEADER_H;
   const DRAW_W = PAGE_W - MARGIN * 2;
-  const DRAW_H = PAGE_H - MARGIN * 2 - HEADER_H - FOOTER_H - 2;
+  const DRAW_H = PAGE_H - MARGIN * 2 - HEADER_H - FOOTER_H;
 
   // Prepare SVG for the drawing area (convert px to mm: 1px ≈ 0.264583mm)
   const svgClone = prepareSvgElement(
@@ -142,8 +143,8 @@ export async function exportPDF(svgElement) {
 
   try {
     // ═══════ BORDER ═══════
-    doc.setDrawColor(NAVY);
-    doc.setLineWidth(0.4);
+    doc.setDrawColor(...NAVY);
+    doc.setLineWidth(0.5);
     doc.rect(MARGIN, MARGIN, PAGE_W - MARGIN * 2, PAGE_H - MARGIN * 2);
 
     // ═══════ HEADER ═══════
@@ -151,72 +152,74 @@ export async function exportPDF(svgElement) {
     const headerH = HEADER_H;
 
     // Header bottom line
-    doc.setLineWidth(0.5);
+    doc.setLineWidth(0.6);
     doc.line(MARGIN, headerY + headerH, PAGE_W - MARGIN, headerY + headerH);
 
     // Logo area (left side)
-    const logoAreaW = 55;
-    doc.setLineWidth(0.3);
-    doc.setDrawColor(ORANGE);
-    doc.line(MARGIN + logoAreaW, headerY, MARGIN + logoAreaW, headerY + headerH);
+    const logoAreaW = 60;
+    doc.setLineWidth(1);
+    doc.setDrawColor(...ORANGE);
+    doc.line(MARGIN + logoAreaW, headerY + 0.5, MARGIN + logoAreaW, headerY + headerH - 0.5);
 
     // Add logo if available
     if (GLR_LOGO_BASE64) {
       try {
-        doc.addImage(GLR_LOGO_BASE64, 'PNG', MARGIN + 3, headerY + 2, 49, 11);
+        doc.addImage(GLR_LOGO_BASE64, 'PNG', MARGIN + 4, headerY + 2.5, 52, 12);
       } catch (e) {
         // Fallback text if logo fails
-        doc.setFontSize(10);
-        doc.setTextColor(NAVY);
-        doc.text('GREAT LAKES RADIANT', MARGIN + 27.5, headerY + 10, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setTextColor(...NAVY);
+        doc.text('GREAT LAKES RADIANT', MARGIN + logoAreaW / 2, headerY + 10, { align: 'center' });
       }
     }
 
     // Contact info under logo
-    doc.setFontSize(5);
-    doc.setTextColor(GRAY);
-    doc.text('sales@glradiant.com  |  www.glradiant.com', MARGIN + 27.5, headerY + 16, { align: 'center' });
+    doc.setFontSize(5.5);
+    doc.setTextColor(...GRAY);
+    doc.text('sales@glradiant.com  |  www.glradiant.com', MARGIN + logoAreaW / 2, headerY + 17.5, { align: 'center' });
 
     // Project title (center)
-    doc.setDrawColor(NAVY);
-    const titleX = MARGIN + logoAreaW + 5;
-    const metaX = PAGE_W - MARGIN - 50;
+    doc.setDrawColor(...NAVY);
+    const titleX = MARGIN + logoAreaW + 6;
+    const metaW = 55;
+    const metaX = PAGE_W - MARGIN - metaW;
 
-    doc.setFontSize(14);
-    doc.setTextColor(NAVY);
+    doc.setFontSize(16);
+    doc.setTextColor(...NAVY);
     doc.setFont('helvetica', 'bold');
-    doc.text(store.projectName || 'Untitled Layout', titleX, headerY + 8);
+    doc.text(store.projectName || 'Untitled Layout', titleX, headerY + 9);
 
-    doc.setFontSize(7);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(MID_GRAY);
+    doc.setTextColor(...MID_GRAY);
     const customerInfo = [store.customerName, store.customerAddress].filter(Boolean).join('  ·  ');
     if (customerInfo) {
-      doc.text(customerInfo, titleX, headerY + 14);
+      doc.text(customerInfo, titleX, headerY + 15);
     }
 
-    // Meta grid (right side) - vertical line
-    doc.setDrawColor(NAVY);
-    doc.setLineWidth(0.2);
-    doc.line(metaX, headerY, metaX, headerY + headerH);
-    doc.line(metaX + 25, headerY, metaX + 25, headerY + headerH);
-    doc.line(metaX, headerY + headerH / 2, PAGE_W - MARGIN, headerY + headerH / 2);
+    // Meta grid (right side)
+    doc.setDrawColor(...NAVY);
+    doc.setLineWidth(0.3);
+    doc.line(metaX, headerY + 0.5, metaX, headerY + headerH - 0.5);
+    doc.line(metaX + metaW / 2, headerY + 0.5, metaX + metaW / 2, headerY + headerH - 0.5);
+    doc.line(metaX, headerY + headerH / 2, PAGE_W - MARGIN - 0.5, headerY + headerH / 2);
 
     // Meta labels and values
     const metaCells = [
-      { label: 'PREPARED BY', value: store.preparedBy || '—', x: metaX + 2, y: headerY + 2 },
-      { label: 'DATE', value: store.date || '—', x: metaX + 27, y: headerY + 2 },
-      { label: 'QUOTE NO.', value: store.quoteNumber || '—', x: metaX + 2, y: headerY + headerH / 2 + 1 },
-      { label: 'SCALE', value: 'As noted', x: metaX + 27, y: headerY + headerH / 2 + 1 },
+      { label: 'PREPARED BY', value: store.preparedBy || '—', x: metaX + 2, y: headerY + 1.5 },
+      { label: 'DATE', value: store.date || '—', x: metaX + metaW / 2 + 2, y: headerY + 1.5 },
+      { label: 'QUOTE NO.', value: store.quoteNumber || '—', x: metaX + 2, y: headerY + headerH / 2 + 0.5 },
+      { label: 'SCALE', value: 'As noted', x: metaX + metaW / 2 + 2, y: headerY + headerH / 2 + 0.5 },
     ];
 
     metaCells.forEach(({ label, value, x, y }) => {
-      doc.setFontSize(4);
-      doc.setTextColor(GRAY);
-      doc.text(label, x, y + 3);
-      doc.setFontSize(7);
-      doc.setTextColor(NAVY);
-      doc.text(value, x, y + 7);
+      doc.setFontSize(5);
+      doc.setTextColor(...GRAY);
+      doc.text(label, x, y + 3.5);
+      doc.setFontSize(8);
+      doc.setTextColor(...NAVY);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, x, y + 8);
     });
 
     // ═══════ DRAWING AREA ═══════
@@ -242,18 +245,18 @@ export async function exportPDF(svgElement) {
     const footerY = PAGE_H - MARGIN - FOOTER_H;
 
     // Footer top line
-    doc.setDrawColor(NAVY);
-    doc.setLineWidth(0.5);
+    doc.setDrawColor(...NAVY);
+    doc.setLineWidth(0.6);
     doc.line(MARGIN, footerY, PAGE_W - MARGIN, footerY);
 
     // Equipment Schedule (left)
-    const scheduleW = 45;
-    doc.setLineWidth(0.2);
-    doc.line(MARGIN + scheduleW, footerY, MARGIN + scheduleW, PAGE_H - MARGIN);
+    const scheduleW = 50;
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
-    doc.setFontSize(4);
-    doc.setTextColor(GRAY);
-    doc.text('EQUIPMENT SCHEDULE', MARGIN + 3, footerY + 4);
+    doc.setFontSize(5);
+    doc.setTextColor(...GRAY);
+    doc.text('EQUIPMENT SCHEDULE', MARGIN + 4, footerY + 5);
 
     // Group heaters by model
     const schedule = Object.values(
@@ -265,43 +268,43 @@ export async function exportPDF(svgElement) {
       }, {})
     );
 
-    doc.setFontSize(6);
-    doc.setTextColor(NAVY);
-    let schedY = footerY + 8;
+    doc.setFontSize(7);
+    let schedY = footerY + 10;
     if (schedule.length === 0) {
-      doc.setTextColor(GRAY);
-      doc.text('No heaters placed', MARGIN + 3, schedY);
+      doc.setTextColor(...GRAY);
+      doc.text('No heaters placed', MARGIN + 4, schedY);
     } else {
       schedule.forEach(({ model, count }) => {
         // Orange swatch
-        doc.setFillColor(ORANGE);
-        doc.rect(MARGIN + 3, schedY - 1.5, 4, 1.5, 'F');
-        doc.setTextColor(NAVY);
-        doc.text(`${count}× ${model.label}`, MARGIN + 9, schedY);
-        schedY += 4;
+        doc.setFillColor(...ORANGE);
+        doc.rect(MARGIN + 4, schedY - 2, 5, 2, 'F');
+        doc.setTextColor(...NAVY);
+        doc.text(`${count}× ${model.label}`, MARGIN + 11, schedY);
+        schedY += 5;
       });
     }
 
     // Total Output (center-left)
     const totalX = MARGIN + scheduleW;
-    const totalW = 25;
-    doc.line(totalX + totalW, footerY, totalX + totalW, PAGE_H - MARGIN);
+    const totalW = 28;
+    doc.setDrawColor(...NAVY);
+    doc.line(totalX + totalW, footerY + 0.5, totalX + totalW, PAGE_H - MARGIN - 0.5);
 
     const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + h.model.kbtu, 0);
 
-    doc.setFontSize(4);
-    doc.setTextColor(GRAY);
-    doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 5, { align: 'center' });
-
-    doc.setFontSize(18);
-    doc.setTextColor(ORANGE);
-    doc.setFont('helvetica', 'bold');
-    doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 14, { align: 'center' });
-
     doc.setFontSize(5);
-    doc.setTextColor(GRAY);
+    doc.setTextColor(...GRAY);
+    doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 6, { align: 'center' });
+
+    doc.setFontSize(22);
+    doc.setTextColor(...ORANGE);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 16, { align: 'center' });
+
+    doc.setFontSize(5.5);
+    doc.setTextColor(...GRAY);
     doc.setFont('helvetica', 'normal');
-    doc.text('kBTU / HR', totalX + totalW / 2, footerY + 19, { align: 'center' });
+    doc.text('kBTU / HR', totalX + totalW / 2, footerY + 22, { align: 'center' });
 
     // Offices (right side, fills remaining width)
     const officesX = totalX + totalW;
@@ -311,20 +314,20 @@ export async function exportPDF(svgElement) {
       const ox = officesX + i * officeW;
       if (i > 0) {
         doc.setDrawColor(200, 210, 220);
-        doc.setLineWidth(0.1);
-        doc.line(ox, footerY + 2, ox, PAGE_H - MARGIN - 2);
+        doc.setLineWidth(0.15);
+        doc.line(ox, footerY + 3, ox, PAGE_H - MARGIN - 3);
       }
 
-      doc.setFontSize(6);
-      doc.setTextColor(NAVY);
+      doc.setFontSize(7);
+      doc.setTextColor(...NAVY);
       doc.setFont('helvetica', 'bold');
-      doc.text(office.name, ox + 3, footerY + 5);
+      doc.text(office.name, ox + 4, footerY + 6);
 
-      doc.setFontSize(5);
-      doc.setTextColor(MID_GRAY);
+      doc.setFontSize(5.5);
+      doc.setTextColor(...MID_GRAY);
       doc.setFont('helvetica', 'normal');
       office.lines.forEach((line, j) => {
-        doc.text(line, ox + 3, footerY + 9 + j * 3.5);
+        doc.text(line, ox + 4, footerY + 11 + j * 4);
       });
     });
 
