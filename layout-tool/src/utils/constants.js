@@ -9,6 +9,12 @@ export const CANVAS_H = 620;
 // This gives: 30' unit → 31' 7 3/8", 20' unit → 21' 11 3/8"
 export const HEATER_SCALE = 0.441;
 
+// Label scale factor - multiplied by the largest drawing dimension (in feet)
+// to determine text/dimension scaling. Adjust this single value to make
+// all labels larger or smaller relative to drawing size.
+// Example: 0.04 means a 50' building gets scale=2.0, 100' building gets scale=4.0
+export const LABEL_SCALE_FACTOR = 0.04;
+
 export const snap = (v) => Math.round(v / GRID) * GRID;
 
 // Re-export heater catalog from centralized location

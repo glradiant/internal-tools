@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { HEATER_MODELS_FROM_SVG } from '../utils/heaterCatalog';
-import { GRID } from '../utils/constants';
+import { GRID, LABEL_SCALE_FACTOR } from '../utils/constants';
 
 // Get the first available model ID, or null if no models
 const getDefaultModelId = () => {
@@ -26,16 +26,15 @@ const getWallsBoundingBox = (walls) => {
 };
 
 // Calculate label scale factor based on drawing size
-// Base: 25 foot drawing = scale 1.0, larger drawings get larger labels
-// This ensures readable labels on large commercial/industrial buildings
-const BASE_EXTENT_FT = 25;
+// Simply: scale = largestDimension(ft) * LABEL_SCALE_FACTOR
+// Adjust LABEL_SCALE_FACTOR in constants.js to tune all label sizes
 const calcLabelScale = (walls) => {
   const bbox = getWallsBoundingBox(walls);
   if (!bbox) return 1;
   const maxExtentPx = Math.max(bbox.width, bbox.height);
   const maxExtentFt = maxExtentPx / GRID;
-  // Scale proportionally, minimum 1.0
-  return Math.max(1, maxExtentFt / BASE_EXTENT_FT);
+  // Direct scaling: larger buildings = larger labels
+  return Math.max(1, maxExtentFt * LABEL_SCALE_FACTOR);
 };
 
 // Helper to extract entity state for history

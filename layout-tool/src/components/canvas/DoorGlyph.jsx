@@ -183,10 +183,13 @@ export default function DoorGlyph({ door, walls, selected }) {
           ? `${door.heightFt}' x ${widthFt}' OVERHEAD DOOR`
           : `${widthFt}' OVERHEAD DOOR`;
         const maxWidth = door.widthPx - 6;
-        const charWidth = 0.62 * labelScale;
-        const naturalWidth = label.length * charWidth;
+        // Scale font with drawing size, but shrink if it would overflow door width
         const baseFontSize = 7 * labelScale;
-        const fontSize = Math.min(baseFontSize, maxWidth / naturalWidth);
+        const charWidthRatio = 0.62; // character width per font size unit
+        const textWidthAtBaseFont = label.length * charWidthRatio * baseFontSize;
+        const fontSize = textWidthAtBaseFont > maxWidth
+          ? maxWidth / (label.length * charWidthRatio)
+          : baseFontSize;
         const baseY = inwardSign > 0 ? 14 * labelScale : -9 * labelScale;
         const localY = flip ? -baseY : baseY;
 
