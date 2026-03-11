@@ -119,8 +119,8 @@ export default function DoorGlyph({ door, walls, selected }) {
                 textAnchor="middle"
                 fontSize={fontSize}
                 fill={COLORS.doorLabel}
-                fontFamily="Courier, monospace"
-                fontWeight={600}
+                fontFamily="Helvetica, Arial, sans-serif"
+                fontWeight="bold"
               >
                 {label}
               </text>
