@@ -26,14 +26,13 @@ export default function Dashboard({ session }) {
 
     if (error) {
       setSaveMessage({ type: 'error', text: error.message });
+      setSaving(false);
     } else {
       setFirstName(formattedFirst);
       setLastName(formattedLast);
-      setSaveMessage({ type: 'success', text: 'Name saved successfully!' });
-      setTimeout(() => setSaveMessage(null), 2000);
+      setSaving(false);
+      setShowSettings(false);
     }
-
-    setSaving(false);
   };
 
   return (

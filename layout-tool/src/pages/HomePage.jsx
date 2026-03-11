@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { formatName } from '../utils/formatName';
@@ -16,6 +16,44 @@ export default function HomePage() {
   const [lastName, setLastName] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('updated_at'); // 'updated_at' | 'customer_name' | 'date'
+  const [sortAsc, setSortAsc] = useState(false);
+
+  // Filter and sort layouts
+  const filteredLayouts = useMemo(() => {
+    let result = [...layouts];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(l =>
+        (l.customer_name || '').toLowerCase().includes(q) ||
+        (l.project_name || '').toLowerCase().includes(q) ||
+        (l.quote_number || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      let aVal, bVal;
+      if (sortBy === 'updated_at') {
+        aVal = new Date(a.updated_at || 0).getTime();
+        bVal = new Date(b.updated_at || 0).getTime();
+      } else if (sortBy === 'customer_name') {
+        aVal = (a.customer_name || '').toLowerCase();
+        bVal = (b.customer_name || '').toLowerCase();
+      } else if (sortBy === 'date') {
+        aVal = a.date || '';
+        bVal = b.date || '';
+      }
+      if (aVal < bVal) return sortAsc ? -1 : 1;
+      if (aVal > bVal) return sortAsc ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [layouts, searchQuery, sortBy, sortAsc]);
 
   // Fetch layouts and user data on mount
   useEffect(() => {
@@ -45,23 +83,22 @@ export default function HomePage() {
 
     if (error) {
       setSaveMessage({ type: 'error', text: error.message });
+      setSaving(false);
     } else {
       setFirstName(formattedFirst);
       setLastName(formattedLast);
       // Also update localStorage so it's used for new layouts
       localStorage.setItem('glr_last_prepared_by', fullName);
-      setSaveMessage({ type: 'success', text: 'Name saved successfully!' });
-      setTimeout(() => setSaveMessage(null), 2000);
+      setSaving(false);
+      setShowSettings(false);
     }
-
-    setSaving(false);
   }
 
   async function fetchLayouts() {
     try {
       const { data, error } = await supabase
         .from('layouts')
-        .select('id, project_name, customer_name, date, updated_at, thumbnail_url')
+        .select('id, project_name, customer_name, quote_number, date, updated_at, thumbnail_url')
         .order('updated_at', { ascending: false });
 
       if (error) {
@@ -227,7 +264,7 @@ export default function HomePage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            marginBottom: 32,
+            marginBottom: 24,
           }}
         >
           <h1
@@ -238,7 +275,7 @@ export default function HomePage() {
               margin: 0,
             }}
           >
-            Recent Layouts
+            Layouts
           </h1>
           <button
             onClick={() => setShowNewModal(true)}
@@ -263,6 +300,73 @@ export default function HomePage() {
           </button>
         </div>
 
+        {/* Search and Sort */}
+        <div style={{ display: 'flex', gap: 12, marginBottom: 24, alignItems: 'center' }}>
+          <div style={{ position: 'relative', flex: 1, maxWidth: 320 }}>
+            <input
+              type="text"
+              placeholder="Search layouts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px 10px 36px',
+                background: 'white',
+                border: '1px solid #E5E9EF',
+                borderRadius: 4,
+                color: '#1B3557',
+                fontSize: 13,
+                fontFamily: 'inherit',
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <svg
+              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1B3557" strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </div>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: '10px 12px',
+              background: 'white',
+              border: '1px solid #E5E9EF',
+              borderRadius: 4,
+              color: '#1B3557',
+              fontSize: 12,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            <option value="updated_at">Last Modified</option>
+            <option value="customer_name">Customer Name</option>
+            <option value="date">Date</option>
+          </select>
+          <button
+            onClick={() => setSortAsc(!sortAsc)}
+            style={{
+              padding: '10px 12px',
+              background: 'white',
+              border: '1px solid #E5E9EF',
+              borderRadius: 4,
+              color: '#1B3557',
+              fontSize: 12,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+            }}
+            title={sortAsc ? 'Ascending' : 'Descending'}
+          >
+            {sortAsc ? '↑' : '↓'}
+          </button>
+        </div>
+
         {/* Loading state */}
         {loading && (
           <div
@@ -277,7 +381,7 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Empty state - no layouts at all */}
         {!loading && layouts.length === 0 && (
           <div
             style={{
@@ -297,8 +401,22 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* No search results */}
+        {!loading && layouts.length > 0 && filteredLayouts.length === 0 && (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: 48,
+              color: '#8AAABF',
+              fontSize: 13,
+            }}
+          >
+            No layouts match your search
+          </div>
+        )}
+
         {/* Layout grid */}
-        {!loading && layouts.length > 0 && (
+        {!loading && filteredLayouts.length > 0 && (
           <div
             style={{
               display: 'grid',
@@ -306,7 +424,7 @@ export default function HomePage() {
               gap: 24,
             }}
           >
-            {layouts.map((layout) => (
+            {filteredLayouts.map((layout) => (
               <LayoutCard
                 key={layout.id}
                 layout={layout}

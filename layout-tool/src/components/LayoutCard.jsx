@@ -107,6 +107,7 @@ export default function LayoutCard({ layout, onClick, onDelete, onDuplicate }) {
           }}
         >
           {layout.customer_name || 'Untitled'}
+          {layout.quote_number && ` - ${layout.quote_number}`}
         </div>
         <div
           style={{
