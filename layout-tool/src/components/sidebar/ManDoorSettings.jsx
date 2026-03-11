@@ -1,10 +1,6 @@
 import useLayoutStore from '../../store/useLayoutStore';
 
 export default function ManDoorSettings() {
-  const doorHingeSide = useLayoutStore((s) => s.doorHingeSide);
-  const doorSwingIn = useLayoutStore((s) => s.doorSwingIn);
-  const toggleDoorHingeSide = useLayoutStore((s) => s.toggleDoorHingeSide);
-  const toggleDoorSwingIn = useLayoutStore((s) => s.toggleDoorSwingIn);
   const manDoorFlipH = useLayoutStore((s) => s.manDoorFlipH);
   const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
   const toggleManDoorFlipH = useLayoutStore((s) => s.toggleManDoorFlipH);
@@ -22,87 +18,9 @@ export default function ManDoorSettings() {
         DOOR SETTINGS
       </div>
 
-      {/* Hinge Side */}
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-        Hinge Side
-      </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-        <button
-          onClick={() => doorHingeSide !== 'left' && toggleDoorHingeSide()}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: doorHingeSide === 'left' ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: doorHingeSide === 'left' ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Left
-        </button>
-        <button
-          onClick={() => doorHingeSide !== 'right' && toggleDoorHingeSide()}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: doorHingeSide === 'right' ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: doorHingeSide === 'right' ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Right
-        </button>
-      </div>
-
-      {/* Swing Direction */}
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-        Swing Direction
-      </div>
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          onClick={() => !doorSwingIn && toggleDoorSwingIn()}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: doorSwingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: doorSwingIn ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Inward
-        </button>
-        <button
-          onClick={() => doorSwingIn && toggleDoorSwingIn()}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: !doorSwingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: !doorSwingIn ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Outward
-        </button>
-      </div>
-
       {/* Flip Controls */}
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginTop: 10, marginBottom: 4 }}>
-        Flip
+      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
+        Orientation
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
         <button
@@ -119,7 +37,7 @@ export default function ManDoorSettings() {
             fontSize: 9,
           }}
         >
-          Flip H
+          {'\u2194'} Flip H
         </button>
         <button
           onClick={toggleManDoorFlipV}
@@ -135,7 +53,7 @@ export default function ManDoorSettings() {
             fontSize: 9,
           }}
         >
-          Flip V
+          {'\u2195'} Flip V
         </button>
       </div>
 

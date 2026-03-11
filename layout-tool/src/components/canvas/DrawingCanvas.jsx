@@ -11,6 +11,7 @@ import DimensionLabel from './DimensionLabel';
 import ManualDimension from './ManualDimension';
 import WallInputOverlay from '../modals/WallInputOverlay';
 import DoorInputOverlay from '../modals/DoorInputOverlay';
+import RectangleInputOverlay from '../modals/RectangleInputOverlay';
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6;
@@ -97,8 +98,6 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const heaterAngle = useLayoutStore((s) => s.heaterAngle);
   const heaterFlipH = useLayoutStore((s) => s.heaterFlipH);
   const heaterFlipV = useLayoutStore((s) => s.heaterFlipV);
-  const doorHingeSide = useLayoutStore((s) => s.doorHingeSide);
-  const doorSwingIn = useLayoutStore((s) => s.doorSwingIn);
   const manDoorFlipH = useLayoutStore((s) => s.manDoorFlipH);
   const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
   const orthoMode = useLayoutStore((s) => s.orthoMode);
@@ -161,6 +160,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Door lock refs (from typed input)
   const doorWidthLock = useRef(null);
   const doorHeightRef = useRef(null);
+  // Rectangle dimension locks
+  const rectangleLocks = useRef({ width: null, height: null });
 
   const selectedModel = getHeaterModel(selectedModelId) || HEATER_MODELS[0];
 
@@ -468,10 +469,29 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       if (!rectangleStart) {
         // First click — set first corner
         setRectangleStart({ x: pos.x, y: pos.y });
+        rectangleLocks.current = { width: null, height: null };
       } else {
         // Second click — create rectangle wall
         const p1 = rectangleStart;
-        const p3 = { x: pos.x, y: pos.y };
+        // Use locked dimensions if set, otherwise use cursor position
+        const locks = rectangleLocks.current;
+        let p3;
+        if (locks.width !== null && locks.height !== null) {
+          const dirX = pos.x >= p1.x ? 1 : -1;
+          const dirY = pos.y >= p1.y ? 1 : -1;
+          p3 = {
+            x: p1.x + locks.width * GRID * dirX,
+            y: p1.y + locks.height * GRID * dirY,
+          };
+        } else if (locks.width !== null) {
+          const dirX = pos.x >= p1.x ? 1 : -1;
+          p3 = { x: p1.x + locks.width * GRID * dirX, y: pos.y };
+        } else if (locks.height !== null) {
+          const dirY = pos.y >= p1.y ? 1 : -1;
+          p3 = { x: pos.x, y: p1.y + locks.height * GRID * dirY };
+        } else {
+          p3 = { x: pos.x, y: pos.y };
+        }
         // Skip if too small
         if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
           const p2 = { x: p3.x, y: p1.y };
@@ -479,6 +499,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           addWall([p1, p2, p3, p4]);
         }
         setRectangleStart(null);
+        rectangleLocks.current = { width: null, height: null };
       }
     } else if (activeTool === 'overhead-door') {
       if (!doorPlacement) {
@@ -549,8 +570,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             doorWidthPx,
             null,
             'man',
-            doorHingeSide,
-            doorSwingIn,
+            'left',  // default hinge side
+            true,    // default swing in
             manDoorFlipH,
             manDoorFlipV
           );
@@ -648,7 +669,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         clearSelection();
       }
     }
-  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste, rectangleStart, doorHingeSide, doorSwingIn, manDoorFlipH, manDoorFlipV, dimensionStart, findNearestSnapPoint, addDimension, wallOffsetMode, heaters, updateHeaterPosition, clearWallOffsetMode, toggleSelection, clearSelection, heaterFlipH, heaterFlipV]);
+  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste, rectangleStart, manDoorFlipH, manDoorFlipV, dimensionStart, findNearestSnapPoint, addDimension, wallOffsetMode, heaters, updateHeaterPosition, clearWallOffsetMode, toggleSelection, clearSelection, heaterFlipH, heaterFlipV]);
 
   // Mouse down — pan or drag
   const handleMouseDown = useCallback((e) => {
@@ -1529,6 +1550,30 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             onConfirm={handleDoorConfirm}
             onWidthLock={(val) => { doorWidthLock.current = val; }}
             onHeightChange={(val) => { doorHeightRef.current = val; }}
+          />
+        );
+      })()}
+
+      {/* Rectangle Input Overlay */}
+      {activeTool === 'rectangle' && rectangleStart && hoverPos && (() => {
+        const screenPos = svgToScreen(hoverPos.x, hoverPos.y);
+        return (
+          <RectangleInputOverlay
+            startPoint={rectangleStart}
+            cursorPoint={hoverPos}
+            screenPos={screenPos}
+            onConfirm={(endPoint) => {
+              const p1 = rectangleStart;
+              const p3 = endPoint;
+              if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+                const p2 = { x: p3.x, y: p1.y };
+                const p4 = { x: p1.x, y: p3.y };
+                addWall([p1, p2, p3, p4]);
+              }
+              setRectangleStart(null);
+              rectangleLocks.current = { width: null, height: null };
+            }}
+            onDimensionsChange={(dims) => { rectangleLocks.current = dims; }}
           />
         );
       })()}

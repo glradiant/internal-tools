@@ -26,87 +26,9 @@ export default function DoorPositionPanel() {
         DOOR SETTINGS
       </div>
 
-      {/* Hinge Side */}
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-        Hinge Side
-      </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-        <button
-          onClick={() => updateDoor(selectedDoor.id, { hingeSide: 'left' })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: selectedDoor.hingeSide === 'left' ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: selectedDoor.hingeSide === 'left' ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Left
-        </button>
-        <button
-          onClick={() => updateDoor(selectedDoor.id, { hingeSide: 'right' })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: selectedDoor.hingeSide === 'right' ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: selectedDoor.hingeSide === 'right' ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Right
-        </button>
-      </div>
-
-      {/* Swing Direction */}
-      <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-        Swing Direction
-      </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-        <button
-          onClick={() => updateDoor(selectedDoor.id, { swingIn: true })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: selectedDoor.swingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: selectedDoor.swingIn ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Inward
-        </button>
-        <button
-          onClick={() => updateDoor(selectedDoor.id, { swingIn: false })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: !selectedDoor.swingIn ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: !selectedDoor.swingIn ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
-          Outward
-        </button>
-      </div>
-
       {/* Flip Controls */}
       <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-        Flip
+        Orientation
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
         <button
@@ -123,7 +45,7 @@ export default function DoorPositionPanel() {
             fontSize: 9,
           }}
         >
-          Flip H
+          {'\u2194'} Flip H
         </button>
         <button
           onClick={() => updateDoor(selectedDoor.id, { flipV: !selectedDoor.flipV })}
@@ -139,7 +61,7 @@ export default function DoorPositionPanel() {
             fontSize: 9,
           }}
         >
-          Flip V
+          {'\u2195'} Flip V
         </button>
       </div>
     </div>

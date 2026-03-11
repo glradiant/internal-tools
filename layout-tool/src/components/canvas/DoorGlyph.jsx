@@ -45,12 +45,12 @@ export default function DoorGlyph({ door, walls, selected }) {
     // Man door rendering - standard architectural symbol
     // Door swings 90 degrees from hinge point
     const doorLen = door.widthPx - 4; // Door panel length (slightly less than opening)
-    const hingeSide = door.hingeSide || 'left';
-    const swingIn = door.swingIn !== undefined ? door.swingIn : true;
-    const hingeX = hingeSide === 'left' ? -hw + 2 : hw - 2; // Hinge position
-    const swingDir = (swingIn ? inwardSign : -inwardSign) * (hingeSide === 'right' ? -1 : 1);
+    // Fixed defaults - use flipH/flipV for visual control
+    const hingeSide = 'left';
+    const hingeX = -hw + 2; // Hinge on left
+    const swingDir = inwardSign; // Always swing inward by default
 
-    // Flip transforms for the door
+    // Flip transforms for the door - these control the visual appearance
     const doorFlipH = door.flipH || false;
     const doorFlipV = door.flipV || false;
     const flipTransform = (doorFlipH || doorFlipV)
@@ -94,10 +94,7 @@ export default function DoorGlyph({ door, walls, selected }) {
 
           {/* 90-degree swing arc from hinge */}
           <path
-            d={hingeSide === 'left'
-              ? `M ${hingeX + doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 0 : 1} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
-              : `M ${hingeX - doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 1 : 0} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
-            }
+            d={`M ${hingeX + doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 0 : 1} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`}
             fill="none"
             stroke={COLORS.wallStroke}
             strokeWidth={0.75}

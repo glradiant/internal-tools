@@ -291,7 +291,7 @@ const useLayoutStore = create((set, get) => ({
     customerAddress: data.customerAddress || '',
     preparedBy: data.preparedBy || '',
     quoteNumber: data.quoteNumber || '',
-    revision: data.revision || '',
+    revision: data.revision || 'A',
     gasType: data.gasType || '',
     date: data.date || '',
     walls: data.walls || [],
