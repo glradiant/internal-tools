@@ -56,6 +56,8 @@ const useLayoutStore = create((set, get) => ({
   customerAddress: '',
   preparedBy: '',
   quoteNumber: '',
+  revision: '',
+  gasType: 'Natural Gas',
   date: new Date().toISOString().slice(0, 10),
 
   walls: [],
@@ -145,6 +147,8 @@ const useLayoutStore = create((set, get) => ({
   setCustomerAddress: (v) => set({ customerAddress: v }),
   setPreparedBy: (v) => set({ preparedBy: v }),
   setQuoteNumber: (v) => set({ quoteNumber: v }),
+  setRevision: (v) => set({ revision: v }),
+  setGasType: (v) => set({ gasType: v }),
   setDate: (date) => set({ date }),
 
   // Wall actions
@@ -279,6 +283,8 @@ const useLayoutStore = create((set, get) => ({
     customerAddress: data.customerAddress || '',
     preparedBy: data.preparedBy || '',
     quoteNumber: data.quoteNumber || '',
+    revision: data.revision || '',
+    gasType: data.gasType || 'Natural Gas',
     date: data.date || '',
     walls: data.walls || [],
     doors: data.doors || [],

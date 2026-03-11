@@ -13,6 +13,8 @@ export default function useAutosave(layoutId) {
   const customerAddress = useLayoutStore((s) => s.customerAddress);
   const preparedBy = useLayoutStore((s) => s.preparedBy);
   const quoteNumber = useLayoutStore((s) => s.quoteNumber);
+  const revision = useLayoutStore((s) => s.revision);
+  const gasType = useLayoutStore((s) => s.gasType);
   const date = useLayoutStore((s) => s.date);
   const walls = useLayoutStore((s) => s.walls);
   const doors = useLayoutStore((s) => s.doors);
@@ -68,6 +70,8 @@ export default function useAutosave(layoutId) {
       customerAddress,
       preparedBy,
       quoteNumber,
+      revision,
+      gasType,
       date,
       walls,
       doors,
@@ -84,6 +88,8 @@ export default function useAutosave(layoutId) {
     customerAddress,
     preparedBy,
     quoteNumber,
+    revision,
+    gasType,
     date,
     walls,
     doors,

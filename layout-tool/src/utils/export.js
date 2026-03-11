@@ -181,8 +181,9 @@ export async function exportPDF(svgElement) {
     // Project title (center)
     doc.setDrawColor(...NAVY);
     const titleX = MARGIN + logoAreaW + 6;
-    const metaW = 55;
+    const metaW = 75; // Wider for 3 columns
     const metaX = PAGE_W - MARGIN - metaW;
+    const colW = metaW / 3;
 
     doc.setFontSize(16);
     doc.setTextColor(...NAVY);
@@ -197,27 +198,30 @@ export async function exportPDF(svgElement) {
       doc.text(customerInfo, titleX, headerY + 15);
     }
 
-    // Meta grid (right side)
+    // Meta grid (right side) - 3 columns x 2 rows
     doc.setDrawColor(...NAVY);
     doc.setLineWidth(0.3);
     doc.line(metaX, headerY + 0.5, metaX, headerY + headerH - 0.5);
-    doc.line(metaX + metaW / 2, headerY + 0.5, metaX + metaW / 2, headerY + headerH - 0.5);
+    doc.line(metaX + colW, headerY + 0.5, metaX + colW, headerY + headerH - 0.5);
+    doc.line(metaX + colW * 2, headerY + 0.5, metaX + colW * 2, headerY + headerH - 0.5);
     doc.line(metaX, headerY + headerH / 2, PAGE_W - MARGIN - 0.5, headerY + headerH / 2);
 
-    // Meta labels and values
+    // Meta labels and values (3 cols x 2 rows)
     const scaleValue = store.showGrid ? `1 div = ${store.gridDivisionFt} ft` : 'Not to scale';
     const metaCells = [
       { label: 'PREPARED BY', value: store.preparedBy || '—', x: metaX + 2, y: headerY + 1.5 },
-      { label: 'DATE', value: store.date || '—', x: metaX + metaW / 2 + 2, y: headerY + 1.5 },
+      { label: 'DATE', value: store.date || '—', x: metaX + colW + 2, y: headerY + 1.5 },
+      { label: 'REVISION', value: store.revision || '—', x: metaX + colW * 2 + 2, y: headerY + 1.5 },
       { label: 'QUOTE NO.', value: store.quoteNumber || '—', x: metaX + 2, y: headerY + headerH / 2 + 0.5 },
-      { label: 'SCALE', value: scaleValue, x: metaX + metaW / 2 + 2, y: headerY + headerH / 2 + 0.5 },
+      { label: 'GAS TYPE', value: store.gasType || '—', x: metaX + colW + 2, y: headerY + headerH / 2 + 0.5 },
+      { label: 'SCALE', value: scaleValue, x: metaX + colW * 2 + 2, y: headerY + headerH / 2 + 0.5 },
     ];
 
     metaCells.forEach(({ label, value, x, y }) => {
-      doc.setFontSize(5);
+      doc.setFontSize(4.5);
       doc.setTextColor(...GRAY);
       doc.text(label, x, y + 3.5);
-      doc.setFontSize(8);
+      doc.setFontSize(7);
       doc.setTextColor(...NAVY);
       doc.setFont('helvetica', 'normal');
       doc.text(value, x, y + 8);
