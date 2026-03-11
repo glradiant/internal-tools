@@ -16,6 +16,62 @@ const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6;
 const INITIAL_ZOOM = 1; // 1 SVG unit = 1 screen pixel at zoom=1
 
+/**
+ * Compute wall stroke segments with door gaps.
+ * Returns array of { x1, y1, x2, y2 } line segments.
+ */
+function getWallSegmentsWithDoorGaps(wall, doors) {
+  const pts = wall.points;
+  const segments = [];
+  const wallDoors = doors.filter(d => d.wallId === wall.id);
+
+  for (let i = 0; i < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[(i + 1) % pts.length];
+    const segLen = Math.hypot(b.x - a.x, b.y - a.y);
+    if (segLen === 0) continue;
+
+    // Find all doors on this segment
+    const segDoors = wallDoors
+      .filter(d => d.segmentIndex === i)
+      .map(d => ({
+        tStart: d.tStart,
+        tEnd: d.tStart + d.widthPx / segLen
+      }))
+      .sort((x, y) => x.tStart - y.tStart);
+
+    if (segDoors.length === 0) {
+      // No doors on this segment - draw full line
+      segments.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
+    } else {
+      // Draw segments between doors
+      let t = 0;
+      for (const door of segDoors) {
+        if (door.tStart > t) {
+          // Draw segment from current position to door start
+          segments.push({
+            x1: a.x + t * (b.x - a.x),
+            y1: a.y + t * (b.y - a.y),
+            x2: a.x + door.tStart * (b.x - a.x),
+            y2: a.y + door.tStart * (b.y - a.y)
+          });
+        }
+        t = Math.min(1, door.tEnd);
+      }
+      // Draw remaining segment after last door
+      if (t < 1) {
+        segments.push({
+          x1: a.x + t * (b.x - a.x),
+          y1: a.y + t * (b.y - a.y),
+          x2: b.x,
+          y2: b.y
+        });
+      }
+    }
+  }
+  return segments;
+}
+
 const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
@@ -907,55 +963,17 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         <line x1={-10} y1={0} x2={10} y2={0} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
         <line x1={0} y1={-10} x2={0} y2={10} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
 
-        {/* Wall masks - cut out door openings */}
-        <defs>
-          {walls.map((wall) => {
-            const wallDoors = doors.filter(d => d.wallId === wall.id);
-            if (wallDoors.length === 0) return null;
-
-            const pts = wall.points;
-            return (
-              <mask key={`mask-${wall.id}`} id={`wall-mask-${wall.id}`}>
-                {/* White background - visible */}
-                <rect x={-100000} y={-100000} width={200000} height={200000} fill="white" />
-                {/* Black rectangles where doors are - cut out */}
-                {wallDoors.map((door) => {
-                  const a = pts[door.segmentIndex];
-                  const b = pts[(door.segmentIndex + 1) % pts.length];
-                  const segLen = Math.hypot(b.x - a.x, b.y - a.y);
-                  if (segLen === 0) return null;
-                  const dx = (b.x - a.x) / segLen;
-                  const dy = (b.y - a.y) / segLen;
-                  const startX = a.x + door.tStart * (b.x - a.x);
-                  const startY = a.y + door.tStart * (b.y - a.y);
-                  const centerX = startX + (door.widthPx / 2) * dx;
-                  const centerY = startY + (door.widthPx / 2) * dy;
-                  const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-                  return (
-                    <rect
-                      key={door.id}
-                      x={-door.widthPx / 2 - 1}
-                      y={-8}
-                      width={door.widthPx + 2}
-                      height={16}
-                      fill="black"
-                      transform={`translate(${centerX},${centerY}) rotate(${angle})`}
-                    />
-                  );
-                })}
-              </mask>
-            );
-          })}
-        </defs>
-
         {/* Completed walls */}
         {walls.map((wall) => {
           const pts = wall.points;
           const pointStr = pts.map((p) => `${p.x},${p.y}`).join(' ');
           const isSelected = selectedIds.includes(wall.id);
           const isOffsetTarget = !!wallOffsetMode;
-          const hasDoors = doors.some(d => d.wallId === wall.id);
-          const maskUrl = hasDoors ? `url(#wall-mask-${wall.id})` : undefined;
+
+          // Get wall segments with door gaps
+          const wallSegments = getWallSegmentsWithDoorGaps(wall, doors);
+          const strokeColor = isSelected ? '#60A5FA' : isOffsetTarget ? '#f37021' : COLORS.wallStroke;
+          const strokeW = isSelected ? 4 : isOffsetTarget ? 4 : 3.5;
 
           // Deduplicate dimensions: only show one label per unique (angle, length) pair
           // This avoids labeling parallel walls of the same length twice
@@ -975,25 +993,30 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
           return (
             <g key={wall.id} data-entity-id={wall.id} data-entity-type="wall">
+              {/* Wall fill */}
               <polygon points={pointStr} fill={COLORS.wallFill} stroke="none" />
-              <g mask={maskUrl}>
-                <polygon
-                  points={pointStr}
-                  fill="none"
-                  stroke={isSelected ? '#60A5FA' : isOffsetTarget ? '#f37021' : COLORS.wallStroke}
-                  strokeWidth={isSelected ? 4 : isOffsetTarget ? 4 : 3.5}
-                  strokeLinejoin="round"
+              {/* Wall stroke segments (with door gaps) */}
+              {wallSegments.map((seg, idx) => (
+                <line
+                  key={`stroke-${idx}`}
+                  x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2}
+                  stroke={strokeColor}
+                  strokeWidth={strokeW}
+                  strokeLinecap="round"
                   style={{ cursor: isOffsetTarget ? 'crosshair' : 'pointer' }}
                 />
-                <polygon
-                  points={pointStr}
-                  fill="none"
+              ))}
+              {/* Wall hatch segments (with door gaps) */}
+              {wallSegments.map((seg, idx) => (
+                <line
+                  key={`hatch-${idx}`}
+                  x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2}
                   stroke={COLORS.wallHatch}
                   strokeWidth={1}
-                  strokeLinejoin="round"
+                  strokeLinecap="round"
                   strokeDasharray="4,4"
                 />
-              </g>
+              ))}
               {showDimensions && pts.map((p, i) => {
                 if (!shouldShowDimension[i]) return null;
                 const q = pts[(i + 1) % pts.length];
