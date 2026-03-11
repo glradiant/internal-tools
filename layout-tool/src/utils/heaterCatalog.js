@@ -38,12 +38,11 @@ function buildHeaterCatalog() {
     const fileName = parts[parts.length - 1];
     const fileNameWithoutExt = fileName.replace('.svg', '');
 
-    // Create a nice label from filename (replace underscores with spaces, clean up)
-    const label = fileNameWithoutExt
-      .replace(/_/g, ' ')
-      .replace(/-/g, ' - ')
-      .replace(/\s+/g, ' ')
-      .trim();
+    // Extract dimensions from SVG for proper scaling
+    const dimensions = extractSvgDimensions(svgContent);
+
+    // Create formatted label from filename
+    const label = formatHeaterLabel(fileNameWithoutExt);
 
     // Create category if it doesn't exist
     if (!categories[categoryFolder]) {
@@ -53,9 +52,6 @@ function buildHeaterCatalog() {
         models: []
       };
     }
-
-    // Extract dimensions from SVG for proper scaling
-    const dimensions = extractSvgDimensions(svgContent);
 
     // Create unique ID from category and filename
     const modelId = `${categoryFolder}__${fileNameWithoutExt}`.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -112,20 +108,60 @@ function extractSvgDimensions(svgContent) {
   };
 }
 
-// Try to extract BTU from filename (e.g., "100" from "U-100")
-function extractKbtu(fileName) {
-  const match = fileName.match(/(\d+)\s*(?:kbtu|btu)?/i);
-  if (match) {
-    const num = parseInt(match[1], 10);
-    // If it looks like a BTU value (>= 50), return it
-    if (num >= 50 && num <= 500) return num;
+// Format heater label for display
+// Converts "HL3-20-65" to "HL3 20' 65kBTU"
+// Converts "HL3-20U-65" to "HL3 20'U 65kBTU"
+function formatHeaterLabel(fileName) {
+  // New naming convention: HL3-20-65, HL3-30U-125, etc.
+  const newFormatMatch = fileName.match(/^([A-Z]+\d*)-(\d+)(U)?-(\d+)$/i);
+  if (newFormatMatch) {
+    const series = newFormatMatch[1].toUpperCase();
+    const length = newFormatMatch[2];
+    const isUtube = newFormatMatch[3] ? 'U' : '';
+    const btu = newFormatMatch[4];
+    return `${series} ${length}'${isUtube} ${btu}kBTU`;
   }
-  return 100; // Default
+
+  // Legacy: clean up filename for display
+  return fileName
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-// Try to extract length from filename (e.g., "10" from "10_ft")
+// Try to extract BTU from filename
+// Handles new naming convention: HL3-20-65, HL3-30U-100, etc.
+// Format: SERIES-LENGTH[U]-BTU where U indicates U-tube
+function extractKbtu(fileName) {
+  // New naming convention: HL3-20-65, HL3-30U-125, etc.
+  // Pattern: series prefix, then length, optional U, then BTU at the end
+  const newFormatMatch = fileName.match(/^[A-Z]+\d*-\d+U?-(\d+)$/i);
+  if (newFormatMatch) {
+    return parseInt(newFormatMatch[1], 10);
+  }
+
+  // Legacy: use the last number in the filename as BTU
+  const allNumbers = fileName.match(/\d+/g);
+  if (allNumbers && allNumbers.length > 0) {
+    return parseInt(allNumbers[allNumbers.length - 1], 10);
+  }
+
+  return 0; // Default - no BTU found
+}
+
+// Try to extract length from filename
+// Handles new naming convention: HL3-20-65, HL3-30U-100, etc.
+// Format: SERIES-LENGTH[U]-BTU where LENGTH is in feet
 function extractLengthFt(fileName, dimensions) {
-  // Look for patterns like "10_ft", "10ft", "10'", "20 ft", "10 ft"
+  // New naming convention: HL3-20-65, HL3-30U-125, etc.
+  // Pattern: series prefix, then length (with optional U suffix), then BTU
+  const newFormatMatch = fileName.match(/^[A-Z]+\d*-(\d+)U?-\d+$/i);
+  if (newFormatMatch) {
+    return parseInt(newFormatMatch[1], 10);
+  }
+
+  // Legacy: Look for patterns like "10_ft", "10ft", "10'", "20 ft", "10 ft"
   const match = fileName.match(/(\d+)\s*(?:ft|'|_ft)/i);
   if (match) {
     return parseInt(match[1], 10);
@@ -137,13 +173,12 @@ function extractLengthFt(fileName, dimensions) {
     return parseInt(spaceMatch[1], 10);
   }
 
-  // Fallback: estimate from aspect ratio (assuming ~1ft = 20px in standard view)
+  // Fallback: estimate from aspect ratio
   if (dimensions.aspectRatio > 1) {
-    // Wide SVG, estimate length - use a reasonable default
-    return Math.min(Math.max(Math.round(dimensions.aspectRatio * 2), 5), 70);
+    return Math.round(dimensions.aspectRatio * 2);
   }
 
-  return 10; // Default length
+  return 0; // Default - no length found
 }
 
 // Build the catalog on module load

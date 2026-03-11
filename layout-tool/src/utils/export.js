@@ -4,7 +4,15 @@ import { createRoot } from 'react-dom/client';
 import { createElement } from 'react';
 import useLayoutStore from '../store/useLayoutStore';
 import LayoutTemplate from '../components/LayoutTemplate';
-import { GRID } from './constants';
+import { GRID, HEATER_SCALE } from './constants';
+
+// Get heater display width from SVG dimensions (matches DrawingCanvas logic)
+function getHeaterDisplayWidth(model) {
+  if (model?.dimensions?.width) {
+    return model.dimensions.width * HEATER_SCALE;
+  }
+  return (model?.lengthFt || 10) * GRID;
+}
 
 /**
  * Compute the bounding box of all entities with margin for dimension lines.
@@ -25,9 +33,11 @@ function computeExtents(walls, heaters) {
   });
 
   heaters.forEach((h) => {
-    const len = (h.model?.lengthFt || 10) * GRID;
-    expand(h.x - len / 2, h.y - len / 2);
-    expand(h.x + len / 2, h.y + len / 2);
+    const width = getHeaterDisplayWidth(h.model);
+    const aspectRatio = h.model?.dimensions?.aspectRatio || 1;
+    const height = width / aspectRatio;
+    expand(h.x - width / 2, h.y - height / 2);
+    expand(h.x + width / 2, h.y + height / 2);
   });
 
   if (minX === Infinity) return null;

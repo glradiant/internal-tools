@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect, forwardRef } from 'react';
 import useLayoutStore from '../../store/useLayoutStore';
-import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel } from '../../utils/constants';
+import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel, HEATER_SCALE } from '../../utils/constants';
 import { findNearestWallSegment, closestOnSegment } from '../../utils/geometry';
 import GridLayer from './GridLayer';
 import NorthArrow from './NorthArrow';
@@ -79,7 +79,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
   const [isPanning, setIsPanning] = useState(false);
   const panStart = useRef({ x: 0, y: 0, originX: 0, originY: 0 });
-  const spaceHeld = useRef(false);
+  const [spaceHeld, setSpaceHeld] = useState(false);
 
   // Wall input overlay lock ref
   const wallInputLocks = useRef({ length: null, angle: null });
@@ -89,10 +89,19 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   const selectedModel = getHeaterModel(selectedModelId) || HEATER_MODELS[0];
 
+  // Get heater display width from SVG dimensions (uses actual drawn size, not tube length)
+  const getHeaterDisplayWidth = useCallback((model) => {
+    // Use SVG's actual width if available, otherwise fall back to lengthFt * GRID
+    if (model?.dimensions?.width) {
+      return model.dimensions.width * HEATER_SCALE;
+    }
+    return (model?.lengthFt || 10) * GRID;
+  }, []);
+
   // Get snap points for heaters - just the centerline points (left end, center, right end)
   // The SVG viewBox includes lots of annotation, so we only snap to the heater centerline
   const getHeaterSnapPoints = useCallback((heater) => {
-    const halfLen = (heater.model?.lengthFt || 10) * GRID / 2;
+    const halfLen = getHeaterDisplayWidth(heater.model) / 2;
     const angleRad = (heater.angleDeg * Math.PI) / 180;
     const cos = Math.cos(angleRad);
     const sin = Math.sin(angleRad);
@@ -113,7 +122,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     points.push({ x: heater.x + halfLen * cos * 0.5, y: heater.y + halfLen * sin * 0.5, label: 'quarter-right' });
 
     return points;
-  }, []);
+  }, [getHeaterDisplayWidth]);
 
   // Find nearest snap point to cursor when in dimension mode
   const findNearestSnapPoint = useCallback((cursorX, cursorY) => {
@@ -467,7 +476,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Mouse down — pan only
   const handleMouseDown = useCallback((e) => {
     // Middle mouse button or space+left click = pan
-    if (e.button === 1 || (e.button === 0 && spaceHeld.current)) {
+    if (e.button === 1 || (e.button === 0 && spaceHeld)) {
       e.preventDefault();
       setIsPanning(true);
       panStart.current = { x: e.clientX, y: e.clientY, originX: viewOrigin.x, originY: viewOrigin.y };
@@ -574,7 +583,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       if (e.key === ' ' && !e.repeat) {
         if (isTyping) return;
         e.preventDefault();
-        spaceHeld.current = true;
+        setSpaceHeld(true);
       }
       if (e.key === 'Escape') {
         if (wallOffsetMode) {
@@ -612,7 +621,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     };
     const handleKeyUp = (e) => {
       if (e.key === ' ') {
-        spaceHeld.current = false;
+        setSpaceHeld(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -642,7 +651,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   // Cursor style
   const cursor = isPanning ? 'grabbing'
-    : spaceHeld.current ? 'grab'
+    : spaceHeld ? 'grab'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
     : activeTool === 'heater' ? 'cell'
@@ -828,9 +837,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
         {/* Heaters */}
         {heaters.map((h) => {
-          // Calculate display height for proper label positioning
+          // Use actual SVG dimensions for proper sizing
+          const displayWidth = getHeaterDisplayWidth(h.model);
           const aspectRatio = h.model.dimensions?.aspectRatio || 1;
-          const displayHeight = (h.model.lengthFt * GRID) / aspectRatio;
+          const displayHeight = displayWidth / aspectRatio;
           const labelOffset = Math.max(14, displayHeight / 2 + 8);
 
           return (
@@ -843,7 +853,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             >
               <HeaterGlyph
                 model={h.model}
-                lengthPx={h.model.lengthFt * GRID}
+                lengthPx={displayWidth}
                 selected={selectedIds.includes(h.id)}
                 preview={false}
                 flipH={h.flipH || false}
@@ -1046,7 +1056,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             opacity={0.45}
             data-no-print="true"
           >
-            <HeaterGlyph model={selectedModel} lengthPx={selectedModel.lengthFt * GRID} selected={false} preview={true} flipH={heaterFlipH} flipV={heaterFlipV} />
+            <HeaterGlyph model={selectedModel} lengthPx={getHeaterDisplayWidth(selectedModel)} selected={false} preview={true} flipH={heaterFlipH} flipV={heaterFlipV} />
           </g>
         )}
 
