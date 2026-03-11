@@ -1,10 +1,20 @@
 import useLayoutStore from '../../store/useLayoutStore';
 
 export default function ManDoorSettings() {
-  const manDoorFlipH = useLayoutStore((s) => s.manDoorFlipH);
-  const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
   const toggleManDoorFlipH = useLayoutStore((s) => s.toggleManDoorFlipH);
   const toggleManDoorFlipV = useLayoutStore((s) => s.toggleManDoorFlipV);
+
+  const buttonStyle = {
+    flex: 1,
+    padding: '6px 0',
+    background: 'rgba(255,255,255,0.05)',
+    border: 'none',
+    borderRadius: 3,
+    color: 'rgba(255,255,255,0.6)',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontSize: 9,
+  };
 
   return (
     <div
@@ -23,36 +33,10 @@ export default function ManDoorSettings() {
         Orientation
       </div>
       <div style={{ display: 'flex', gap: 4 }}>
-        <button
-          onClick={toggleManDoorFlipH}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: manDoorFlipH ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: manDoorFlipH ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
+        <button onClick={toggleManDoorFlipH} style={buttonStyle}>
           {'\u2194'} Flip H
         </button>
-        <button
-          onClick={toggleManDoorFlipV}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: manDoorFlipV ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: manDoorFlipV ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
-        >
+        <button onClick={toggleManDoorFlipV} style={buttonStyle}>
           {'\u2195'} Flip V
         </button>
       </div>

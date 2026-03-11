@@ -14,6 +14,18 @@ export default function DoorPositionPanel() {
     return null;
   }
 
+  const buttonStyle = {
+    flex: 1,
+    padding: '6px 0',
+    background: 'rgba(255,255,255,0.05)',
+    border: 'none',
+    borderRadius: 3,
+    color: 'rgba(255,255,255,0.6)',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    fontSize: 9,
+  };
+
   return (
     <div
       style={{
@@ -33,33 +45,13 @@ export default function DoorPositionPanel() {
       <div style={{ display: 'flex', gap: 4 }}>
         <button
           onClick={() => updateDoor(selectedDoor.id, { flipH: !selectedDoor.flipH })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: selectedDoor.flipH ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: selectedDoor.flipH ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
+          style={buttonStyle}
         >
           {'\u2194'} Flip H
         </button>
         <button
           onClick={() => updateDoor(selectedDoor.id, { flipV: !selectedDoor.flipV })}
-          style={{
-            flex: 1,
-            padding: '6px 0',
-            background: selectedDoor.flipV ? '#f37021' : 'rgba(255,255,255,0.05)',
-            border: 'none',
-            borderRadius: 3,
-            color: selectedDoor.flipV ? 'white' : 'rgba(255,255,255,0.4)',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 9,
-          }}
+          style={buttonStyle}
         >
           {'\u2195'} Flip V
         </button>
