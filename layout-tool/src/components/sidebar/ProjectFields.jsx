@@ -79,8 +79,9 @@ export default function ProjectFields() {
         onChange={(e) => setGasType(e.target.value)}
         style={{ ...inputStyle, marginBottom: 6 }}
       >
-        <option value="Natural Gas">Natural Gas</option>
-        <option value="Propane">Propane</option>
+        <option value="" style={{ color: '#333' }}>-- select gas type --</option>
+        <option value="Natural Gas" style={{ color: '#333' }}>Natural Gas</option>
+        <option value="Propane" style={{ color: '#333' }}>Propane</option>
       </select>
       <input
         type="date"

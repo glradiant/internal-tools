@@ -79,7 +79,8 @@ export const OFFICES = [
 export const TOOLS = [
   { id: 'select', label: 'Select',     icon: '\u2196', hint: 'Select & inspect elements' },
   { id: 'draw',   label: 'Draw Walls', icon: '\u2B21', hint: 'Click points, click origin to close' },
-  { id: 'overhead-door', label: 'Overhead Door', icon: '\u2B1C', hint: 'Click wall to set start, click again to set width' },
+  { id: 'rectangle', label: 'Rectangle', icon: '\u25AD', hint: 'Click to set corners' },
+  { id: 'overhead-door', label: 'Overhead Door', icon: '\u2B1C', hint: 'Click wall to set start, click again to set width, click to set height' },
   { id: 'man-door', label: 'Man Door', icon: '\u25AF', hint: 'Click wall to place door' },
   { id: 'heater', label: 'Heater',     icon: '\u25C9', hint: 'Click canvas to place heater' },
   { id: 'dimension', label: 'Dimension', icon: '\u2194', hint: 'Click two points to add dimension line' },

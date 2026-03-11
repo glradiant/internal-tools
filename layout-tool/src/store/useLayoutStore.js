@@ -56,8 +56,8 @@ const useLayoutStore = create((set, get) => ({
   customerAddress: '',
   preparedBy: '',
   quoteNumber: '',
-  revision: '',
-  gasType: 'Natural Gas',
+  revision: 'A',
+  gasType: '',
   date: new Date().toISOString().slice(0, 10),
 
   walls: [],
@@ -83,6 +83,9 @@ const useLayoutStore = create((set, get) => ({
   heaterFlipV: false,
   doorHingeSide: 'left', // 'left' or 'right'
   doorSwingIn: true, // true = swing into building
+  manDoorFlipH: false, // flip H for next man door placement
+  manDoorFlipV: false, // flip V for next man door placement
+  orthoMode: false, // 90-degree angle lock for drawing
 
   // Push current state to past stack (call before making changes)
   pushHistory: () => set((s) => {
@@ -168,10 +171,10 @@ const useLayoutStore = create((set, get) => ({
   },
 
   // Door actions
-  addDoor: (wallId, segmentIndex, tStart, widthPx, heightFt, doorType = 'overhead', hingeSide = 'left', swingIn = true) => {
+  addDoor: (wallId, segmentIndex, tStart, widthPx, heightFt, doorType = 'overhead', hingeSide = 'left', swingIn = true, flipH = false, flipV = false) => {
     get().pushHistory();
     set((s) => ({
-      doors: [...s.doors, { id: crypto.randomUUID(), wallId, segmentIndex, tStart, widthPx, heightFt: heightFt || null, doorType, hingeSide, swingIn }],
+      doors: [...s.doors, { id: crypto.randomUUID(), wallId, segmentIndex, tStart, widthPx, heightFt: heightFt || null, doorType, hingeSide, swingIn, flipH, flipV }],
     }));
   },
   removeDoor: (id) => {
@@ -236,6 +239,11 @@ const useLayoutStore = create((set, get) => ({
   toggleDoorHingeSide: () => set((s) => ({ doorHingeSide: s.doorHingeSide === 'left' ? 'right' : 'left' })),
   setDoorSwingIn: (swingIn) => set({ doorSwingIn: swingIn }),
   toggleDoorSwingIn: () => set((s) => ({ doorSwingIn: !s.doorSwingIn })),
+  setManDoorFlipH: (flip) => set({ manDoorFlipH: flip }),
+  setManDoorFlipV: (flip) => set({ manDoorFlipV: flip }),
+  toggleManDoorFlipH: () => set((s) => ({ manDoorFlipH: !s.manDoorFlipH })),
+  toggleManDoorFlipV: () => set((s) => ({ manDoorFlipV: !s.manDoorFlipV })),
+  toggleOrthoMode: () => set((s) => ({ orthoMode: !s.orthoMode })),
   toggleDimensions: () => set((s) => ({ showDimensions: !s.showDimensions })),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   setGridDivisionFt: (ft) => set({ gridDivisionFt: ft }),
@@ -284,7 +292,7 @@ const useLayoutStore = create((set, get) => ({
     preparedBy: data.preparedBy || '',
     quoteNumber: data.quoteNumber || '',
     revision: data.revision || '',
-    gasType: data.gasType || 'Natural Gas',
+    gasType: data.gasType || '',
     date: data.date || '',
     walls: data.walls || [],
     doors: data.doors || [],

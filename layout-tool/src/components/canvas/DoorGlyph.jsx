@@ -50,12 +50,29 @@ export default function DoorGlyph({ door, walls, selected }) {
     const hingeX = hingeSide === 'left' ? -hw + 2 : hw - 2; // Hinge position
     const swingDir = (swingIn ? inwardSign : -inwardSign) * (hingeSide === 'right' ? -1 : 1);
 
+    // Flip transforms for the door
+    const doorFlipH = door.flipH || false;
+    const doorFlipV = door.flipV || false;
+    const flipTransform = (doorFlipH || doorFlipV)
+      ? `scale(${doorFlipH ? -1 : 1}, ${doorFlipV ? -1 : 1})`
+      : '';
+
     return (
       <g
         transform={`translate(${centerX},${centerY}) rotate(${angle})`}
         data-entity-id={door.id}
         data-entity-type="door"
       >
+        {/* Invisible hit area for easier clicking */}
+        <rect
+          x={-hw - 10}
+          y={swingDir > 0 ? -doorLen - 15 : -15}
+          width={door.widthPx + 20}
+          height={doorLen + 30}
+          fill="transparent"
+          style={{ cursor: 'pointer' }}
+        />
+
         {selected && (
           <rect
             x={-hw - 4} y={Math.min(-10, -doorLen - 4) * (swingDir > 0 ? 1 : -1) - 4}
@@ -69,35 +86,38 @@ export default function DoorGlyph({ door, walls, selected }) {
           />
         )}
 
-        {/* Door jamb lines */}
-        <line x1={-hw} y1={-7} x2={-hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
-        <line x1={hw} y1={-7} x2={hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
+        {/* Door content with flip transform */}
+        <g transform={flipTransform}>
+          {/* Door jamb lines */}
+          <line x1={-hw} y1={-7} x2={-hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
+          <line x1={hw} y1={-7} x2={hw} y2={7} stroke={COLORS.wallStroke} strokeWidth={2.5} />
 
-        {/* 90-degree swing arc from hinge */}
-        <path
-          d={hingeSide === 'left'
-            ? `M ${hingeX + doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 0 : 1} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
-            : `M ${hingeX - doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 1 : 0} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
-          }
-          fill="none"
-          stroke={COLORS.wallStroke}
-          strokeWidth={0.75}
-          strokeDasharray="3,2"
-          opacity={0.5}
-        />
+          {/* 90-degree swing arc from hinge */}
+          <path
+            d={hingeSide === 'left'
+              ? `M ${hingeX + doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 0 : 1} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
+              : `M ${hingeX - doorLen} 0 A ${doorLen} ${doorLen} 0 0 ${swingDir > 0 ? 1 : 0} ${hingeX} ${swingDir > 0 ? -doorLen : doorLen}`
+            }
+            fill="none"
+            stroke={COLORS.wallStroke}
+            strokeWidth={0.75}
+            strokeDasharray="3,2"
+            opacity={0.5}
+          />
 
-        {/* Door panel in open position (perpendicular to wall) */}
-        <line
-          x1={hingeX} y1={0}
-          x2={hingeX} y2={swingDir > 0 ? -doorLen : doorLen}
-          stroke={COLORS.wallStroke}
-          strokeWidth={1.5}
-        />
+          {/* Door panel in open position (perpendicular to wall) */}
+          <line
+            x1={hingeX} y1={0}
+            x2={hingeX} y2={swingDir > 0 ? -doorLen : doorLen}
+            stroke={COLORS.wallStroke}
+            strokeWidth={1.5}
+          />
 
-        {/* Small hinge indicator */}
-        <circle cx={hingeX} cy={0} r={2} fill={COLORS.wallStroke} />
+          {/* Small hinge indicator */}
+          <circle cx={hingeX} cy={0} r={2} fill={COLORS.wallStroke} />
+        </g>
 
-        {/* Label */}
+        {/* Label (outside flip transform so text stays readable) */}
         {(() => {
           const widthFt = Math.round(door.widthPx / GRID);
           const label = `${widthFt}' MAN DOOR`;
@@ -108,7 +128,9 @@ export default function DoorGlyph({ door, walls, selected }) {
           const fontSize = Math.min(baseFontSize, (maxWidth / naturalWidth) * baseFontSize);
           // Position label just past door swing, with fixed offset plus half font height
           const offset = 8 + fontSize * 0.5;
-          const baseY = swingDir > 0 ? -doorLen - offset : doorLen + offset;
+          // Adjust for flip when calculating label position
+          const effectiveSwingDir = doorFlipV ? -swingDir : swingDir;
+          const baseY = effectiveSwingDir > 0 ? -doorLen - offset : doorLen + offset;
           const localY = flip ? -baseY : baseY;
 
           return (
@@ -138,6 +160,16 @@ export default function DoorGlyph({ door, walls, selected }) {
       data-entity-id={door.id}
       data-entity-type="door"
     >
+      {/* Invisible hit area for easier clicking */}
+      <rect
+        x={-hw - 10}
+        y={heightPx > 0 ? (inwardSign > 0 ? -15 : -heightPx - 15) : -15}
+        width={door.widthPx + 20}
+        height={(heightPx > 0 ? heightPx : 0) + 30}
+        fill="transparent"
+        style={{ cursor: 'pointer' }}
+      />
+
       {selected && (
         <rect
           x={-hw - 4} y={-10}

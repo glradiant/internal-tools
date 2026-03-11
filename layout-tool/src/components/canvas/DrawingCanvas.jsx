@@ -99,6 +99,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const heaterFlipV = useLayoutStore((s) => s.heaterFlipV);
   const doorHingeSide = useLayoutStore((s) => s.doorHingeSide);
   const doorSwingIn = useLayoutStore((s) => s.doorSwingIn);
+  const manDoorFlipH = useLayoutStore((s) => s.manDoorFlipH);
+  const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
+  const orthoMode = useLayoutStore((s) => s.orthoMode);
+  const toggleOrthoMode = useLayoutStore((s) => s.toggleOrthoMode);
   const addWall = useLayoutStore((s) => s.addWall);
   const addDoor = useLayoutStore((s) => s.addDoor);
   const addHeater = useLayoutStore((s) => s.addHeater);
@@ -136,6 +140,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const [dimensionStart, setDimensionStart] = useState(null);
   // Current snap point when hovering in dimension mode
   const [hoverSnapPoint, setHoverSnapPoint] = useState(null);
+  // Rectangle tool state: null | { x, y } (first corner)
+  const [rectangleStart, setRectangleStart] = useState(null);
 
   // Drag state for moving selected elements
   const [isDragging, setIsDragging] = useState(false);
@@ -288,14 +294,19 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     if (locks.length !== null) dist = locks.length * GRID;
     if (locks.angle !== null) angle = (locks.angle * Math.PI) / 180;
 
-    if (locks.length !== null || locks.angle !== null) {
+    // Apply ortho mode: snap angle to nearest 90 degrees if no explicit angle lock
+    if (orthoMode && locks.angle === null) {
+      angle = Math.round(angle / (Math.PI / 2)) * (Math.PI / 2);
+    }
+
+    if (locks.length !== null || locks.angle !== null || orthoMode) {
       return {
         x: snap(anchor.x + dist * Math.cos(angle)),
         y: snap(anchor.y - dist * Math.sin(angle)),
       };
     }
     return cursor;
-  }, []);
+  }, [orthoMode]);
 
   // Mouse move handler
   const handleMouseMove = useCallback((e) => {
@@ -361,33 +372,60 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setHoverSnapPoint(null);
     }
 
-    // Door second-click preview — project cursor along the wall segment
+    // Door placement preview
     if (doorPlacement) {
       const wall = walls.find((w) => w.id === doorPlacement.wallId);
       if (wall) {
         const pts = wall.points;
         const a = pts[doorPlacement.segmentIndex];
         const b = pts[(doorPlacement.segmentIndex + 1) % pts.length];
-        const proj = closestOnSegment(raw.x, raw.y, a.x, a.y, b.x, b.y);
         const segLen = Math.hypot(b.x - a.x, b.y - a.y);
 
-        // If width is locked from typed input, use that instead of cursor projection
-        const lockedW = doorWidthLock.current;
-        let widthPx, effectiveTStart;
-        if (lockedW !== null) {
-          widthPx = lockedW * GRID;
-          effectiveTStart = doorPlacement.startT;
-        } else {
-          widthPx = Math.abs(proj.t - doorPlacement.startT) * segLen;
-          effectiveTStart = Math.min(proj.t, doorPlacement.startT);
-        }
+        if (doorPlacement.phase === 'width' || !doorPlacement.phase) {
+          // Width phase: project cursor along the wall segment
+          const proj = closestOnSegment(raw.x, raw.y, a.x, a.y, b.x, b.y);
 
-        setDoorPlacement((prev) => ({
-          ...prev,
-          currentT: proj.t,
-          currentWidthPx: widthPx,
-          effectiveTStart,
-        }));
+          // If width is locked from typed input, use that instead of cursor projection
+          const lockedW = doorWidthLock.current;
+          let widthPx, effectiveTStart;
+          if (lockedW !== null) {
+            widthPx = lockedW * GRID;
+            effectiveTStart = doorPlacement.startT;
+          } else {
+            widthPx = Math.abs(proj.t - doorPlacement.startT) * segLen;
+            effectiveTStart = Math.min(proj.t, doorPlacement.startT);
+          }
+
+          setDoorPlacement((prev) => ({
+            ...prev,
+            currentT: proj.t,
+            currentWidthPx: widthPx,
+            effectiveTStart,
+          }));
+        } else if (doorPlacement.phase === 'height') {
+          // Height phase: track perpendicular distance from wall
+          const dx = (b.x - a.x) / segLen;
+          const dy = (b.y - a.y) / segLen;
+          // Perpendicular direction (inward)
+          const perpX = -dy;
+          const perpY = dx;
+
+          // Door center position
+          const centerT = doorPlacement.lockedTStart + (doorPlacement.lockedWidthPx / 2) / segLen;
+          const centerX = a.x + centerT * (b.x - a.x);
+          const centerY = a.y + centerT * (b.y - a.y);
+
+          // Calculate perpendicular distance from cursor to wall center
+          const toCursorX = raw.x - centerX;
+          const toCursorY = raw.y - centerY;
+          const perpDist = Math.abs(toCursorX * perpX + toCursorY * perpY);
+          const heightFt = Math.round(perpDist / GRID);
+
+          setDoorPlacement((prev) => ({
+            ...prev,
+            currentHeightFt: heightFt,
+          }));
+        }
       }
     }
   }, [activeTool, currentPath, walls, doorPlacement, getCoords, applyLocks, onHoverPos, isPanning, zoom]);
@@ -426,6 +464,22 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       }
       setCurrentPath((prev) => [...prev, { x: pos.x, y: pos.y }]);
       wallInputLocks.current = { length: null, angle: null };
+    } else if (activeTool === 'rectangle') {
+      if (!rectangleStart) {
+        // First click — set first corner
+        setRectangleStart({ x: pos.x, y: pos.y });
+      } else {
+        // Second click — create rectangle wall
+        const p1 = rectangleStart;
+        const p3 = { x: pos.x, y: pos.y };
+        // Skip if too small
+        if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+          const p2 = { x: p3.x, y: p1.y };
+          const p4 = { x: p1.x, y: p3.y };
+          addWall([p1, p2, p3, p4]);
+        }
+        setRectangleStart(null);
+      }
     } else if (activeTool === 'overhead-door') {
       if (!doorPlacement) {
         // First click — start door placement on nearest wall
@@ -441,24 +495,34 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             currentWidthPx: 0,
             effectiveTStart: nearest.point.t,
             doorType: 'overhead',
+            phase: 'width', // NEW: track phase
           });
           doorWidthLock.current = null;
           doorHeightRef.current = null;
           setHoverWall(null);
         }
-      } else {
-        // Second click — place the door if wide enough
+      } else if (doorPlacement.phase === 'width') {
+        // Second click — finalize width, transition to height phase
         const widthFt = doorPlacement.currentWidthPx / GRID;
         if (widthFt >= 2) {
-          addDoor(
-            doorPlacement.wallId,
-            doorPlacement.segmentIndex,
-            doorPlacement.effectiveTStart,
-            doorPlacement.currentWidthPx,
-            doorHeightRef.current,
-            'overhead'
-          );
+          setDoorPlacement((prev) => ({
+            ...prev,
+            phase: 'height',
+            lockedWidthPx: prev.currentWidthPx,
+            lockedTStart: prev.effectiveTStart,
+            currentHeightFt: 0,
+          }));
         }
+      } else if (doorPlacement.phase === 'height') {
+        // Third click — set height and place door
+        addDoor(
+          doorPlacement.wallId,
+          doorPlacement.segmentIndex,
+          doorPlacement.lockedTStart,
+          doorPlacement.lockedWidthPx,
+          doorPlacement.currentHeightFt || null,
+          'overhead'
+        );
         setDoorPlacement(null);
         doorWidthLock.current = null;
         doorHeightRef.current = null;
@@ -486,7 +550,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
             null,
             'man',
             doorHingeSide,
-            doorSwingIn
+            doorSwingIn,
+            manDoorFlipH,
+            manDoorFlipV
           );
         }
       }
@@ -582,7 +648,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         clearSelection();
       }
     }
-  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste]);
+  }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste, rectangleStart, doorHingeSide, doorSwingIn, manDoorFlipH, manDoorFlipV, dimensionStart, findNearestSnapPoint, addDimension, wallOffsetMode, heaters, updateHeaterPosition, clearWallOffsetMode, toggleSelection, clearSelection, heaterFlipH, heaterFlipV]);
 
   // Mouse down — pan or drag
   const handleMouseDown = useCallback((e) => {
@@ -793,6 +859,14 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         e.preventDefault();
         setSpaceHeld(true);
       }
+
+      // Ortho mode toggle: O key or F8 (like AutoCAD)
+      if ((e.key === 'o' || e.key === 'O' || e.key === 'F8') && !e.ctrlKey && !e.metaKey) {
+        if (isTyping) return;
+        e.preventDefault();
+        toggleOrthoMode();
+        return;
+      }
       if (e.key === 'Escape') {
         if (pasteMode) {
           cancelPaste();
@@ -803,11 +877,32 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           setCurrentPath([]);
           wallInputLocks.current = { length: null, angle: null };
           setActiveTool('select');
+        } else if (activeTool === 'rectangle') {
+          if (rectangleStart) {
+            setRectangleStart(null);
+          } else {
+            setActiveTool('select');
+          }
         } else if (doorPlacement) {
-          setDoorPlacement(null);
-          doorWidthLock.current = null;
-          doorHeightRef.current = null;
-          setActiveTool('select');
+          if (doorPlacement.phase === 'height') {
+            // ESC during height phase: place door with no height
+            addDoor(
+              doorPlacement.wallId,
+              doorPlacement.segmentIndex,
+              doorPlacement.lockedTStart,
+              doorPlacement.lockedWidthPx,
+              null,
+              'overhead'
+            );
+            setDoorPlacement(null);
+            doorWidthLock.current = null;
+            doorHeightRef.current = null;
+          } else {
+            setDoorPlacement(null);
+            doorWidthLock.current = null;
+            doorHeightRef.current = null;
+            setActiveTool('select');
+          }
         } else if (activeTool === 'dimension') {
           setDimensionStart(null);
           setActiveTool('select');
@@ -840,7 +935,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste]);
+  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste, rectangleStart, addDoor, toggleOrthoMode]);
 
   // Clear state when switching tools
   useEffect(() => {
@@ -857,6 +952,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setDimensionStart(null);
       setHoverSnapPoint(null);
     }
+    if (activeTool !== 'rectangle') {
+      setRectangleStart(null);
+    }
   }, [activeTool]);
 
   // Cursor style
@@ -866,6 +964,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     : pasteMode ? 'crosshair'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
+    : activeTool === 'rectangle' ? 'crosshair'
     : activeTool === 'heater' ? 'cell'
     : (activeTool === 'overhead-door' || activeTool === 'man-door') ? 'copy'
     : activeTool === 'dimension' ? 'crosshair'
@@ -1118,16 +1217,40 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           </g>
         )}
 
+        {/* Rectangle preview */}
+        {activeTool === 'rectangle' && rectangleStart && hoverPos && (
+          <g data-no-print="true">
+            <rect
+              x={Math.min(rectangleStart.x, hoverPos.x)}
+              y={Math.min(rectangleStart.y, hoverPos.y)}
+              width={Math.abs(hoverPos.x - rectangleStart.x)}
+              height={Math.abs(hoverPos.y - rectangleStart.y)}
+              fill="rgba(27,53,87,0.06)"
+              stroke={COLORS.wallStroke}
+              strokeWidth={2}
+              strokeDasharray="8,4"
+            />
+            <circle
+              cx={rectangleStart.x} cy={rectangleStart.y}
+              r={6}
+              fill="white"
+              stroke={COLORS.orange}
+              strokeWidth={2}
+            />
+          </g>
+        )}
+
         {/* Door placement preview */}
-        {doorPlacement && doorPlacement.currentWidthPx > 0 && (() => {
+        {doorPlacement && (doorPlacement.currentWidthPx > 0 || doorPlacement.phase === 'height') && (() => {
           const wall = walls.find((w) => w.id === doorPlacement.wallId);
           if (!wall) return null;
           const previewDoor = {
             id: 'preview',
             wallId: doorPlacement.wallId,
             segmentIndex: doorPlacement.segmentIndex,
-            tStart: doorPlacement.effectiveTStart,
-            widthPx: doorPlacement.currentWidthPx,
+            tStart: doorPlacement.phase === 'height' ? doorPlacement.lockedTStart : doorPlacement.effectiveTStart,
+            widthPx: doorPlacement.phase === 'height' ? doorPlacement.lockedWidthPx : doorPlacement.currentWidthPx,
+            heightFt: doorPlacement.phase === 'height' ? doorPlacement.currentHeightFt : null,
           };
           return (
             <g data-no-print="true" opacity={0.6}>

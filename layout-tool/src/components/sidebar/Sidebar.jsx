@@ -5,6 +5,7 @@ import ToolPanel from './ToolPanel';
 import HeaterModelPicker from './HeaterModelPicker';
 import ManDoorSettings from './ManDoorSettings';
 import PositionPanel from './PositionPanel';
+import DoorPositionPanel from './DoorPositionPanel';
 import DistributionPanel from './DistributionPanel';
 import SummaryPanel from './SummaryPanel';
 
@@ -15,10 +16,15 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
   const activeTool = useLayoutStore((s) => s.activeTool);
   const selectedIds = useLayoutStore((s) => s.selectedIds);
   const heaters = useLayoutStore((s) => s.heaters);
+  const doors = useLayoutStore((s) => s.doors);
   const isResizing = useRef(false);
 
   // Check if multiple heaters are selected
   const selectedHeaterCount = heaters.filter((h) => selectedIds.includes(h.id)).length;
+  // Check if a man door is selected
+  const selectedManDoor = selectedIds.length === 1
+    ? doors.find((d) => d.id === selectedIds[0] && d.doorType === 'man')
+    : null;
 
   const handleResizeStart = useCallback((e) => {
     e.preventDefault();
@@ -81,6 +87,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
       {activeTool === 'man-door' && <ManDoorSettings />}
       {selectedHeaterCount === 1 && <PositionPanel />}
       {selectedHeaterCount >= 2 && <DistributionPanel />}
+      {selectedManDoor && <DoorPositionPanel />}
       <div style={{ marginTop: 'auto' }}>
         <SummaryPanel onExportPDF={onExportPDF} />
       </div>
