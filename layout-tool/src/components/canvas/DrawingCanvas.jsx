@@ -957,6 +957,22 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           const hasDoors = doors.some(d => d.wallId === wall.id);
           const maskUrl = hasDoors ? `url(#wall-mask-${wall.id})` : undefined;
 
+          // Deduplicate dimensions: only show one label per unique (angle, length) pair
+          // This avoids labeling parallel walls of the same length twice
+          const seenDimensions = new Set();
+          const shouldShowDimension = pts.map((p, i) => {
+            const q = pts[(i + 1) % pts.length];
+            const len = Math.round(Math.hypot(q.x - p.x, q.y - p.y) / GRID); // length in feet
+            // Normalize angle to 0-180 range (parallel walls differ by 180°)
+            let angle = Math.round(Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI);
+            if (angle < 0) angle += 180;
+            if (angle >= 180) angle -= 180;
+            const key = `${angle}_${len}`;
+            if (seenDimensions.has(key)) return false;
+            seenDimensions.add(key);
+            return true;
+          });
+
           return (
             <g key={wall.id} data-entity-id={wall.id} data-entity-type="wall">
               <polygon points={pointStr} fill={COLORS.wallFill} stroke="none" />
@@ -979,6 +995,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                 />
               </g>
               {showDimensions && pts.map((p, i) => {
+                if (!shouldShowDimension[i]) return null;
                 const q = pts[(i + 1) % pts.length];
                 return <DimensionLabel key={i} ax={p.x} ay={p.y} bx={q.x} by={q.y} wallPoints={pts} />;
               })}
