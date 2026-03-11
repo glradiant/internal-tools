@@ -293,18 +293,23 @@ const useLayoutStore = create((set, get) => ({
   // Copy selected items to clipboard
   copySelected: () => {
     const s = get();
+    const copiedWalls = s.walls.filter(w => s.selectedIds.includes(w.id));
     const copiedHeaters = s.heaters.filter(h => s.selectedIds.includes(h.id));
-    const copiedDoors = s.doors.filter(d => s.selectedIds.includes(d.id));
     const copiedDimensions = s.dimensions.filter(d => s.selectedIds.includes(d.id));
 
-    if (copiedHeaters.length === 0 && copiedDoors.length === 0 && copiedDimensions.length === 0) {
+    // Also copy doors that belong to copied walls
+    const copiedWallIds = copiedWalls.map(w => w.id);
+    const copiedDoors = s.doors.filter(d => copiedWallIds.includes(d.wallId));
+
+    if (copiedWalls.length === 0 && copiedHeaters.length === 0 && copiedDimensions.length === 0) {
       return false;
     }
 
     set({
       clipboard: {
-        heaters: cloneEntityState(copiedHeaters),
+        walls: cloneEntityState(copiedWalls),
         doors: cloneEntityState(copiedDoors),
+        heaters: cloneEntityState(copiedHeaters),
         dimensions: cloneEntityState(copiedDimensions),
       }
     });
@@ -319,25 +324,46 @@ const useLayoutStore = create((set, get) => ({
     get().pushHistory();
 
     const newIds = [];
+    const wallIdMap = {}; // Map old wall IDs to new wall IDs
+
+    // Paste walls
+    const newWalls = (s.clipboard.walls || []).map(w => {
+      const newId = crypto.randomUUID();
+      wallIdMap[w.id] = newId;
+      newIds.push(newId);
+      return {
+        ...w,
+        id: newId,
+        points: w.points.map(p => ({ x: p.x + offsetX, y: p.y + offsetY })),
+      };
+    });
+
+    // Paste doors (with updated wall references)
+    const newDoors = (s.clipboard.doors || []).map(d => {
+      const newWallId = wallIdMap[d.wallId];
+      if (!newWallId) return null; // Skip if parent wall wasn't copied
+      const newId = crypto.randomUUID();
+      // Don't add door IDs to selection (walls are the parent)
+      return { ...d, id: newId, wallId: newWallId };
+    }).filter(Boolean);
 
     // Paste heaters
-    const newHeaters = s.clipboard.heaters.map(h => {
+    const newHeaters = (s.clipboard.heaters || []).map(h => {
       const newId = crypto.randomUUID();
       newIds.push(newId);
       return { ...h, id: newId, x: h.x + offsetX, y: h.y + offsetY };
     });
 
     // Paste dimensions
-    const newDimensions = s.clipboard.dimensions.map(d => {
+    const newDimensions = (s.clipboard.dimensions || []).map(d => {
       const newId = crypto.randomUUID();
       newIds.push(newId);
       return { ...d, id: newId, x1: d.x1 + offsetX, y1: d.y1 + offsetY, x2: d.x2 + offsetX, y2: d.y2 + offsetY };
     });
 
-    // Note: doors are wall-dependent, so we only paste them if walls exist
-    // For now, skip door pasting as it requires wall context
-
     set({
+      walls: [...s.walls, ...newWalls],
+      doors: [...s.doors, ...newDoors],
       heaters: [...s.heaters, ...newHeaters],
       dimensions: [...s.dimensions, ...newDimensions],
       selectedIds: newIds,
