@@ -11,12 +11,23 @@ export default function NewLayoutModal({ onClose, onCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Pre-fill preparedBy from localStorage
+  // Pre-fill preparedBy from localStorage, or fallback to user's full_name from profile
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      setPreparedBy(saved);
+    async function loadPreparedBy() {
+      // First try localStorage
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setPreparedBy(saved);
+        return;
+      }
+
+      // Fallback to user's full_name from metadata
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.full_name) {
+        setPreparedBy(user.user_metadata.full_name);
+      }
     }
+    loadPreparedBy();
   }, []);
 
   async function handleSubmit(e) {

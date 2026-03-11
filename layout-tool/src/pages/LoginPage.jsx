@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { formatName } from '../utils/formatName';
 
 export default function LoginPage() {
   const [mode, setMode] = useState('signin'); // 'signin' | 'signup' | 'forgot'
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,6 +43,13 @@ export default function LoginPage() {
       return;
     }
 
+    // Name validation
+    if (!fullName.trim()) {
+      setError('Please enter your full name.');
+      setLoading(false);
+      return;
+    }
+
     // Password confirmation
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -54,9 +63,17 @@ export default function LoginPage() {
       return;
     }
 
+    // Format the name properly
+    const formattedName = formatName(fullName);
+
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: formattedName,
+        },
+      },
     });
 
     if (authError) {
@@ -66,6 +83,7 @@ export default function LoginPage() {
       setMessage('Check your email to confirm your account.');
       setPassword('');
       setConfirmPassword('');
+      setFullName('');
     }
 
     setLoading(false);
@@ -253,6 +271,18 @@ export default function LoginPage() {
         {/* Sign Up Form */}
         {mode === 'signup' && (
           <form onSubmit={handleSignUp}>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>FULL NAME</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+                placeholder="John Smith"
+                style={inputStyle}
+              />
+            </div>
+
             <div style={{ marginBottom: 16 }}>
               <label style={labelStyle}>EMAIL</label>
               <input
