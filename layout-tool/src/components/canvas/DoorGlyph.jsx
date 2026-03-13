@@ -114,23 +114,30 @@ export default function DoorGlyph({ door, walls, selected }) {
         </g>
 
         {/* Label (outside flip transform so text stays readable) */}
-        {(() => {
+        {(door.labelVisible !== false) && (() => {
           const widthFt = Math.round(door.widthPx / GRID);
-          const label = `${widthFt}' MAN DOOR`;
+          const defaultLabel = `${widthFt}' MAN DOOR`;
+          const label = door.labelText ?? defaultLabel;
           const maxWidth = door.widthPx * 1.5;
           const charWidth = 4.5 * labelScale;
           const naturalWidth = label.length * charWidth;
-          const baseFontSize = 7 * labelScale;
+          const baseFontSize = 7 * labelScale * (1 + (door.labelSizeOffset || 0) * 0.1);
           const fontSize = Math.min(baseFontSize, (maxWidth / naturalWidth) * baseFontSize);
           // Position label just past door swing, with fixed offset plus half font height
           const offset = 8 + fontSize * 0.5;
           // Adjust for flip when calculating label position
           const effectiveSwingDir = doorFlipV ? -swingDir : swingDir;
           const baseY = effectiveSwingDir > 0 ? -doorLen - offset : doorLen + offset;
-          const localY = flip ? -baseY : baseY;
+
+          // Use manual rotation if set, otherwise use auto flip
+          const useManualRotation = door.labelRotation !== null && door.labelRotation !== undefined;
+          const effectiveFlip = useManualRotation ? false : flip;
+          const localY = effectiveFlip ? -baseY : baseY;
 
           return (
-            <g transform={flip ? `rotate(180, 0, 0)` : undefined}>
+            <g transform={useManualRotation
+              ? `rotate(${door.labelRotation}, 0, 0)`
+              : (effectiveFlip ? `rotate(180, 0, 0)` : undefined)}>
               <text
                 x={0}
                 y={localY + fontSize * 0.35}
@@ -210,14 +217,15 @@ export default function DoorGlyph({ door, walls, selected }) {
         />
       ))}
       {/* OVERHEAD DOOR label — AIA convention: reads from bottom or right */}
-      {(() => {
+      {(door.labelVisible !== false) && (() => {
         const widthFt = Math.round(door.widthPx / GRID);
-        const label = door.heightFt
+        const defaultLabel = door.heightFt
           ? `${door.heightFt}' x ${widthFt}' OVERHEAD DOOR`
           : `${widthFt}' OVERHEAD DOOR`;
+        const label = door.labelText ?? defaultLabel;
         const maxWidth = door.widthPx - 6;
         // Scale font with drawing size, but shrink if it would overflow door width
-        const baseFontSize = 7 * labelScale;
+        const baseFontSize = 7 * labelScale * (1 + (door.labelSizeOffset || 0) * 0.1);
         const charWidthRatio = 0.62; // character width per font size unit
         const textWidthAtBaseFont = label.length * charWidthRatio * baseFontSize;
         const fontSize = textWidthAtBaseFont > maxWidth
@@ -226,10 +234,16 @@ export default function DoorGlyph({ door, walls, selected }) {
         // Fixed offset from door (12px) plus half font height for proper centering
         const offset = 12 + fontSize * 0.5;
         const baseY = effectiveInwardSign > 0 ? offset : -offset;
-        const localY = flip ? -baseY : baseY;
+
+        // Use manual rotation if set, otherwise use auto flip
+        const useManualRotation = door.labelRotation !== null && door.labelRotation !== undefined;
+        const effectiveFlip = useManualRotation ? false : flip;
+        const localY = effectiveFlip ? -baseY : baseY;
 
         return (
-          <g transform={flip ? `rotate(180, 0, 0)` : undefined}>
+          <g transform={useManualRotation
+            ? `rotate(${door.labelRotation}, 0, 0)`
+            : (effectiveFlip ? `rotate(180, 0, 0)` : undefined)}>
             <text
               x={0}
               y={localY + fontSize * 0.35}

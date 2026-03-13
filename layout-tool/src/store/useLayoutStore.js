@@ -174,7 +174,24 @@ const useLayoutStore = create((set, get) => ({
   addDoor: (wallId, segmentIndex, tStart, widthPx, heightFt, doorType = 'overhead', hingeSide = 'left', swingIn = true, flipH = false, flipV = false) => {
     get().pushHistory();
     set((s) => ({
-      doors: [...s.doors, { id: crypto.randomUUID(), wallId, segmentIndex, tStart, widthPx, heightFt: heightFt || null, doorType, hingeSide, swingIn, flipH, flipV }],
+      doors: [...s.doors, {
+        id: crypto.randomUUID(),
+        wallId,
+        segmentIndex,
+        tStart,
+        widthPx,
+        heightFt: heightFt || null,
+        doorType,
+        hingeSide,
+        swingIn,
+        flipH,
+        flipV,
+        // Label customization defaults
+        labelText: null,
+        labelSizeOffset: 0,
+        labelRotation: null,
+        labelVisible: true,
+      }],
     }));
   },
   removeDoor: (id) => {
@@ -195,7 +212,20 @@ const useLayoutStore = create((set, get) => ({
   addHeater: (x, y, angleDeg, model, flipH = false, flipV = false) => {
     get().pushHistory();
     set((s) => ({
-      heaters: [...s.heaters, { id: crypto.randomUUID(), x, y, angleDeg, model, flipH, flipV }],
+      heaters: [...s.heaters, {
+        id: crypto.randomUUID(),
+        x,
+        y,
+        angleDeg,
+        model,
+        flipH,
+        flipV,
+        // Label customization defaults
+        labelText: null,
+        labelSizeOffset: 0,
+        labelRotation: null,
+        labelVisible: true,
+      }],
     }));
   },
   removeHeater: (id) => {
@@ -210,6 +240,53 @@ const useLayoutStore = create((set, get) => ({
     set((s) => ({
       heaters: s.heaters.map((h) => h.id === id ? { ...h, ...updates } : h)
     }));
+  },
+
+  // Label customization actions
+  updateEntityLabel: (entityType, id, labelUpdates) => {
+    get().pushHistory();
+    set((s) => {
+      if (entityType === 'heater') {
+        return {
+          heaters: s.heaters.map((h) => h.id === id ? { ...h, ...labelUpdates } : h)
+        };
+      } else if (entityType === 'door') {
+        return {
+          doors: s.doors.map((d) => d.id === id ? { ...d, ...labelUpdates } : d)
+        };
+      } else if (entityType === 'dimension') {
+        return {
+          dimensions: s.dimensions.map((d) => d.id === id ? { ...d, ...labelUpdates } : d)
+        };
+      }
+      return {};
+    });
+  },
+
+  resetEntityLabel: (entityType, id) => {
+    get().pushHistory();
+    const defaults = {
+      labelText: null,
+      labelSizeOffset: 0,
+      labelRotation: null,
+      labelVisible: true,
+    };
+    set((s) => {
+      if (entityType === 'heater') {
+        return {
+          heaters: s.heaters.map((h) => h.id === id ? { ...h, ...defaults } : h)
+        };
+      } else if (entityType === 'door') {
+        return {
+          doors: s.doors.map((d) => d.id === id ? { ...d, ...defaults } : d)
+        };
+      } else if (entityType === 'dimension') {
+        return {
+          dimensions: s.dimensions.map((d) => d.id === id ? { ...d, ...defaults } : d)
+        };
+      }
+      return {};
+    });
   },
 
   // UI actions
@@ -252,7 +329,18 @@ const useLayoutStore = create((set, get) => ({
   addDimension: (x1, y1, x2, y2) => {
     get().pushHistory();
     set((s) => ({
-      dimensions: [...s.dimensions, { id: crypto.randomUUID(), x1, y1, x2, y2 }],
+      dimensions: [...s.dimensions, {
+        id: crypto.randomUUID(),
+        x1,
+        y1,
+        x2,
+        y2,
+        // Label customization defaults
+        labelText: null,
+        labelSizeOffset: 0,
+        labelRotation: null,
+        labelVisible: true,
+      }],
     }));
   },
   removeDimension: (id) => {
@@ -295,9 +383,28 @@ const useLayoutStore = create((set, get) => ({
     gasType: data.gasType || '',
     date: data.date || '',
     walls: data.walls || [],
-    doors: data.doors || [],
-    heaters: data.heaters || [],
-    dimensions: data.dimensions || [],
+    // Add label property defaults for backward compatibility
+    doors: (data.doors || []).map((d) => ({
+      ...d,
+      labelText: d.labelText ?? null,
+      labelSizeOffset: d.labelSizeOffset ?? 0,
+      labelRotation: d.labelRotation ?? null,
+      labelVisible: d.labelVisible ?? true,
+    })),
+    heaters: (data.heaters || []).map((h) => ({
+      ...h,
+      labelText: h.labelText ?? null,
+      labelSizeOffset: h.labelSizeOffset ?? 0,
+      labelRotation: h.labelRotation ?? null,
+      labelVisible: h.labelVisible ?? true,
+    })),
+    dimensions: (data.dimensions || []).map((d) => ({
+      ...d,
+      labelText: d.labelText ?? null,
+      labelSizeOffset: d.labelSizeOffset ?? 0,
+      labelRotation: d.labelRotation ?? null,
+      labelVisible: d.labelVisible ?? true,
+    })),
     selectedIds: [],
     activeTool: 'select',
     // Reset history when loading a new layout

@@ -1182,16 +1182,29 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                 flipH={h.flipH || false}
                 flipV={h.flipV || false}
               />
-              <text
-                y={flipLabel ? -labelOffset : labelOffset}
-                transform={flipLabel ? 'rotate(180)' : undefined}
-                textAnchor="middle"
-                fontSize={heaterFontSize}
-                fill={COLORS.heaterNormal}
-                fontFamily="'DM Mono', monospace"
-              >
-                {h.model.label}
-              </text>
+              {(h.labelVisible !== false) && (() => {
+                const adjustedFontSize = heaterFontSize * (1 + (h.labelSizeOffset || 0) * 0.1);
+                const labelText = h.labelText ?? h.model.label;
+                // Use manual rotation if set, otherwise use auto flip
+                const useManualRotation = h.labelRotation !== null && h.labelRotation !== undefined;
+                const manualRotation = useManualRotation ? h.labelRotation : 0;
+                const effectiveFlipLabel = useManualRotation ? false : flipLabel;
+
+                return (
+                  <text
+                    y={effectiveFlipLabel ? -labelOffset : labelOffset}
+                    transform={useManualRotation
+                      ? `rotate(${manualRotation})`
+                      : (effectiveFlipLabel ? 'rotate(180)' : undefined)}
+                    textAnchor="middle"
+                    fontSize={adjustedFontSize}
+                    fill={COLORS.heaterNormal}
+                    fontFamily="'DM Mono', monospace"
+                  >
+                    {labelText}
+                  </text>
+                );
+              })()}
             </g>
           );
         })}
@@ -1326,6 +1339,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               x2={dim.x2}
               y2={dim.y2}
               selected={selectedIds.includes(dim.id)}
+              labelText={dim.labelText}
+              labelSizeOffset={dim.labelSizeOffset}
+              labelRotation={dim.labelRotation}
+              labelVisible={dim.labelVisible}
             />
           </g>
         ))}

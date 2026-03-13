@@ -7,6 +7,7 @@ import ManDoorSettings from './ManDoorSettings';
 import PositionPanel from './PositionPanel';
 import DoorPositionPanel from './DoorPositionPanel';
 import DistributionPanel from './DistributionPanel';
+import LabelSettingsPanel from './LabelSettingsPanel';
 import SummaryPanel from './SummaryPanel';
 
 const MIN_WIDTH = 200;
@@ -17,6 +18,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
   const selectedIds = useLayoutStore((s) => s.selectedIds);
   const heaters = useLayoutStore((s) => s.heaters);
   const doors = useLayoutStore((s) => s.doors);
+  const dimensions = useLayoutStore((s) => s.dimensions);
   const isResizing = useRef(false);
 
   // Check if multiple heaters are selected
@@ -25,6 +27,12 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
   const selectedDoor = selectedIds.length === 1
     ? doors.find((d) => d.id === selectedIds[0])
     : null;
+  // Check if a single entity (heater, door, or dimension) is selected for label settings
+  const showLabelSettings = selectedIds.length === 1 && (
+    heaters.some((h) => h.id === selectedIds[0]) ||
+    doors.some((d) => d.id === selectedIds[0]) ||
+    dimensions.some((d) => d.id === selectedIds[0])
+  );
 
   const handleResizeStart = useCallback((e) => {
     e.preventDefault();
@@ -90,6 +98,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
         {selectedHeaterCount === 1 && <PositionPanel />}
         {selectedHeaterCount >= 2 && <DistributionPanel />}
         {selectedDoor && <DoorPositionPanel />}
+        {showLabelSettings && <LabelSettingsPanel />}
       </div>
 
       {/* Fixed bottom section */}

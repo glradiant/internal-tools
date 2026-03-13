@@ -4,7 +4,10 @@ import useLayoutStore from '../../store/useLayoutStore';
 /**
  * Renders a manual dimension line between two points.
  */
-export default function ManualDimension({ x1, y1, x2, y2, selected }) {
+export default function ManualDimension({
+  x1, y1, x2, y2, selected,
+  labelText, labelSizeOffset, labelRotation, labelVisible
+}) {
   const labelScale = useLayoutStore((s) => s.getLabelScale());
 
   const dx = x2 - x1;
@@ -38,22 +41,31 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
   const ext2X = x2 + (-Math.sin(angle) * extLen);
   const ext2Y = y2 + (Math.cos(angle) * extLen);
 
-  // Scaled visual parameters
-  const fontSize = 9 * labelScale;
+  // Scaled visual parameters with size offset
+  const sizeMultiplier = 1 + (labelSizeOffset || 0) * 0.1;
+  const fontSize = 9 * labelScale * sizeMultiplier;
   const strokeW = 0.75 * labelScale;
   const dimStrokeW = 1 * labelScale;
-  const labelW = 36 * labelScale;
-  const labelH = 14 * labelScale;
+  const labelW = 36 * labelScale * sizeMultiplier;
+  const labelH = 14 * labelScale * sizeMultiplier;
   const selectRadius = 4 * labelScale;
 
   // Label position (at midpoint of dimension line)
   const labelX = midX + perpX;
   const labelY = midY + perpY;
 
-  // Flip text if it would be upside down (readable from bottom or right)
-  const textAngle = angleDeg >= 90 || angleDeg < -90 ? angleDeg + 180 : angleDeg;
+  // Use manual rotation if set, otherwise flip text if it would be upside down
+  const useManualRotation = labelRotation !== null && labelRotation !== undefined;
+  const autoTextAngle = angleDeg >= 90 || angleDeg < -90 ? angleDeg + 180 : angleDeg;
+  const textAngle = useManualRotation ? labelRotation : autoTextAngle;
 
   const strokeColor = selected ? '#60A5FA' : '#f37021';
+
+  // Default label text
+  const displayText = labelText ?? `${distFt}'`;
+
+  // Check visibility
+  const isVisible = labelVisible !== false;
 
   return (
     <g>
@@ -92,30 +104,35 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
         style={{ cursor: 'pointer' }}
       />
 
-      {/* Label background */}
-      <rect
-        x={labelX - labelW / 2}
-        y={labelY - labelH / 2}
-        width={labelW}
-        height={labelH}
-        fill="white"
-        transform={`rotate(${textAngle}, ${labelX}, ${labelY})`}
-      />
+      {/* Label (only if visible) */}
+      {isVisible && (
+        <>
+          {/* Label background */}
+          <rect
+            x={labelX - labelW / 2}
+            y={labelY - labelH / 2}
+            width={labelW}
+            height={labelH}
+            fill="white"
+            transform={`rotate(${textAngle}, ${labelX}, ${labelY})`}
+          />
 
-      {/* Label */}
-      <text
-        x={labelX}
-        y={labelY}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={fontSize}
-        fontFamily="'DM Mono', monospace"
-        fontWeight={600}
-        fill={strokeColor}
-        transform={`rotate(${textAngle}, ${labelX}, ${labelY})`}
-      >
-        {distFt}'
-      </text>
+          {/* Label */}
+          <text
+            x={labelX}
+            y={labelY}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize={fontSize}
+            fontFamily="'DM Mono', monospace"
+            fontWeight={600}
+            fill={strokeColor}
+            transform={`rotate(${textAngle}, ${labelX}, ${labelY})`}
+          >
+            {displayText}
+          </text>
+        </>
+      )}
 
       {/* Selection indicator */}
       {selected && (
