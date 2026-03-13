@@ -170,7 +170,7 @@ export async function exportPDF(svgElement) {
   const PAGE_H = 279.4;
   const MARGIN = 4;
   const HEADER_H = 20;
-  const FOOTER_H = 42;
+  const FOOTER_H = 39;
 
   // Drawing area
   const DRAW_X = MARGIN;
