@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import useLayoutStore from '../../store/useLayoutStore';
 import { getHeaterModel } from '../../utils/constants';
 
@@ -10,6 +10,7 @@ export default function SummaryPanel({ onExportPDF }) {
   const clearAll = useLayoutStore((s) => s.clearAll);
   const loadLayout = useLayoutStore((s) => s.loadLayout);
   const fileInputRef = useRef(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const totalKbtu = heaters.reduce((s, h) => s + h.model.kbtu, 0);
   const overheadDoors = doors.filter(d => d.doorType !== 'man').length;
@@ -86,14 +87,14 @@ export default function SummaryPanel({ onExportPDF }) {
   ];
 
   const btnStyle = {
-    padding: '6px',
+    padding: '8px 12px',
     background: 'transparent',
-    border: '1px solid rgba(255,255,255,0.15)',
-    color: 'rgba(255,255,255,0.3)',
+    border: '1px solid rgba(255,255,255,0.2)',
+    color: 'rgba(255,255,255,0.6)',
     cursor: 'pointer',
-    borderRadius: 3,
+    borderRadius: 4,
     fontFamily: 'inherit',
-    fontSize: 9,
+    fontSize: 11,
   };
 
   return (
@@ -116,37 +117,124 @@ export default function SummaryPanel({ onExportPDF }) {
         </div>
       ))}
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-        <button onClick={clearAll} style={{ ...btnStyle, flex: 1 }}>
-          CLEAR
+      {/* Primary action - Download PDF */}
+      <button
+        onClick={onExportPDF}
+        style={{
+          width: '100%',
+          padding: '8px 12px',
+          marginTop: 10,
+          background: '#f37021',
+          border: 'none',
+          color: 'white',
+          cursor: 'pointer',
+          borderRadius: 4,
+          fontFamily: 'inherit',
+          fontSize: 11,
+          fontWeight: 500,
+        }}
+      >
+        ↓ Download PDF
+      </button>
+
+      {/* Secondary actions - Export/Import .glr */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+        <button onClick={handleSave} style={{ ...btnStyle, flex: 1 }}>
+          ↓ Export .glr
         </button>
-        <button
-          onClick={onExportPDF}
-          style={{
-            flex: 2,
-            padding: '6px',
-            background: '#f37021',
-            border: 'none',
-            color: 'white',
-            cursor: 'pointer',
-            borderRadius: 3,
-            fontFamily: 'inherit',
-            fontSize: 9,
-            letterSpacing: 1,
-          }}
-        >
-          EXPORT PDF
+        <button onClick={() => fileInputRef.current?.click()} style={{ ...btnStyle, flex: 1 }}>
+          ↑ Import .glr
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-        <button onClick={handleSave} style={{ ...btnStyle, flex: 1 }}>
-          SAVE
-        </button>
-        <button onClick={() => fileInputRef.current?.click()} style={{ ...btnStyle, flex: 1 }}>
-          LOAD
-        </button>
-      </div>
+      {/* Destructive action - Clear Canvas */}
+      <button
+        onClick={() => setShowClearConfirm(true)}
+        style={{
+          width: '100%',
+          padding: '8px 12px',
+          marginTop: 8,
+          background: 'transparent',
+          border: '1px solid rgba(255,255,255,0.1)',
+          color: 'rgba(255,255,255,0.4)',
+          cursor: 'pointer',
+          borderRadius: 4,
+          fontFamily: 'inherit',
+          fontSize: 11,
+        }}
+      >
+        🗑 Clear Canvas
+      </button>
+
+      {/* Clear confirmation dialog */}
+      {showClearConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => setShowClearConfirm(false)}
+        >
+          <div
+            style={{
+              background: '#1B3557',
+              borderRadius: 8,
+              padding: 24,
+              maxWidth: 320,
+              border: '1px solid rgba(255,255,255,0.1)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ color: 'white', fontSize: 14, fontWeight: 500, marginBottom: 8 }}>
+              Clear Canvas?
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 20 }}>
+              This will remove all walls, doors, heaters, and dimensions. This action cannot be undone.
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                style={{
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: 'rgba(255,255,255,0.7)',
+                  cursor: 'pointer',
+                  borderRadius: 4,
+                  fontFamily: 'inherit',
+                  fontSize: 12,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  clearAll();
+                  setShowClearConfirm(false);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: 'transparent',
+                  border: '1px solid #dc2626',
+                  color: '#dc2626',
+                  cursor: 'pointer',
+                  borderRadius: 4,
+                  fontFamily: 'inherit',
+                  fontSize: 12,
+                  fontWeight: 500,
+                }}
+              >
+                Clear Canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <input
         ref={fileInputRef}
