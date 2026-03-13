@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { formatName } from '../utils/formatName';
+import { getHeaterModel } from '../utils/constants';
 import NewLayoutModal from '../components/NewLayoutModal';
 import LayoutCard from '../components/LayoutCard';
 
@@ -19,6 +20,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('updated_at'); // 'updated_at' | 'customer_name' | 'date'
   const [sortAsc, setSortAsc] = useState(false);
+  const importInputRef = useRef(null);
 
   // Filter and sort layouts
   const filteredLayouts = useMemo(() => {
@@ -183,6 +185,62 @@ export default function HomePage() {
     navigate(`/layout/${newLayout.id}`);
   }
 
+  async function handleImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+
+        // Re-hydrate heater models with SVG content from catalog
+        if (data.heaters) {
+          data.heaters = data.heaters.map(h => {
+            const catalogModel = getHeaterModel(h.model?.id);
+            return {
+              ...h,
+              model: catalogModel || h.model
+            };
+          });
+        }
+
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // Create new layout in database
+        const { data: newLayout, error } = await supabase
+          .from('layouts')
+          .insert({
+            user_id: user.id,
+            project_name: data.projectName || 'Imported Layout',
+            customer_name: data.customerName || '',
+            customer_address: data.customerAddress || '',
+            prepared_by: data.preparedBy || '',
+            quote_number: data.quoteNumber || '',
+            date: data.date || new Date().toISOString().slice(0, 10),
+            layout_json: data,
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error importing layout:', error);
+          alert('Failed to import layout.');
+          return;
+        }
+
+        // Navigate to the new layout
+        navigate(`/layout/${newLayout.id}`);
+      } catch {
+        alert('Invalid layout file.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be imported again
+    e.target.value = '';
+  }
+
   return (
     <div
       style={{
@@ -277,27 +335,56 @@ export default function HomePage() {
           >
             Layouts
           </h1>
-          <button
-            onClick={() => setShowNewModal(true)}
-            style={{
-              padding: '10px 20px',
-              background: '#f37021',
-              border: 'none',
-              borderRadius: 4,
-              color: 'white',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: 1,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-            }}
-          >
-            <span style={{ fontSize: 16 }}>+</span>
-            NEW LAYOUT
-          </button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => importInputRef.current?.click()}
+              style={{
+                padding: '10px 20px',
+                background: 'transparent',
+                border: '1px solid #E5E9EF',
+                borderRadius: 4,
+                color: '#1B3557',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: 1,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              ↑ IMPORT
+            </button>
+            <button
+              onClick={() => setShowNewModal(true)}
+              style={{
+                padding: '10px 20px',
+                background: '#f37021',
+                border: 'none',
+                borderRadius: 4,
+                color: 'white',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: 1,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 16 }}>+</span>
+              NEW LAYOUT
+            </button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".glr,.json"
+              onChange={handleImport}
+              style={{ display: 'none' }}
+            />
+          </div>
         </div>
 
         {/* Search and Sort */}
