@@ -50,8 +50,8 @@ export default function ManualDimension({ x1, y1, x2, y2, selected }) {
   const labelX = midX + perpX;
   const labelY = midY + perpY;
 
-  // Flip text if it would be upside down
-  const textAngle = angleDeg > 90 || angleDeg < -90 ? angleDeg + 180 : angleDeg;
+  // Flip text if it would be upside down (readable from bottom or right)
+  const textAngle = angleDeg > 90 || angleDeg <= -90 ? angleDeg + 180 : angleDeg;
 
   const strokeColor = selected ? '#60A5FA' : '#f37021';
 

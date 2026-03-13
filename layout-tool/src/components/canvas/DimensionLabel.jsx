@@ -88,9 +88,10 @@ export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
   const textCY = (dAy + dBy) / 2 + ny * (FONT_SIZE * 0.5 + TEXT_PAD);
 
   // AIA text convention: readable from bottom or right
+  // Flip if angle is in (90°, 270°] so text reads left-to-right or bottom-to-top
   const angleDeg = Math.atan2(dBy - dAy, dBx - dAx) * 180 / Math.PI;
   const normAngle = ((angleDeg % 360) + 360) % 360;
-  const flip = normAngle > 90 && normAngle < 270;
+  const flip = normAngle > 90 && normAngle <= 270;
   const textAngle = flip ? angleDeg + 180 : angleDeg;
 
   const label = `${ft}'`;
