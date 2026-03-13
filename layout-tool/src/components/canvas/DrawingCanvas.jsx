@@ -1233,7 +1233,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
                 // Direction: negative = top (negative Y), positive = bottom (positive Y)
                 const direction = angle < 0 ? -1 : 1;
-                const arrowStartY = direction * (displayHeight / 2 + 5 * labelScale);
+                const arrowStartY = direction * (displayHeight / 2 + 2);
 
                 return (
                   <g>
