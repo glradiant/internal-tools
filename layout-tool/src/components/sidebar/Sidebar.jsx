@@ -81,16 +81,19 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
         </div>
       </div>
 
-      <ProjectFields />
-      <ToolPanel />
-      {activeTool === 'heater' && <HeaterModelPicker />}
-      {activeTool === 'man-door' && <ManDoorSettings />}
-      {selectedHeaterCount === 1 && <PositionPanel />}
-      {selectedHeaterCount >= 2 && <DistributionPanel />}
-      {selectedDoor && <DoorPositionPanel />}
-      <div style={{ marginTop: 'auto' }}>
-        <SummaryPanel onExportPDF={onExportPDF} />
+      {/* Scrollable middle section */}
+      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+        <ProjectFields />
+        <ToolPanel />
+        {activeTool === 'heater' && <HeaterModelPicker />}
+        {activeTool === 'man-door' && <ManDoorSettings />}
+        {selectedHeaterCount === 1 && <PositionPanel />}
+        {selectedHeaterCount >= 2 && <DistributionPanel />}
+        {selectedDoor && <DoorPositionPanel />}
       </div>
+
+      {/* Fixed bottom section */}
+      <SummaryPanel onExportPDF={onExportPDF} />
 
       {/* Resize handle */}
       <div
