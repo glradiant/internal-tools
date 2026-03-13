@@ -318,11 +318,6 @@ export async function exportPDF(svgElement) {
     doc.setLineWidth(0.3);
     doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, footerY + 7);
-
     // Group heaters by model
     const schedule = Object.values(
       (store.heaters || []).reduce((acc, h) => {
@@ -333,9 +328,22 @@ export async function exportPDF(svgElement) {
       }, {})
     );
 
+    // Calculate schedule content height and center vertically
+    const schedTitleH = 4; // Title height
+    const schedItemH = 7; // Height per item
+    const schedGap = 3; // Gap between title and items
+    const schedItemCount = schedule.length === 0 ? 1 : schedule.length;
+    const schedContentH = schedTitleH + schedGap + (schedItemCount * schedItemH);
+    const schedStartY = footerY + (FOOTER_H - schedContentH) / 2;
+
+    doc.setFont('courier', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY);
+    doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, schedStartY + schedTitleH);
+
     doc.setFont('courier', 'normal');
     doc.setFontSize(10);
-    let schedY = footerY + 15;
+    let schedY = schedStartY + schedTitleH + schedGap + 4; // +4 for text baseline
     if (schedule.length === 0) {
       doc.setTextColor(...GRAY);
       doc.text('No heaters placed', MARGIN + 5, schedY);
@@ -346,7 +354,7 @@ export async function exportPDF(svgElement) {
         doc.rect(MARGIN + 5, schedY - 3, 7, 4, 'F');
         doc.setTextColor(...NAVY);
         doc.text(`${count}x ${model.label}`, MARGIN + 14, schedY);
-        schedY += 7;
+        schedY += schedItemH;
       });
     }
 
@@ -367,47 +375,63 @@ export async function exportPDF(svgElement) {
     const formatWatts = (w) => w >= 1000 ? (w / 1000).toFixed(1) : String(w);
     const wattsLabel = totalWatts >= 1000 ? 'kW' : 'W';
 
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 7, { align: 'center' });
+    // Calculate content height and center vertically
+    const totalCenterX = totalX + totalW / 2;
+    const footerCenterY = footerY + FOOTER_H / 2;
 
     if (isMixed) {
-      // Show both values stacked when mixed
+      // Mixed: title + 2 values with units (total ~28mm content)
+      const mixedContentH = 28;
+      const mixedStartY = footerCenterY - mixedContentH / 2;
+
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...GRAY);
+      doc.text('TOTAL OUTPUT', totalCenterX, mixedStartY + 4, { align: 'center' });
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(20);
       doc.setTextColor(...ORANGE);
-      doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 16, { align: 'center' });
+      doc.text(String(totalKbtu), totalCenterX, mixedStartY + 13, { align: 'center' });
 
       doc.setFont('courier', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...GRAY);
-      doc.text('kBTU/HR', totalX + totalW / 2, footerY + 21, { align: 'center' });
+      doc.text('kBTU/HR', totalCenterX, mixedStartY + 18, { align: 'center' });
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(20);
       doc.setTextColor(...ORANGE);
-      doc.text(formatWatts(totalWatts), totalX + totalW / 2, footerY + 28, { align: 'center' });
+      doc.text(formatWatts(totalWatts), totalCenterX, mixedStartY + 25, { align: 'center' });
 
       doc.setFont('courier', 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...GRAY);
-      doc.text(wattsLabel, totalX + totalW / 2, footerY + 33, { align: 'center' });
+      doc.text(wattsLabel, totalCenterX, mixedStartY + 30, { align: 'center' });
     } else {
       // Single value display - watts for electric only, BTU for gas only
       const isElectricOnly = electricCount > 0;
       const outputValue = isElectricOnly ? formatWatts(totalWatts) : String(totalKbtu);
       const outputLabel = isElectricOnly ? wattsLabel : 'kBTU / HR';
 
+      // Single: title + value + unit (~22mm content)
+      const singleContentH = 22;
+      const singleStartY = footerCenterY - singleContentH / 2;
+
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...GRAY);
+      doc.text('TOTAL OUTPUT', totalCenterX, singleStartY + 4, { align: 'center' });
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(32);
       doc.setTextColor(...ORANGE);
-      doc.text(outputValue, totalX + totalW / 2, footerY + 20, { align: 'center' });
+      doc.text(outputValue, totalCenterX, singleStartY + 16, { align: 'center' });
 
       doc.setFont('courier', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(...GRAY);
-      doc.text(outputLabel, totalX + totalW / 2, footerY + 28, { align: 'center' });
+      doc.text(outputLabel, totalCenterX, singleStartY + 24, { align: 'center' });
     }
 
     // Offices (fills remaining space)
@@ -422,16 +446,23 @@ export async function exportPDF(svgElement) {
         doc.line(ox, footerY + 3, ox, PAGE_H - MARGIN - 3);
       }
 
+      // Calculate office content height and center vertically
+      const officeNameH = 5; // Name line height
+      const officeLineH = 5; // Each address line height
+      const officeGap = 2; // Gap between name and address
+      const officeContentH = officeNameH + officeGap + (office.lines.length * officeLineH);
+      const officeStartY = footerY + (FOOTER_H - officeContentH) / 2;
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(...NAVY);
-      doc.text(office.name, ox + 3, footerY + 8);
+      doc.text(office.name, ox + 3, officeStartY + officeNameH);
 
       doc.setFont('courier', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(...MID_GRAY);
       office.lines.forEach((line, j) => {
-        doc.text(line, ox + 3, footerY + 15 + j * 5);
+        doc.text(line, ox + 3, officeStartY + officeNameH + officeGap + (j + 1) * officeLineH);
       });
     });
 
