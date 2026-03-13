@@ -166,35 +166,48 @@ export default function PositionPanel() {
       <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', margin: '12px 0 6px' }}>
         ROTATION
       </div>
-      <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-        {[0, 45, 90, 135].map((a) => (
-          <button
-            key={a}
-            onClick={() => updateHeater(selectedHeater.id, { angleDeg: a })}
-            style={{
-              flex: 1,
-              padding: '5px 0',
-              background: selectedHeater.angleDeg === a ? '#f37021' : 'rgba(255,255,255,0.05)',
-              border: 'none',
-              borderRadius: 3,
-              color: selectedHeater.angleDeg === a ? 'white' : 'rgba(255,255,255,0.4)',
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 9,
-            }}
-          >
-            {a}&deg;
-          </button>
-        ))}
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          onClick={() => updateHeater(selectedHeater.id, { angleDeg: (selectedHeater.angleDeg - 90 + 360) % 360 })}
+          style={{
+            padding: '6px 12px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 3,
+            color: 'rgba(255,255,255,0.6)',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 11,
+          }}
+          title="Rotate 90° left"
+        >
+          ↺
+        </button>
+        <input
+          type="number"
+          min={0}
+          max={360}
+          value={selectedHeater.angleDeg}
+          onChange={(e) => updateHeater(selectedHeater.id, { angleDeg: ((Number(e.target.value) % 360) + 360) % 360 })}
+          style={{ ...inputStyle, flex: 1, textAlign: 'center' }}
+        />
+        <button
+          onClick={() => updateHeater(selectedHeater.id, { angleDeg: (selectedHeater.angleDeg + 90) % 360 })}
+          style={{
+            padding: '6px 12px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 3,
+            color: 'rgba(255,255,255,0.6)',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 11,
+          }}
+          title="Rotate 90° right"
+        >
+          ↻
+        </button>
       </div>
-      <input
-        type="number"
-        min={0}
-        max={360}
-        value={selectedHeater.angleDeg}
-        onChange={(e) => updateHeater(selectedHeater.id, { angleDeg: Number(e.target.value) % 360 })}
-        style={inputStyle}
-      />
 
       {/* Flip Controls */}
       <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', margin: '10px 0 6px' }}>
