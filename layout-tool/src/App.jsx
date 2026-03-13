@@ -3,6 +3,7 @@ import AuthGuard from './components/AuthGuard';
 import HomePage from './pages/HomePage';
 import LayoutCanvas from './pages/LayoutCanvas';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import CalibratePage from './pages/CalibratePage';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/layout/:id" element={<LayoutCanvas />} />
+              <Route path="/calibrate" element={<CalibratePage />} />
             </Routes>
           </AuthGuard>
         }
