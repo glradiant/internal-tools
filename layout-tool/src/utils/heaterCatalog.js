@@ -52,7 +52,7 @@ function buildHeaterCatalog() {
       const lampCount = elxMatch[2]; // "1", "2", "3"
       const lampCountLabel = lampCount === '1' ? '1-Lamp' : lampCount === '2' ? '2-Lamp' : '3-Lamp';
 
-      // Build ELX nested tree: ELX -> Length -> LampCount -> Models
+      // Build ELX nested tree: ELX -> Length -> LampCount -> Voltage -> Models
       if (!nestedTree['ELX']) {
         nestedTree['ELX'] = { id: 'ELX', label: 'ELX', children: {} };
       }
@@ -65,21 +65,11 @@ function buildHeaterCatalog() {
         };
       }
 
-      const categoryId = `ELX__${lengthIn}__${lampCount}`;
       if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel]) {
         nestedTree['ELX'].children[lengthLabel].children[lampCountLabel] = {
-          id: categoryId,
+          id: `ELX__${lengthIn}__${lampCount}`,
           label: lampCountLabel,
-          models: []
-        };
-      }
-
-      // Flat category for backwards compatibility
-      if (!flatCategories[categoryId]) {
-        flatCategories[categoryId] = {
-          id: categoryId,
-          label: `ELX ${lengthIn}" ${lampCountLabel}`,
-          models: []
+          children: {}
         };
       }
 
@@ -89,10 +79,30 @@ function buildHeaterCatalog() {
 
       if (lampSpecs) {
         for (const [voltage, lampTypes] of Object.entries(lampSpecs)) {
+          const categoryId = `ELX__${lengthIn}__${lampCount}__${voltage}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+          // Add voltage level to nested tree
+          if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage]) {
+            nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage] = {
+              id: categoryId,
+              label: voltage,
+              models: []
+            };
+          }
+
+          // Flat category for backwards compatibility
+          if (!flatCategories[categoryId]) {
+            flatCategories[categoryId] = {
+              id: categoryId,
+              label: `ELX ${lengthIn}" ${lampCountLabel} ${voltage}`,
+              models: []
+            };
+          }
+
           for (const [lampType, specs] of Object.entries(lampTypes)) {
             const modelId = `ELX__${lengthIn}__${lampCount}__${voltage}__${lampType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
             const wattsFormatted = specs.watts.toLocaleString();
-            const label = `ELX ${lengthIn}" ${voltage} ${lampType} ${wattsFormatted}W`;
+            const label = `${lampType} ${wattsFormatted}W`;
 
             const model = {
               id: modelId,
@@ -116,7 +126,7 @@ function buildHeaterCatalog() {
               isElectric: true,
             };
 
-            nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].models.push(model);
+            nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage].models.push(model);
             flatCategories[categoryId].models.push(model);
           }
         }
