@@ -19,6 +19,55 @@ const isSeriesElectric = (seriesName) => {
   return specs?.fuelType === 'electric';
 };
 
+/**
+ * Look up clearance data for a gas heater based on series and BTU rating
+ * Returns the clearance configurations object or null if not found
+ */
+function getGasClearances(seriesName, kbtu) {
+  const specs = seriesSpecs[seriesName];
+  if (!specs?.clearances) return null;
+
+  // Find the clearance group that includes this BTU rating
+  for (const [groupKey, groupData] of Object.entries(specs.clearances)) {
+    if (groupKey === 'note') continue;
+
+    // Check if this BTU is in the kbtuRatings array
+    if (groupData.kbtuRatings?.includes(kbtu)) {
+      return groupData.configurations;
+    }
+  }
+  return null;
+}
+
+/**
+ * Look up clearance data for an ELX electric heater
+ * Returns the clearance object or null if not found
+ */
+function getElxClearances(lampCount, lengthIn) {
+  const clearances = elxSpecs.clearances;
+  if (!clearances) return null;
+
+  const lampClearances = clearances[String(lampCount)];
+  if (!lampClearances) return null;
+
+  const lengthClearances = lampClearances[String(lengthIn)];
+  if (!lengthClearances) return null;
+
+  // Convert ELX format to match gas heater format for consistency
+  // ELX uses: front, behind, end, top, below
+  // Gas uses: sideFront, sideBehind, top, below
+  return {
+    '0deg': {
+      mountingAngle: lengthClearances.mountingAngle || 0,
+      sideFront: lengthClearances.front,
+      sideBehind: lengthClearances.behind,
+      end: lengthClearances.end,
+      top: lengthClearances.top,
+      below: lengthClearances.below,
+    }
+  };
+}
+
 // Try multiple path patterns to handle different project structures
 const svgModulesRoot = import.meta.glob('/heater_svgs/**/*.svg', {
   query: '?raw',
@@ -148,6 +197,9 @@ function processElxHeater(match, svgContent, path, dimensions, nestedTree, flatC
         };
       }
 
+      // Look up clearance data for this lamp count and length
+      const clearances = getElxClearances(lampCount, lengthIn);
+
       for (const [lampType, specs] of Object.entries(lampTypes)) {
         const modelId = `ELX__${lengthIn}__${lampCount}__${voltage}__${lampType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
         const wattsFormatted = specs.watts.toLocaleString();
@@ -174,6 +226,8 @@ function processElxHeater(match, svgContent, path, dimensions, nestedTree, flatC
           lengthIn: parseInt(lengthIn, 10),
           lampCount: parseInt(lampCount, 10),
           isElectric: true,
+          // Clearance to combustibles data
+          clearances: clearances,
         };
 
         nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage].models.push(model);
@@ -250,6 +304,9 @@ function processGasHeater(match, parts, svgContent, path, dimensions, nestedTree
     const modelId = `${seriesName}__${lengthFt}${uSuffix}__${kbtu}`.replace(/[^a-zA-Z0-9_-]/g, '_');
     const label = `${seriesName} ${lengthFt}'${uSuffix} ${kbtu}kBTU`;
 
+    // Look up clearance data for this BTU rating
+    const clearances = getGasClearances(seriesName, kbtu);
+
     const model = {
       id: modelId,
       label: label,
@@ -271,6 +328,8 @@ function processGasHeater(match, parts, svgContent, path, dimensions, nestedTree
       mountingHeightMax: btuSpecs.mountingHeightMax,
       combustionChamber: btuSpecs.combustionChamber,
       radiantEmitter: btuSpecs.radiantEmitter,
+      // Clearance to combustibles data
+      clearances: clearances,
     };
 
     nestedTree[seriesName].children[typeName].children[lengthName].models.push(model);

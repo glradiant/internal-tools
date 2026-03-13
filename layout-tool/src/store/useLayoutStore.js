@@ -233,6 +233,8 @@ const useLayoutStore = create((set, get) => ({
         // Heat throw angle: -45, -30, -15, 0, +15, +30, +45
         // Negative = left side, positive = right side, 0 = flat (no arrows)
         heatThrowAngle: 0,
+        // Show clearance to combustibles rectangle
+        showClearance: false,
       }],
     }));
   },
@@ -438,6 +440,7 @@ const useLayoutStore = create((set, get) => ({
       labelRotation: h.labelRotation ?? null,
       labelVisible: h.labelVisible ?? true,
       heatThrowAngle: h.heatThrowAngle ?? 0,
+      showClearance: h.showClearance ?? false,
     })),
     dimensions: (data.dimensions || []).map((d) => ({
       ...d,

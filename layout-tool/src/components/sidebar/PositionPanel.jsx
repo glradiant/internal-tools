@@ -328,6 +328,49 @@ export default function PositionPanel() {
         );
       })()}
 
+      {/* Clearance to Combustibles Toggle */}
+      {selectedHeater.model?.clearances && (
+        <>
+          <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', margin: '12px 0 6px' }}>
+            CLEARANCES
+          </div>
+          <button
+            onClick={() => updateHeater(selectedHeater.id, { showClearance: !selectedHeater.showClearance })}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              background: selectedHeater.showClearance ? 'rgba(255, 0, 0, 0.15)' : 'rgba(255,255,255,0.05)',
+              border: selectedHeater.showClearance ? '1px solid rgba(255, 0, 0, 0.4)' : '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 3,
+              color: selectedHeater.showClearance ? '#ff6b6b' : 'rgba(255,255,255,0.6)',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 9,
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span style={{
+              width: 14,
+              height: 14,
+              borderRadius: 2,
+              border: selectedHeater.showClearance ? '1px solid #ff6b6b' : '1px solid rgba(255,255,255,0.3)',
+              background: selectedHeater.showClearance ? '#ff6b6b' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              color: selectedHeater.showClearance ? 'white' : 'transparent',
+            }}>
+              ✓
+            </span>
+            Show Clearance Zone
+          </button>
+        </>
+      )}
+
       <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>
         {selectedHeater.model?.label}
       </div>
