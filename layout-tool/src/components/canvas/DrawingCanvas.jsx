@@ -1216,6 +1216,58 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                   </text>
                 );
               })()}
+              {/* Heat throw arrows */}
+              {(h.heatThrowAngle !== 0) && (() => {
+                const angle = h.heatThrowAngle || 0;
+                const absAngle = Math.abs(angle);
+                // Arrow size scales with angle: 15°=small, 30°=medium, 45°=large
+                const sizeMultiplier = absAngle / 45; // 0.33, 0.67, 1.0
+                const baseArrowLength = 20 * labelScale;
+                const arrowLength = baseArrowLength * (0.5 + sizeMultiplier * 0.5);
+                const arrowWidth = 6 * labelScale * (0.5 + sizeMultiplier * 0.5);
+                const strokeW = 2 * labelScale * (0.5 + sizeMultiplier * 0.3);
+
+                // Arrow spacing along heater length
+                const arrowCount = 3;
+                const spacing = displayWidth / (arrowCount + 1);
+
+                // Direction: negative = top (negative Y), positive = bottom (positive Y)
+                const direction = angle < 0 ? -1 : 1;
+                const arrowStartY = direction * (displayHeight / 2 - 2);
+
+                return (
+                  <g>
+                    {Array.from({ length: arrowCount }, (_, i) => {
+                      const arrowX = -displayWidth / 2 + spacing * (i + 1);
+                      // Line ends where arrowhead begins (no overlap)
+                      const lineEndY = arrowStartY + direction * (arrowLength - arrowWidth);
+                      const tipY = arrowStartY + direction * arrowLength;
+                      return (
+                        <g key={i}>
+                          {/* Arrow shaft - stops before arrowhead */}
+                          <line
+                            x1={arrowX}
+                            y1={arrowStartY}
+                            x2={arrowX}
+                            y2={lineEndY}
+                            stroke="#dc2626"
+                            strokeWidth={strokeW}
+                          />
+                          {/* Arrow head */}
+                          <polygon
+                            points={`
+                              ${arrowX},${tipY}
+                              ${arrowX - arrowWidth / 2},${lineEndY}
+                              ${arrowX + arrowWidth / 2},${lineEndY}
+                            `}
+                            fill="#dc2626"
+                          />
+                        </g>
+                      );
+                    })}
+                  </g>
+                );
+              })()}
             </g>
           );
         })}

@@ -248,6 +248,86 @@ export default function PositionPanel() {
         </button>
       </div>
 
+      {/* Heat Throw Angle */}
+      <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', margin: '10px 0 6px' }}>
+        HEAT THROW
+      </div>
+      {(() => {
+        const heatThrowAngle = selectedHeater.heatThrowAngle || 0;
+        const steps = [-45, -30, -15, 0, 15, 30, 45];
+        const currentIndex = steps.indexOf(heatThrowAngle);
+        const atMin = currentIndex === 0;
+        const atMax = currentIndex === steps.length - 1;
+
+        const goLeft = () => {
+          if (!atMin) {
+            updateHeater(selectedHeater.id, { heatThrowAngle: steps[currentIndex - 1] });
+          }
+        };
+
+        const goRight = () => {
+          if (!atMax) {
+            updateHeater(selectedHeater.id, { heatThrowAngle: steps[currentIndex + 1] });
+          }
+        };
+
+        const getLabel = () => {
+          if (heatThrowAngle === 0) return 'Flat';
+          const direction = heatThrowAngle < 0 ? 'Left' : 'Right';
+          return `${direction} ${Math.abs(heatThrowAngle)}°`;
+        };
+
+        return (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <button
+              onClick={goLeft}
+              disabled={atMin}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 3,
+                color: atMin ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                cursor: atMin ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 11,
+              }}
+              title="Decrease angle"
+            >
+              ◀
+            </button>
+            <div
+              style={{
+                flex: 1,
+                textAlign: 'center',
+                fontSize: 10,
+                color: heatThrowAngle !== 0 ? '#f37021' : 'rgba(255,255,255,0.5)',
+                fontWeight: heatThrowAngle !== 0 ? 500 : 400,
+              }}
+            >
+              {getLabel()}
+            </div>
+            <button
+              onClick={goRight}
+              disabled={atMax}
+              style={{
+                padding: '6px 10px',
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 3,
+                color: atMax ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                cursor: atMax ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 11,
+              }}
+              title="Increase angle"
+            >
+              ▶
+            </button>
+          </div>
+        );
+      })()}
+
       <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', marginTop: 10 }}>
         {selectedHeater.model?.label}
       </div>
