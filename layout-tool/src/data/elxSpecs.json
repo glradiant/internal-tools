@@ -219,5 +219,23 @@
     "SW": "Short Wave",
     "HO": "H.O. Medium Wave",
     "MW": "Medium Wave"
+  },
+  "clearances": {
+    "note": "All clearances in inches except minMountingHeightFt (feet)",
+    "1": {
+      "24": { "mountingAngle": 0, "front": 16, "behind": 16, "end": 12, "top": 6, "below": 56, "minMountingHeightFt": 6 },
+      "33": { "mountingAngle": 0, "front": 16, "behind": 16, "end": 12, "top": 6, "below": 56, "minMountingHeightFt": 6 },
+      "46": { "mountingAngle": 45, "front": 47, "behind": 4, "end": 12, "top": 10, "below": 40, "minMountingHeightFt": 6 }
+    },
+    "2": {
+      "24": { "mountingAngle": 0, "front": 28, "behind": 28, "end": 26, "top": 6, "below": 86, "minMountingHeightFt": 7.5 },
+      "33": { "mountingAngle": 0, "front": 28, "behind": 28, "end": 26, "top": 6, "below": 86, "minMountingHeightFt": 7.5 },
+      "46": { "mountingAngle": 45, "front": 86, "behind": 4, "end": 26, "top": 10, "below": 86, "minMountingHeightFt": 7.5 }
+    },
+    "3": {
+      "24": { "mountingAngle": 0, "front": 31, "behind": 31, "end": 34, "top": 9, "below": 105, "minMountingHeightFt": 9 },
+      "33": { "mountingAngle": 0, "front": 31, "behind": 31, "end": 34, "top": 9, "below": 105, "minMountingHeightFt": 9 },
+      "46": { "mountingAngle": 45, "front": 105, "behind": 4, "end": 34, "top": 10, "below": 105, "minMountingHeightFt": 9 }
+    }
   }
 }
