@@ -356,7 +356,25 @@ export async function exportPDF(svgElement) {
     doc.setDrawColor(...NAVY);
     doc.line(totalX + totalW, footerY + 0.5, totalX + totalW, PAGE_H - MARGIN - 0.5);
 
-    const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + h.model.kbtu, 0);
+    // Calculate totals for both units
+    const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + (h.model.kbtu || 0), 0);
+    const totalWatts = (store.heaters || []).reduce((sum, h) => sum + (h.model.watts || 0), 0);
+    const electricCount = (store.heaters || []).filter(h => h.model.isElectric).length;
+    const gasCount = (store.heaters || []).length - electricCount;
+
+    // Determine effective unit (auto: watts if more electric than gas)
+    const outputUnit = store.outputUnit || 'auto';
+    const effectiveUnit = outputUnit === 'auto'
+      ? (electricCount > gasCount ? 'watts' : 'btu')
+      : outputUnit;
+
+    // Format output value and label
+    const outputValue = effectiveUnit === 'watts'
+      ? (totalWatts >= 1000 ? (totalWatts / 1000).toFixed(1) : String(totalWatts))
+      : String(totalKbtu);
+    const outputLabel = effectiveUnit === 'watts'
+      ? (totalWatts >= 1000 ? 'kW' : 'WATTS')
+      : 'kBTU / HR';
 
     doc.setFont('courier', 'normal');
     doc.setFontSize(6);
@@ -366,12 +384,12 @@ export async function exportPDF(svgElement) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(28);
     doc.setTextColor(...ORANGE);
-    doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 20, { align: 'center' });
+    doc.text(outputValue, totalX + totalW / 2, footerY + 20, { align: 'center' });
 
     doc.setFont('courier', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(...GRAY);
-    doc.text('kBTU / HR', totalX + totalW / 2, footerY + 27, { align: 'center' });
+    doc.text(outputLabel, totalX + totalW / 2, footerY + 27, { align: 'center' });
 
     // Offices (fills remaining space)
     const officesX = totalX + totalW;
