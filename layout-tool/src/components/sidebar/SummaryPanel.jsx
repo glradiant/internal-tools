@@ -9,8 +9,6 @@ export default function SummaryPanel({ onExportPDF }) {
   const projectName = useLayoutStore((s) => s.projectName);
   const clearAll = useLayoutStore((s) => s.clearAll);
   const loadLayout = useLayoutStore((s) => s.loadLayout);
-  const outputUnit = useLayoutStore((s) => s.outputUnit);
-  const setOutputUnit = useLayoutStore((s) => s.setOutputUnit);
   const fileInputRef = useRef(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
@@ -20,11 +18,6 @@ export default function SummaryPanel({ onExportPDF }) {
   const gasCount = heaters.length - electricCount;
   const overheadDoors = doors.filter(d => d.doorType !== 'man').length;
   const manDoors = doors.filter(d => d.doorType === 'man').length;
-
-  // Determine effective unit (auto: watts if more electric than gas, otherwise BTU)
-  const effectiveUnit = outputUnit === 'auto'
-    ? (electricCount > gasCount ? 'watts' : 'btu')
-    : outputUnit;
 
   const handleSave = () => {
     const state = useLayoutStore.getState();
@@ -49,7 +42,6 @@ export default function SummaryPanel({ onExportPDF }) {
       revision: state.revision,
       gasType: state.gasType,
       date: state.date,
-      outputUnit: state.outputUnit,
       walls: state.walls,
       doors: state.doors,
       heaters: heatersForSave,
@@ -132,36 +124,28 @@ export default function SummaryPanel({ onExportPDF }) {
         </div>
       ))}
 
-      {/* Total Output with unit selector */}
+      {/* Total Output - automatic based on heater types */}
       <div style={{ marginTop: 8, marginBottom: 8, padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: 4 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>Total Output</span>
-          <span style={{ color: '#f37021', fontSize: 12, fontWeight: 600 }}>
-            {effectiveUnit === 'watts' ? formatWatts(totalWatts) : `${totalKbtu} kBTU`}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 4 }}>
-          {['auto', 'btu', 'watts'].map((unit) => (
-            <button
-              key={unit}
-              onClick={() => setOutputUnit(unit)}
-              style={{
-                flex: 1,
-                padding: '4px 6px',
-                background: outputUnit === unit ? '#f37021' : 'rgba(255,255,255,0.05)',
-                border: 'none',
-                borderRadius: 3,
-                color: outputUnit === unit ? 'white' : 'rgba(255,255,255,0.4)',
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontSize: 8,
-                textTransform: 'uppercase',
-              }}
-            >
-              {unit === 'auto' ? `Auto${electricCount > gasCount ? ' (W)' : ' (BTU)'}` : unit}
-            </button>
-          ))}
-        </div>
+        <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', marginBottom: 4 }}>Total Output</div>
+        {/* Show both values if mixed heater types */}
+        {electricCount > 0 && gasCount > 0 ? (
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#f37021', fontSize: 14, fontWeight: 600 }}>{totalKbtu}</div>
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>kBTU</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#f37021', fontSize: 14, fontWeight: 600 }}>{formatWatts(totalWatts)}</div>
+              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>Electric</div>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <span style={{ color: '#f37021', fontSize: 14, fontWeight: 600 }}>
+              {electricCount > 0 ? formatWatts(totalWatts) : `${totalKbtu} kBTU`}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Primary action - Download PDF */}

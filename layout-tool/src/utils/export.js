@@ -361,35 +361,54 @@ export async function exportPDF(svgElement) {
     const totalWatts = (store.heaters || []).reduce((sum, h) => sum + (h.model.watts || 0), 0);
     const electricCount = (store.heaters || []).filter(h => h.model.isElectric).length;
     const gasCount = (store.heaters || []).length - electricCount;
+    const isMixed = electricCount > 0 && gasCount > 0;
 
-    // Determine effective unit (auto: watts if more electric than gas)
-    const outputUnit = store.outputUnit || 'auto';
-    const effectiveUnit = outputUnit === 'auto'
-      ? (electricCount > gasCount ? 'watts' : 'btu')
-      : outputUnit;
-
-    // Format output value and label
-    const outputValue = effectiveUnit === 'watts'
-      ? (totalWatts >= 1000 ? (totalWatts / 1000).toFixed(1) : String(totalWatts))
-      : String(totalKbtu);
-    const outputLabel = effectiveUnit === 'watts'
-      ? (totalWatts >= 1000 ? 'kW' : 'WATTS')
-      : 'kBTU / HR';
+    // Format watts for display
+    const formatWatts = (w) => w >= 1000 ? (w / 1000).toFixed(1) : String(w);
+    const wattsLabel = totalWatts >= 1000 ? 'kW' : 'W';
 
     doc.setFont('courier', 'normal');
     doc.setFontSize(6);
     doc.setTextColor(...GRAY);
     doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 7, { align: 'center' });
 
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(28);
-    doc.setTextColor(...ORANGE);
-    doc.text(outputValue, totalX + totalW / 2, footerY + 20, { align: 'center' });
+    if (isMixed) {
+      // Show both values stacked when mixed
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(...ORANGE);
+      doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 15, { align: 'center' });
 
-    doc.setFont('courier', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(...GRAY);
-    doc.text(outputLabel, totalX + totalW / 2, footerY + 27, { align: 'center' });
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(5);
+      doc.setTextColor(...GRAY);
+      doc.text('kBTU/HR', totalX + totalW / 2, footerY + 19, { align: 'center' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.setTextColor(...ORANGE);
+      doc.text(formatWatts(totalWatts), totalX + totalW / 2, footerY + 26, { align: 'center' });
+
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(5);
+      doc.setTextColor(...GRAY);
+      doc.text(wattsLabel, totalX + totalW / 2, footerY + 30, { align: 'center' });
+    } else {
+      // Single value display - watts for electric only, BTU for gas only
+      const isElectricOnly = electricCount > 0;
+      const outputValue = isElectricOnly ? formatWatts(totalWatts) : String(totalKbtu);
+      const outputLabel = isElectricOnly ? wattsLabel : 'kBTU / HR';
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(28);
+      doc.setTextColor(...ORANGE);
+      doc.text(outputValue, totalX + totalW / 2, footerY + 20, { align: 'center' });
+
+      doc.setFont('courier', 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(...GRAY);
+      doc.text(outputLabel, totalX + totalW / 2, footerY + 27, { align: 'center' });
+    }
 
     // Offices (fills remaining space)
     const officesX = totalX + totalW;

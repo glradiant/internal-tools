@@ -21,20 +21,12 @@ export default function LayoutTemplate({ store, svgMarkup }) {
   const totalWatts = (store.heaters || []).reduce((sum, h) => sum + (h.model.watts || 0), 0);
   const electricCount = (store.heaters || []).filter(h => h.model.isElectric).length;
   const gasCount = (store.heaters || []).length - electricCount;
+  const isMixed = electricCount > 0 && gasCount > 0;
+  const isElectricOnly = electricCount > 0 && gasCount === 0;
 
-  // Determine effective unit (auto: watts if more electric than gas, otherwise BTU)
-  const outputUnit = store.outputUnit || 'auto';
-  const effectiveUnit = outputUnit === 'auto'
-    ? (electricCount > gasCount ? 'watts' : 'btu')
-    : outputUnit;
-
-  // Format output value and label
-  const outputValue = effectiveUnit === 'watts'
-    ? (totalWatts >= 1000 ? (totalWatts / 1000).toFixed(1) : totalWatts)
-    : totalKbtu;
-  const outputLabel = effectiveUnit === 'watts'
-    ? (totalWatts >= 1000 ? 'kW' : 'WATTS')
-    : 'kBTU / HR';
+  // Format watts for display
+  const formatWatts = (w) => w >= 1000 ? (w / 1000).toFixed(1) : w;
+  const wattsLabel = totalWatts >= 1000 ? 'kW' : 'W';
 
   return (
     <div className="layout-sheet">
@@ -110,29 +102,30 @@ export default function LayoutTemplate({ store, svgMarkup }) {
         <div style={{ width: 84, height: 92, flexShrink: 0, borderRight: '1px solid #1B3557', background: 'white' }}>
           <svg width="84" height="92" viewBox="0 0 84 92">
             <text
-              x="42" y="22"
+              x="42" y="14"
               textAnchor="middle"
               fontFamily="DM Mono, monospace"
               fontSize="6"
               letterSpacing="2"
               fill="#8AAABF"
             >TOTAL OUTPUT</text>
-            <text
-              x="42" y="56"
-              textAnchor="middle"
-              fontFamily="Barlow Condensed, sans-serif"
-              fontSize="30"
-              fontWeight="700"
-              fill="#f37021"
-            >{outputValue}</text>
-            <text
-              x="42" y="72"
-              textAnchor="middle"
-              fontFamily="DM Mono, monospace"
-              fontSize="6.5"
-              letterSpacing="1.5"
-              fill="#8AAABF"
-            >{outputLabel}</text>
+            {isMixed ? (
+              <>
+                <text x="42" y="36" textAnchor="middle" fontFamily="Barlow Condensed, sans-serif" fontSize="20" fontWeight="700" fill="#f37021">{totalKbtu}</text>
+                <text x="42" y="46" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="5" letterSpacing="1" fill="#8AAABF">kBTU/HR</text>
+                <text x="42" y="66" textAnchor="middle" fontFamily="Barlow Condensed, sans-serif" fontSize="20" fontWeight="700" fill="#f37021">{formatWatts(totalWatts)}</text>
+                <text x="42" y="76" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="5" letterSpacing="1" fill="#8AAABF">{wattsLabel}</text>
+              </>
+            ) : (
+              <>
+                <text x="42" y="52" textAnchor="middle" fontFamily="Barlow Condensed, sans-serif" fontSize="30" fontWeight="700" fill="#f37021">
+                  {isElectricOnly ? formatWatts(totalWatts) : totalKbtu}
+                </text>
+                <text x="42" y="68" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="6.5" letterSpacing="1.5" fill="#8AAABF">
+                  {isElectricOnly ? wattsLabel : 'kBTU / HR'}
+                </text>
+              </>
+            )}
           </svg>
         </div>
 
