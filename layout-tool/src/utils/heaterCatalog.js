@@ -102,7 +102,8 @@ function buildHeaterCatalog() {
           for (const [lampType, specs] of Object.entries(lampTypes)) {
             const modelId = `ELX__${lengthIn}__${lampCount}__${voltage}__${lampType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
             const wattsFormatted = specs.watts.toLocaleString();
-            const label = `${lampType} ${wattsFormatted}W`;
+            // Full label includes: ELX, length, voltage, wave type, watts
+            const label = `ELX ${lengthIn}" ${voltage} ${lampType} ${wattsFormatted}W`;
 
             const model = {
               id: modelId,

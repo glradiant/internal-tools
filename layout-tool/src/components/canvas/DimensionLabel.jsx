@@ -10,16 +10,25 @@ const BASE_FONT_SIZE = 7;
 const BASE_TEXT_PAD = 2;   // padding around text on dimension line
 const BASE_STROKE = 0.5;   // line stroke width
 
-export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
+export default function DimensionLabel({
+  ax, ay, bx, by, wallPoints,
+  labelText, labelSizeOffset, labelRotation, labelVisible
+}) {
   const labelScale = useLayoutStore((s) => s.getLabelScale());
+
+  // Check visibility first
+  if (labelVisible === false) return null;
+
+  // Apply size offset
+  const sizeMultiplier = 1 + (labelSizeOffset || 0) * 0.1;
 
   // Scale all visual dimensions
   const GAP = BASE_GAP * labelScale;
   const EXTEND = BASE_EXTEND * labelScale;
   const OVERSHOOT = BASE_OVERSHOOT * labelScale;
   const ARROW = BASE_ARROW * labelScale;
-  const FONT_SIZE = BASE_FONT_SIZE * labelScale;
-  const TEXT_PAD = BASE_TEXT_PAD * labelScale;
+  const FONT_SIZE = BASE_FONT_SIZE * labelScale * sizeMultiplier;
+  const TEXT_PAD = BASE_TEXT_PAD * labelScale * sizeMultiplier;
   const strokeWidth = BASE_STROKE * labelScale;
   const segLen = Math.hypot(bx - ax, by - ay);
   if (segLen === 0) return null;
@@ -92,9 +101,14 @@ export default function DimensionLabel({ ax, ay, bx, by, wallPoints }) {
   const angleDeg = Math.atan2(dBy - dAy, dBx - dAx) * 180 / Math.PI;
   const normAngle = ((angleDeg % 360) + 360) % 360;
   const flip = normAngle >= 90 && normAngle < 270;
-  const textAngle = flip ? angleDeg + 180 : angleDeg;
 
-  const label = `${ft}'`;
+  // Use manual rotation if set, otherwise use auto flip
+  const useManualRotation = labelRotation !== null && labelRotation !== undefined;
+  const autoTextAngle = flip ? angleDeg + 180 : angleDeg;
+  const textAngle = useManualRotation ? labelRotation : autoTextAngle;
+
+  // Use custom label text if provided
+  const label = labelText ?? `${ft}'`;
   const dimColor = COLORS.dimText;
 
   // Estimate text width for background rect

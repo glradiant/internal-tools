@@ -1140,7 +1140,18 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               {showDimensions && pts.map((p, i) => {
                 if (!shouldShowDimension[i]) return null;
                 const q = pts[(i + 1) % pts.length];
-                return <DimensionLabel key={i} ax={p.x} ay={p.y} bx={q.x} by={q.y} wallPoints={pts} />;
+                const segLabel = wall.segmentLabels?.[i] || {};
+                return (
+                  <DimensionLabel
+                    key={i}
+                    ax={p.x} ay={p.y} bx={q.x} by={q.y}
+                    wallPoints={pts}
+                    labelText={segLabel.labelText}
+                    labelSizeOffset={segLabel.labelSizeOffset}
+                    labelRotation={segLabel.labelRotation}
+                    labelVisible={segLabel.labelVisible}
+                  />
+                );
               })}
             </g>
           );

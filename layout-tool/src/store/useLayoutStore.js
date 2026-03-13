@@ -158,7 +158,12 @@ const useLayoutStore = create((set, get) => ({
   addWall: (points) => {
     get().pushHistory();
     set((s) => ({
-      walls: [...s.walls, { id: crypto.randomUUID(), points }],
+      walls: [...s.walls, {
+        id: crypto.randomUUID(),
+        points,
+        // Segment label overrides: { segmentIndex: { labelText, labelSizeOffset, labelRotation, labelVisible } }
+        segmentLabels: {},
+      }],
     }));
   },
   removeWall: (id) => {
@@ -289,6 +294,34 @@ const useLayoutStore = create((set, get) => ({
     });
   },
 
+  // Wall segment label actions
+  updateWallSegmentLabel: (wallId, segmentIndex, labelUpdates) => {
+    get().pushHistory();
+    set((s) => ({
+      walls: s.walls.map((w) => {
+        if (w.id !== wallId) return w;
+        const segmentLabels = { ...(w.segmentLabels || {}) };
+        segmentLabels[segmentIndex] = {
+          ...(segmentLabels[segmentIndex] || {}),
+          ...labelUpdates,
+        };
+        return { ...w, segmentLabels };
+      })
+    }));
+  },
+
+  resetWallSegmentLabel: (wallId, segmentIndex) => {
+    get().pushHistory();
+    set((s) => ({
+      walls: s.walls.map((w) => {
+        if (w.id !== wallId) return w;
+        const segmentLabels = { ...(w.segmentLabels || {}) };
+        delete segmentLabels[segmentIndex];
+        return { ...w, segmentLabels };
+      })
+    }));
+  },
+
   // UI actions
   setSelected: (id) => set({ selectedIds: id ? [id] : [] }),
   addToSelection: (id) => set((s) => ({
@@ -382,7 +415,11 @@ const useLayoutStore = create((set, get) => ({
     revision: data.revision || 'A',
     gasType: data.gasType || '',
     date: data.date || '',
-    walls: data.walls || [],
+    // Add segmentLabels default for backward compatibility
+    walls: (data.walls || []).map((w) => ({
+      ...w,
+      segmentLabels: w.segmentLabels ?? {},
+    })),
     // Add label property defaults for backward compatibility
     doors: (data.doors || []).map((d) => ({
       ...d,

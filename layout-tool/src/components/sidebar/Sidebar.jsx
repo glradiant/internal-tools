@@ -27,11 +27,13 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
   const selectedDoor = selectedIds.length === 1
     ? doors.find((d) => d.id === selectedIds[0])
     : null;
-  // Check if a single entity (heater, door, or dimension) is selected for label settings
+  const walls = useLayoutStore((s) => s.walls);
+  // Check if a single entity (heater, door, dimension, or wall) is selected for label settings
   const showLabelSettings = selectedIds.length === 1 && (
     heaters.some((h) => h.id === selectedIds[0]) ||
     doors.some((d) => d.id === selectedIds[0]) ||
-    dimensions.some((d) => d.id === selectedIds[0])
+    dimensions.some((d) => d.id === selectedIds[0]) ||
+    walls.some((w) => w.id === selectedIds[0])
   );
 
   const handleResizeStart = useCallback((e) => {
