@@ -2,8 +2,11 @@
 """
 extract_blocks.py
 -----------------
-Reads DXF files and extracts every block definition as an individual SVG.
+Reads DXF files and extracts block definitions and groups as individual SVGs.
 One subfolder per DXF file, named after the DXF file.
+
+- Blocks: Named block definitions (e.g., heater models)
+- Groups: Named groups with 50+ entities (e.g., U-bend heaters stored as groups)
 
 Setup:
   pip install ezdxf
@@ -21,8 +24,8 @@ from ezdxf.addons.drawing.config import Configuration
 from ezdxf.addons.drawing import layout as drawing_layout
 
 # ── CONFIGURE THESE TWO PATHS ──────────────────────────────────────────────
-INPUT_DIR  = r"C:\Users\JoshDunlap\Code\glr_layout_tool\block_conversion\heater_blocks"
-OUTPUT_DIR = r"C:\Users\JoshDunlap\Code\glr_layout_tool\heater_svgs"
+INPUT_DIR  = r"C:\Users\JoshDunlap\Code\internal-tools\layout-tool\block_conversion\heater_blocks"
+OUTPUT_DIR = r"C:\Users\JoshDunlap\Code\internal-tools\layout-tool\heater_svgs"
 # ───────────────────────────────────────────────────────────────────────────
 
 # AutoCAD internal block name prefixes — always skip these
@@ -45,6 +48,73 @@ def safe_filename(name: str) -> str:
     name = re.sub(r'[\\/*?:"<>|]', "_", name)
     name = re.sub(r"[\s_]+", "_", name.strip())
     return name.strip("_")
+
+
+def group_to_svg(doc, group_name: str) -> str | None:
+    """
+    Render a group of entities to an SVG string.
+    Groups contain references to entities in modelspace.
+    """
+    try:
+        group = doc.groups.get(group_name)
+        if group is None:
+            return None
+
+        entities = list(group)
+        if not entities:
+            return None
+
+        # Build a temp doc with just these entities
+        tmp = ezdxf.new()
+        tmp.units = doc.units
+
+        # Copy layer table
+        for layer in doc.layers:
+            if layer.dxf.name not in ("0",):
+                try:
+                    tmp.layers.new(layer.dxf.name, dxfattribs={"color": layer.dxf.get("color", 7)})
+                except Exception:
+                    pass
+
+        # Copy block definitions for any INSERT entities
+        for blk in doc.blocks:
+            if blk.name.startswith("*") and not blk.name.startswith("*Model"):
+                continue
+            if blk.name not in tmp.blocks:
+                try:
+                    new_blk = tmp.blocks.new(blk.name)
+                    for e in blk:
+                        if e.dxftype() in ("ATTDEF", "SEQEND", "ENDBLK"):
+                            continue
+                        try:
+                            new_blk.add_entity(e.copy())
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
+
+        # Add entities to modelspace
+        msp = tmp.modelspace()
+        for e in entities:
+            try:
+                msp.add_entity(e.copy())
+            except Exception:
+                pass
+
+        backend = SVGBackend()
+        config = Configuration.defaults()
+        ctx = RenderContext(tmp)
+        frontend = Frontend(ctx, backend, config=config)
+        frontend.draw_layout(msp, finalize=True)
+        page = drawing_layout.Page(0, 0, drawing_layout.Units.mm, margins=drawing_layout.Margins.all(0))
+        svg = backend.get_string(page)
+        # Remove background rect
+        import re as _re
+        svg = _re.sub(r'<rect[^>]+fill="#[^"]*"[^>]*/>', '', svg, count=1)
+        return svg if svg.strip() else None
+    except Exception as e:
+        print(f"    Warning: render failed for group '{group_name}': {e}")
+        return None
 
 
 def block_to_svg(doc, block_name: str) -> str | None:
@@ -118,7 +188,7 @@ def block_to_svg(doc, block_name: str) -> str | None:
 
 
 def process_dxf(dxf_path: str, output_dir: str):
-    """Extract all blocks from one DXF into its output subfolder."""
+    """Extract all blocks and groups from one DXF into its output subfolder."""
     filename = os.path.splitext(os.path.basename(dxf_path))[0]
     folder = os.path.join(output_dir, safe_filename(filename))
     os.makedirs(folder, exist_ok=True)
@@ -132,6 +202,7 @@ def process_dxf(dxf_path: str, output_dir: str):
     extracted = 0
     skipped = 0
 
+    # Extract blocks
     for block in doc.blocks:
         name = block.name
 
@@ -159,7 +230,25 @@ def process_dxf(dxf_path: str, output_dir: str):
         print(f"   + {name}")
         extracted += 1
 
-    print(f"   -> {extracted} blocks exported, {skipped} skipped")
+    # Extract groups (with more than 50 entities, likely heater drawings)
+    print("   Checking groups...")
+    for group_name, group in doc.groups:
+        entities = list(group)
+        if len(entities) < 50:  # Skip small groups (likely dimension lines, etc.)
+            continue
+
+        svg = group_to_svg(doc, group_name)
+        if svg is None:
+            continue
+
+        out_path = os.path.join(folder, f"group_{safe_filename(group_name)}.svg")
+        with open(out_path, "w", encoding="utf-8") as f:
+            f.write(svg)
+
+        print(f"   + group {group_name} ({len(entities)} entities)")
+        extracted += 1
+
+    print(f"   -> {extracted} items exported, {skipped} skipped")
 
 
 def main():
@@ -179,9 +268,6 @@ def main():
     if not dxf_files:
         print(f"No .dxf files found in {INPUT_DIR}")
         raise SystemExit(1)
-
-    # TEMP: filter to one file for testing
-    dxf_files = [f for f in dxf_files if "HL3 Series Drawings" in f]
 
     print(f"Found {len(dxf_files)} DXF file(s). Extracting blocks...\n")
 
