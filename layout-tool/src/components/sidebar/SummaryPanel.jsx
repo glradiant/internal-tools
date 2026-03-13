@@ -36,6 +36,8 @@ export default function SummaryPanel({ onExportPDF }) {
       customerAddress: state.customerAddress,
       preparedBy: state.preparedBy,
       quoteNumber: state.quoteNumber,
+      revision: state.revision,
+      gasType: state.gasType,
       date: state.date,
       walls: state.walls,
       doors: state.doors,
