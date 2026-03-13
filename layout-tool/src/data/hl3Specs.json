@@ -2,75 +2,382 @@
   "series": "HL3",
   "fuelType": "gas",
   "description": "HL3 High Intensity Gas Tube Heaters",
+  "gasType": "Natural or Propane",
+  "gasRequirements": {
+    "natural": {
+      "manifoldPressure": 3.5,
+      "minInletPressure": 5.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    },
+    "propane": {
+      "manifoldPressure": 10.0,
+      "minInletPressure": 11.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    }
+  },
+  "electricalRequirements": {
+    "voltage": "120 VAC",
+    "frequency": "60 Hz",
+    "wiring": "GND, 3-wire",
+    "thermostat": "24 VAC",
+    "startingCurrent": 4.8,
+    "runningCurrent": 1.1,
+    "currentUnit": "amps"
+  },
+  "notes": {
+    "tubeClamp": "Models marked with * require stainless steel tube clamp (P/N: TP-220) at the seam between the primary combustion chamber and the secondary combustion tube downstream of the burner control box.",
+    "uBendAccessory": "Models marked with ** require 5EA-SUB accessory package when installing in a 'U' configuration (P/N: TF1B).",
+    "mountingHeight": "Factory recommended mounting heights are listed as a guideline.",
+    "baffles": "Reference box label to determine the number of required baffle sections for each model heater.",
+    "materials": {
+      "Alum": "Black coated aluminized treated steel",
+      "Titan": "Black coated titanium stabilized aluminized steel"
+    }
+  },
   "models": {
-    "Straight": {
-      "20": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 }
+    "20": {
+      "straightLengthFtIn": "21'-9\"",
+      "uTubeLengthFtIn": "13'-1\"",
+      "65": {
+        "kbtuHigh": 65,
+        "kbtuLow": 50,
+        "weightStandard": 120,
+        "weightStainless": null,
+        "mountingHeightMin": 9,
+        "mountingHeightMax": 14,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5
       },
-      "30": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 },
-        "100": { "kbtu": 100 },
-        "125": { "kbtu": 125 }
-      },
-      "40": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 },
-        "100": { "kbtu": 100 },
-        "125": { "kbtu": 125 },
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 }
-      },
-      "50": {
-        "125": { "kbtu": 125 },
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
-      },
-      "60": {
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
-      },
-      "70": {
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
+      "75": {
+        "kbtuHigh": 75,
+        "kbtuLow": 50,
+        "weightStandard": 120,
+        "weightStainless": 145,
+        "mountingHeightMin": 10,
+        "mountingHeightMax": 15,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5
       }
     },
-    "U-Bend": {
-      "20": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 }
+    "30": {
+      "straightLengthFtIn": "31'-5\"",
+      "uTubeLengthFtIn": "17'-9\"",
+      "uTubeRequiresAccessory": true,
+      "65": {
+        "kbtuHigh": 65,
+        "kbtuLow": 50,
+        "weightStandard": 160,
+        "weightStainless": null,
+        "mountingHeightMin": 10,
+        "mountingHeightMax": 15,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 4
       },
-      "30": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 },
-        "100": { "kbtu": 100 },
-        "125": { "kbtu": 125 }
+      "75": {
+        "kbtuHigh": 75,
+        "kbtuLow": 50,
+        "weightStandard": 160,
+        "weightStainless": 195,
+        "mountingHeightMin": 11,
+        "mountingHeightMax": 18,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5
       },
-      "40": {
-        "65": { "kbtu": 65 },
-        "75": { "kbtu": 75 },
-        "100": { "kbtu": 100 },
-        "125": { "kbtu": 125 },
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 }
+      "100": {
+        "kbtuHigh": 100,
+        "kbtuLow": 65,
+        "weightStandard": 160,
+        "weightStainless": 195,
+        "mountingHeightMin": 12,
+        "mountingHeightMax": 20,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5
       },
-      "50": {
-        "125": { "kbtu": 125 },
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
+      "125": {
+        "kbtuHigh": 125,
+        "kbtuLow": 82,
+        "weightStandard": 160,
+        "weightStainless": 195,
+        "mountingHeightMin": 13,
+        "mountingHeightMax": 23,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 6
+      }
+    },
+    "40": {
+      "straightLengthFtIn": "41'-1\"",
+      "uTubeLengthFtIn": "22'-9\"",
+      "65": {
+        "kbtuHigh": 65,
+        "kbtuLow": 50,
+        "weightStandard": 190,
+        "weightStainless": null,
+        "mountingHeightMin": 11,
+        "mountingHeightMax": 18,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 3
       },
-      "60": {
-        "150": { "kbtu": 150 },
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
+      "75": {
+        "kbtuHigh": 75,
+        "kbtuLow": 50,
+        "weightStandard": 190,
+        "weightStainless": 235,
+        "mountingHeightMin": 11,
+        "mountingHeightMax": 18,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 4
       },
-      "70": {
-        "175": { "kbtu": 175 },
-        "200": { "kbtu": 200 }
+      "100": {
+        "kbtuHigh": 100,
+        "kbtuLow": 65,
+        "weightStandard": 190,
+        "weightStainless": 235,
+        "mountingHeightMin": 12,
+        "mountingHeightMax": 20,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 4
+      },
+      "125": {
+        "kbtuHigh": 125,
+        "kbtuLow": 82,
+        "weightStandard": 190,
+        "weightStainless": 235,
+        "mountingHeightMin": 13,
+        "mountingHeightMax": 23,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5
+      },
+      "150": {
+        "kbtuHigh": 150,
+        "kbtuLow": 100,
+        "weightStandard": 190,
+        "weightStainless": 235,
+        "mountingHeightMin": 14,
+        "mountingHeightMax": 25,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5,
+        "requiresTubeClamp": true
+      },
+      "175": {
+        "kbtuHigh": 175,
+        "kbtuLow": 125,
+        "weightStandard": 190,
+        "weightStainless": 235,
+        "mountingHeightMin": 15,
+        "mountingHeightMax": 27,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 5,
+        "requiresTubeClamp": true
+      }
+    },
+    "50": {
+      "straightLengthFtIn": "50'-9\"",
+      "uTubeLengthFtIn": "27'-5\"",
+      "uTubeRequiresAccessory": true,
+      "125": {
+        "kbtuHigh": 125,
+        "kbtuLow": 82,
+        "weightStandard": 235,
+        "weightStainless": 290,
+        "mountingHeightMin": 15,
+        "mountingHeightMax": 27,
+        "combustionChamber": "Alum",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 3
+      },
+      "150": {
+        "kbtuHigh": 150,
+        "kbtuLow": 100,
+        "weightStandard": 235,
+        "weightStainless": 290,
+        "mountingHeightMin": 15,
+        "mountingHeightMax": 27,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 3,
+        "requiresTubeClamp": true
+      },
+      "175": {
+        "kbtuHigh": 175,
+        "kbtuLow": 125,
+        "weightStandard": 235,
+        "weightStainless": null,
+        "mountingHeightMin": 16,
+        "mountingHeightMax": 30,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 3,
+        "requiresTubeClamp": true
+      },
+      "200": {
+        "kbtuHigh": 200,
+        "kbtuLow": 145,
+        "weightStandard": 235,
+        "weightStainless": null,
+        "mountingHeightMin": 17,
+        "mountingHeightMax": 35,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      }
+    },
+    "60": {
+      "straightLengthFtIn": "60'-5\"",
+      "uTubeLengthFtIn": "32'-5\"",
+      "150": {
+        "kbtuHigh": 150,
+        "kbtuLow": 100,
+        "weightStandard": 265,
+        "weightStainless": 330,
+        "mountingHeightMin": 16,
+        "mountingHeightMax": 30,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      },
+      "175": {
+        "kbtuHigh": 175,
+        "kbtuLow": 125,
+        "weightStandard": 265,
+        "weightStainless": null,
+        "mountingHeightMin": 16,
+        "mountingHeightMax": 30,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      },
+      "200": {
+        "kbtuHigh": 200,
+        "kbtuLow": 145,
+        "weightStandard": 265,
+        "weightStainless": null,
+        "mountingHeightMin": 17,
+        "mountingHeightMax": 35,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      }
+    },
+    "70": {
+      "straightLengthFtIn": "70'-1\"",
+      "uTubeLengthFtIn": "37'-3\"",
+      "uTubeRequiresAccessory": true,
+      "175": {
+        "kbtuHigh": 175,
+        "kbtuLow": 125,
+        "weightStandard": 300,
+        "weightStainless": null,
+        "mountingHeightMin": 19,
+        "mountingHeightMax": 42,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      },
+      "200": {
+        "kbtuHigh": 200,
+        "kbtuLow": 145,
+        "weightStandard": 300,
+        "weightStainless": null,
+        "mountingHeightMin": 19,
+        "mountingHeightMax": 42,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "baffleQty36": 2,
+        "requiresTubeClamp": true
+      }
+    }
+  },
+  "clearances": {
+    "note": "Clearances to combustibles in inches. Heaters mounted on an angle between 0° and 45° must maintain clearances posted for 0° or 45°; whichever is greater.",
+    "65-75": {
+      "description": "HL3 (20, 30, 40) - (65, 75) [N, P]",
+      "tubeLengths": [20, 30, 40],
+      "kbtuRatings": [65, 75],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 9, "sideBehind": 9, "top": 6, "below": 60 },
+        "45deg": { "mountingAngle": 45, "sideFront": 39, "sideBehind": 8, "top": 10, "below": 60 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 29, "sideBehind": 8, "top": 6, "below": 60 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 9, "sideBehind": 9, "top": 6, "below": 60 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 7, "sideBehind": 7, "top": 6, "below": 30 }
+      }
+    },
+    "100": {
+      "description": "HL3 (30, 40) - 100 [N, P]",
+      "tubeLengths": [30, 40],
+      "kbtuRatings": [100],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 14, "sideBehind": 14, "top": 6, "below": 66 },
+        "45deg": { "mountingAngle": 45, "sideFront": 39, "sideBehind": 8, "top": 10, "below": 66 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 29, "sideBehind": 8, "top": 6, "below": 66 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 16, "sideBehind": 16, "top": 6, "below": 66 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 7, "sideBehind": 7, "top": 6, "below": 30 }
+      }
+    },
+    "125": {
+      "description": "HL3 (30, 40, 50) - 125 [N, P]",
+      "tubeLengths": [30, 40, 50],
+      "kbtuRatings": [125],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 20, "sideBehind": 20, "top": 6, "below": 76 },
+        "45deg": { "mountingAngle": 45, "sideFront": 58, "sideBehind": 8, "top": 10, "below": 76 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 42, "sideBehind": 8, "top": 6, "below": 76 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 20, "sideBehind": 20, "top": 6, "below": 76 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 7, "sideBehind": 7, "top": 6, "below": 30 }
+      }
+    },
+    "150": {
+      "description": "HL3 (40, 50, 60) - 150 [N, P]",
+      "tubeLengths": [40, 50, 60],
+      "kbtuRatings": [150],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 24, "sideBehind": 24, "top": 6, "below": 81 },
+        "45deg": { "mountingAngle": 45, "sideFront": 58, "sideBehind": 8, "top": 10, "below": 81 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 42, "sideBehind": 8, "top": 6, "below": 81 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 23, "sideBehind": 23, "top": 6, "below": 81 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 11, "sideBehind": 11, "top": 6, "below": 44 }
+      }
+    },
+    "175": {
+      "description": "HL3 (40, 50, 60, 70) - 175 [N, P]",
+      "tubeLengths": [40, 50, 60, 70],
+      "kbtuRatings": [175],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 34, "sideBehind": 34, "top": 6, "below": 92 },
+        "45deg": { "mountingAngle": 45, "sideFront": 63, "sideBehind": 8, "top": 10, "below": 92 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 50, "sideBehind": 8, "top": 6, "below": 92 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 30, "sideBehind": 30, "top": 6, "below": 92 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 11, "sideBehind": 11, "top": 6, "below": 44 }
+      }
+    },
+    "200": {
+      "description": "HL3 (50, 60, 70) - 200 [N, P]",
+      "tubeLengths": [50, 60, 70],
+      "kbtuRatings": [200],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 41, "sideBehind": 41, "top": 6, "below": 94 },
+        "45deg": { "mountingAngle": 45, "sideFront": 63, "sideBehind": 8, "top": 10, "below": 94 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 54, "sideBehind": 8, "top": 6, "below": 94 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 30, "sideBehind": 30, "top": 6, "below": 94 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 11, "sideBehind": 11, "top": 6, "below": 44 }
       }
     }
   }

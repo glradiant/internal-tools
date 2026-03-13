@@ -36,8 +36,8 @@ const svgModulesRelative = import.meta.glob('../../../heater_svgs/**/*.svg', {
 const svgModules = { ...svgModulesRoot, ...svgModulesRelative };
 
 // Parse folder structure and create nested catalog tree
-// Structure: heater_svgs/HL3_Series_Drawings/Straight/20ft/HL3-20-65.svg
-// Creates nested tree: Series -> Type -> Length -> Models
+// Structure: heater_svgs/HL3_Series_Drawings/Straight/20ft/HL3-20.svg
+// Creates nested tree: Series -> Type -> Length -> Models (BTU variants from specs)
 function buildHeaterCatalog() {
   const flatCategories = {}; // Flat lookup for backwards compatibility
   const nestedTree = {}; // Nested tree structure for UI
@@ -63,163 +63,20 @@ function buildHeaterCatalog() {
     // Check if this is an ELX electric heater - handle specially
     const elxMatch = fileNameWithoutExt.match(/^ELX-(\d+)-(\d)$/);
     if (elxMatch) {
-      const lengthIn = elxMatch[1]; // "24", "33", "46"
-      const lampCount = elxMatch[2]; // "1", "2", "3"
-      const lampCountLabel = lampCount === '1' ? '1-Lamp' : lampCount === '2' ? '2-Lamp' : '3-Lamp';
-
-      // Build ELX nested tree: ELX -> Length -> LampCount -> Voltage -> Models
-      if (!nestedTree['ELX']) {
-        nestedTree['ELX'] = { id: 'ELX', label: 'ELX', children: {} };
-      }
-      const lengthLabel = `${lengthIn}"`;
-      if (!nestedTree['ELX'].children[lengthLabel]) {
-        nestedTree['ELX'].children[lengthLabel] = {
-          id: `ELX__${lengthIn}`,
-          label: lengthLabel,
-          children: {}
-        };
-      }
-
-      if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel]) {
-        nestedTree['ELX'].children[lengthLabel].children[lampCountLabel] = {
-          id: `ELX__${lengthIn}__${lampCount}`,
-          label: lampCountLabel,
-          children: {}
-        };
-      }
-
-      // Generate models from ELX specs
-      const lengthSpecs = elxSpecs.ELX[lengthIn];
-      const lampSpecs = lengthSpecs?.[lampCount];
-
-      if (lampSpecs) {
-        for (const [voltage, lampTypes] of Object.entries(lampSpecs)) {
-          const categoryId = `ELX__${lengthIn}__${lampCount}__${voltage}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-
-          // Add voltage level to nested tree
-          if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage]) {
-            nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage] = {
-              id: categoryId,
-              label: voltage,
-              models: []
-            };
-          }
-
-          // Flat category for backwards compatibility
-          if (!flatCategories[categoryId]) {
-            flatCategories[categoryId] = {
-              id: categoryId,
-              label: `ELX ${lengthIn}" ${lampCountLabel} ${voltage}`,
-              models: []
-            };
-          }
-
-          for (const [lampType, specs] of Object.entries(lampTypes)) {
-            const modelId = `ELX__${lengthIn}__${lampCount}__${voltage}__${lampType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-            const wattsFormatted = specs.watts.toLocaleString();
-            // Full label includes: ELX, length, voltage, wave type, watts
-            const label = `ELX ${lengthIn}" ${voltage} ${lampType} ${wattsFormatted}W`;
-
-            const model = {
-              id: modelId,
-              label: label,
-              categoryId: categoryId,
-              svgContent: svgContent,
-              svgPath: path,
-              dimensions: dimensions,
-              // Electric heater specs
-              voltage: voltage,
-              lampType: lampType,
-              lampTypeFull: elxSpecs.lampTypes[lampType],
-              watts: specs.watts,
-              btu: specs.btu,
-              amps: specs.amps,
-              // For compatibility with gas heater fields
-              kbtu: Math.round(specs.btu / 1000),
-              lengthFt: 0, // Not applicable for electric
-              lengthIn: parseInt(lengthIn, 10),
-              lampCount: parseInt(lampCount, 10),
-              isElectric: isSeriesElectric('ELX'),
-            };
-
-            nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage].models.push(model);
-            flatCategories[categoryId].models.push(model);
-          }
-        }
-      }
-
-      continue; // Skip normal processing for ELX
+      processElxHeater(elxMatch, svgContent, path, dimensions, nestedTree, flatCategories);
+      continue;
     }
 
-    // Standard gas heater processing
-    const label = formatHeaterLabel(fileNameWithoutExt);
-
-    // Build nested tree and flat category
-    let categoryId, seriesName, typeName, lengthName;
-
-    if (parts.length >= 4) {
-      // Nested structure: Series/Type/Length/file.svg
-      const seriesFolder = parts[0]; // "HL3_Series_Drawings"
-      typeName = parts[1]; // "Straight" or "U-Bend"
-      lengthName = parts[2]; // "20ft", "30ft", etc.
-      seriesName = seriesFolder.split('_')[0]; // "HL3"
-      categoryId = `${seriesFolder}__${typeName}__${lengthName}`;
-
-      // Build nested tree
-      if (!nestedTree[seriesName]) {
-        nestedTree[seriesName] = { id: seriesName, label: seriesName, children: {} };
-      }
-      if (!nestedTree[seriesName].children[typeName]) {
-        nestedTree[seriesName].children[typeName] = { id: `${seriesName}__${typeName}`, label: typeName, children: {} };
-      }
-      if (!nestedTree[seriesName].children[typeName].children[lengthName]) {
-        nestedTree[seriesName].children[typeName].children[lengthName] = {
-          id: categoryId,
-          label: lengthName,
-          models: []
-        };
-      }
-    } else {
-      // Flat structure fallback
-      categoryId = parts[0];
-      seriesName = parts[0].replace(/_/g, ' ');
-
-      if (!nestedTree[seriesName]) {
-        nestedTree[seriesName] = { id: seriesName, label: seriesName, models: [] };
-      }
+    // Check if this is a gas tube heater (HL3, LD3, etc.)
+    // New naming: HL3-20.svg (straight) or HL3-20U.svg (U-bend)
+    const gasMatch = fileNameWithoutExt.match(/^([A-Z]+\d)-(\d+)(U)?$/i);
+    if (gasMatch && parts.length >= 4) {
+      processGasHeater(gasMatch, parts, svgContent, path, dimensions, nestedTree, flatCategories);
+      continue;
     }
 
-    // Create model object
-    const modelId = `${categoryId}__${fileNameWithoutExt}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const model = {
-      id: modelId,
-      label: label,
-      categoryId: categoryId,
-      svgContent: svgContent,
-      svgPath: path,
-      dimensions: dimensions,
-      kbtu: extractKbtu(fileNameWithoutExt),
-      lengthFt: extractLengthFt(fileNameWithoutExt, dimensions),
-      isElectric: isSeriesElectric(seriesName),
-    };
-
-    // Add to nested tree
-    if (parts.length >= 4) {
-      nestedTree[seriesName].children[typeName].children[lengthName].models.push(model);
-    } else {
-      nestedTree[seriesName].models = nestedTree[seriesName].models || [];
-      nestedTree[seriesName].models.push(model);
-    }
-
-    // Add to flat categories for backwards compatibility
-    if (!flatCategories[categoryId]) {
-      flatCategories[categoryId] = {
-        id: categoryId,
-        label: parts.length >= 4 ? `${seriesName} ${typeName} ${lengthName}` : seriesName,
-        models: []
-      };
-    }
-    flatCategories[categoryId].models.push(model);
+    // Fallback: unknown format - skip or handle generically
+    console.warn(`Unknown heater format: ${fileNameWithoutExt}`);
   }
 
   // Sort models within each leaf node
@@ -234,6 +91,191 @@ function buildHeaterCatalog() {
   Object.values(nestedTree).forEach(sortModels);
 
   return { flatCategories, nestedTree };
+}
+
+/**
+ * Process ELX electric heater - generates models from specs for each voltage/lamp type
+ */
+function processElxHeater(match, svgContent, path, dimensions, nestedTree, flatCategories) {
+  const lengthIn = match[1]; // "24", "33", "46"
+  const lampCount = match[2]; // "1", "2", "3"
+  const lampCountLabel = lampCount === '1' ? '1-Lamp' : lampCount === '2' ? '2-Lamp' : '3-Lamp';
+
+  // Build ELX nested tree: ELX -> Length -> LampCount -> Voltage -> Models
+  if (!nestedTree['ELX']) {
+    nestedTree['ELX'] = { id: 'ELX', label: 'ELX', children: {} };
+  }
+  const lengthLabel = `${lengthIn}"`;
+  if (!nestedTree['ELX'].children[lengthLabel]) {
+    nestedTree['ELX'].children[lengthLabel] = {
+      id: `ELX__${lengthIn}`,
+      label: lengthLabel,
+      children: {}
+    };
+  }
+
+  if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel]) {
+    nestedTree['ELX'].children[lengthLabel].children[lampCountLabel] = {
+      id: `ELX__${lengthIn}__${lampCount}`,
+      label: lampCountLabel,
+      children: {}
+    };
+  }
+
+  // Generate models from ELX specs
+  const lengthSpecs = elxSpecs.ELX[lengthIn];
+  const lampSpecs = lengthSpecs?.[lampCount];
+
+  if (lampSpecs) {
+    for (const [voltage, lampTypes] of Object.entries(lampSpecs)) {
+      const categoryId = `ELX__${lengthIn}__${lampCount}__${voltage}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      // Add voltage level to nested tree
+      if (!nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage]) {
+        nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage] = {
+          id: categoryId,
+          label: voltage,
+          models: []
+        };
+      }
+
+      // Flat category for backwards compatibility
+      if (!flatCategories[categoryId]) {
+        flatCategories[categoryId] = {
+          id: categoryId,
+          label: `ELX ${lengthIn}" ${lampCountLabel} ${voltage}`,
+          models: []
+        };
+      }
+
+      for (const [lampType, specs] of Object.entries(lampTypes)) {
+        const modelId = `ELX__${lengthIn}__${lampCount}__${voltage}__${lampType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+        const wattsFormatted = specs.watts.toLocaleString();
+        // Full label includes: ELX, length, voltage, wave type, watts
+        const label = `ELX ${lengthIn}" ${voltage} ${lampType} ${wattsFormatted}W`;
+
+        const model = {
+          id: modelId,
+          label: label,
+          categoryId: categoryId,
+          svgContent: svgContent,
+          svgPath: path,
+          dimensions: dimensions,
+          // Electric heater specs
+          voltage: voltage,
+          lampType: lampType,
+          lampTypeFull: elxSpecs.lampTypes[lampType],
+          watts: specs.watts,
+          btu: specs.btu,
+          amps: specs.amps,
+          // For compatibility with gas heater fields
+          kbtu: Math.round(specs.btu / 1000),
+          lengthFt: 0, // Not applicable for electric
+          lengthIn: parseInt(lengthIn, 10),
+          lampCount: parseInt(lampCount, 10),
+          isElectric: true,
+        };
+
+        nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage].models.push(model);
+        flatCategories[categoryId].models.push(model);
+      }
+    }
+  }
+}
+
+/**
+ * Process gas tube heater (HL3, LD3, etc.) - generates models from specs for each BTU rating
+ * SVG naming: HL3-20.svg (straight) or HL3-20U.svg (U-bend)
+ */
+function processGasHeater(match, parts, svgContent, path, dimensions, nestedTree, flatCategories) {
+  const seriesName = match[1].toUpperCase(); // "HL3", "LD3"
+  const lengthFt = parseInt(match[2], 10); // 20, 30, 40, etc.
+  const isUBend = !!match[3]; // true if "U" suffix present
+
+  const seriesFolder = parts[0]; // "HL3_Series_Drawings"
+  const typeName = parts[1]; // "Straight" or "U-Bend"
+  const lengthName = parts[2]; // "20ft", "30ft", etc.
+
+  // Get specs for this series
+  const specs = seriesSpecs[seriesName];
+  if (!specs || !specs.models) {
+    console.warn(`No specs found for series: ${seriesName}`);
+    return;
+  }
+
+  // Get available BTU ratings for this length
+  const lengthSpecs = specs.models[String(lengthFt)];
+  if (!lengthSpecs) {
+    console.warn(`No specs found for ${seriesName} ${lengthFt}ft`);
+    return;
+  }
+
+  // Build nested tree structure: Series -> Type -> Length -> Models
+  if (!nestedTree[seriesName]) {
+    nestedTree[seriesName] = { id: seriesName, label: seriesName, children: {} };
+  }
+  if (!nestedTree[seriesName].children[typeName]) {
+    nestedTree[seriesName].children[typeName] = {
+      id: `${seriesName}__${typeName}`,
+      label: typeName,
+      children: {}
+    };
+  }
+
+  const categoryId = `${seriesFolder}__${typeName}__${lengthName}`;
+  if (!nestedTree[seriesName].children[typeName].children[lengthName]) {
+    nestedTree[seriesName].children[typeName].children[lengthName] = {
+      id: categoryId,
+      label: lengthName,
+      models: []
+    };
+  }
+
+  // Flat category for backwards compatibility
+  if (!flatCategories[categoryId]) {
+    flatCategories[categoryId] = {
+      id: categoryId,
+      label: `${seriesName} ${typeName} ${lengthName}`,
+      models: []
+    };
+  }
+
+  // Generate one model per BTU rating from specs
+  for (const [btuKey, btuSpecs] of Object.entries(lengthSpecs)) {
+    // Skip non-BTU properties (like straightLengthFtIn, uTubeLengthFtIn)
+    if (isNaN(parseInt(btuKey, 10))) continue;
+
+    const kbtu = parseInt(btuKey, 10);
+    const uSuffix = isUBend ? 'U' : '';
+    const modelId = `${seriesName}__${lengthFt}${uSuffix}__${kbtu}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const label = `${seriesName} ${lengthFt}'${uSuffix} ${kbtu}kBTU`;
+
+    const model = {
+      id: modelId,
+      label: label,
+      categoryId: categoryId,
+      svgContent: svgContent,
+      svgPath: path,
+      dimensions: dimensions,
+      // Gas heater specs
+      kbtu: kbtu,
+      kbtuHigh: btuSpecs.kbtuHigh || kbtu,
+      kbtuLow: btuSpecs.kbtuLow,
+      lengthFt: lengthFt,
+      isUBend: isUBend,
+      isElectric: false,
+      // Additional specs from the specs file
+      weightStandard: btuSpecs.weightStandard,
+      weightStainless: btuSpecs.weightStainless,
+      mountingHeightMin: btuSpecs.mountingHeightMin,
+      mountingHeightMax: btuSpecs.mountingHeightMax,
+      combustionChamber: btuSpecs.combustionChamber,
+      radiantEmitter: btuSpecs.radiantEmitter,
+    };
+
+    nestedTree[seriesName].children[typeName].children[lengthName].models.push(model);
+    flatCategories[categoryId].models.push(model);
+  }
 }
 
 // Build catalog on module load
@@ -272,80 +314,6 @@ function extractSvgDimensions(svgContent) {
   };
 }
 
-// Format heater label for display
-// Converts "HL3-20-65" to "HL3 20' 65kBTU"
-// Converts "HL3-20U-65" to "HL3 20'U 65kBTU"
-// Note: ELX electric heaters are handled specially in buildHeaterCatalog()
-function formatHeaterLabel(fileName) {
-  // Tube heater naming convention: HL3-20-65, HL3-30U-125, etc.
-  const tubeMatch = fileName.match(/^([A-Z]+\d*)-(\d+)(U)?-(\d+)$/i);
-  if (tubeMatch) {
-    const series = tubeMatch[1].toUpperCase();
-    const length = tubeMatch[2];
-    const isUtube = tubeMatch[3] ? 'U' : '';
-    const btu = tubeMatch[4];
-    return `${series} ${length}'${isUtube} ${btu}kBTU`;
-  }
-
-  // Legacy: clean up filename for display
-  return fileName
-    .replace(/_/g, ' ')
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Try to extract BTU from filename
-// Handles new naming convention: HL3-20-65, HL3-30U-100, etc.
-// Format: SERIES-LENGTH[U]-BTU where U indicates U-tube
-function extractKbtu(fileName) {
-  // New naming convention: HL3-20-65, HL3-30U-125, etc.
-  // Pattern: series prefix, then length, optional U, then BTU at the end
-  const newFormatMatch = fileName.match(/^[A-Z]+\d*-\d+U?-(\d+)$/i);
-  if (newFormatMatch) {
-    return parseInt(newFormatMatch[1], 10);
-  }
-
-  // Legacy: use the last number in the filename as BTU
-  const allNumbers = fileName.match(/\d+/g);
-  if (allNumbers && allNumbers.length > 0) {
-    return parseInt(allNumbers[allNumbers.length - 1], 10);
-  }
-
-  return 0; // Default - no BTU found
-}
-
-// Try to extract length from filename
-// Handles new naming convention: HL3-20-65, HL3-30U-100, etc.
-// Format: SERIES-LENGTH[U]-BTU where LENGTH is in feet
-function extractLengthFt(fileName, dimensions) {
-  // New naming convention: HL3-20-65, HL3-30U-125, etc.
-  // Pattern: series prefix, then length (with optional U suffix), then BTU
-  const newFormatMatch = fileName.match(/^[A-Z]+\d*-(\d+)U?-\d+$/i);
-  if (newFormatMatch) {
-    return parseInt(newFormatMatch[1], 10);
-  }
-
-  // Legacy: Look for patterns like "10_ft", "10ft", "10'", "20 ft", "10 ft"
-  const match = fileName.match(/(\d+)\s*(?:ft|'|_ft)/i);
-  if (match) {
-    return parseInt(match[1], 10);
-  }
-
-  // Also check for "X ft" pattern with space
-  const spaceMatch = fileName.match(/(\d+)\s+ft/i);
-  if (spaceMatch) {
-    return parseInt(spaceMatch[1], 10);
-  }
-
-  // Fallback: estimate from aspect ratio
-  if (dimensions.aspectRatio > 1) {
-    return Math.round(dimensions.aspectRatio * 2);
-  }
-
-  return 0; // Default - no length found
-}
-
 // Flat categories for backwards compatibility
 export const HEATER_CATEGORIES = flatCategories;
 
@@ -378,6 +346,6 @@ if (import.meta.env.DEV) {
   console.log('Heater Catalog loaded:', {
     categories: Object.keys(HEATER_CATEGORIES),
     totalModels: HEATER_MODELS_FROM_SVG.length,
-    models: HEATER_MODELS_FROM_SVG.map(m => ({ id: m.id, label: m.label, lengthFt: m.lengthFt }))
+    models: HEATER_MODELS_FROM_SVG.map(m => ({ id: m.id, label: m.label, kbtu: m.kbtu }))
   });
 }
