@@ -230,6 +230,9 @@ const useLayoutStore = create((set, get) => ({
         labelSizeOffset: 0,
         labelRotation: null,
         labelVisible: true,
+        // Heat throw angle: -45, -30, -15, 0, +15, +30, +45
+        // Negative = left side, positive = right side, 0 = flat (no arrows)
+        heatThrowAngle: 0,
       }],
     }));
   },
@@ -434,6 +437,7 @@ const useLayoutStore = create((set, get) => ({
       labelSizeOffset: h.labelSizeOffset ?? 0,
       labelRotation: h.labelRotation ?? null,
       labelVisible: h.labelVisible ?? true,
+      heatThrowAngle: h.heatThrowAngle ?? 0,
     })),
     dimensions: (data.dimensions || []).map((d) => ({
       ...d,
