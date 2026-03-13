@@ -1216,40 +1216,53 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                   </text>
                 );
               })()}
-              {/* Heat throw arrows - simple chevrons */}
+              {/* Heat throw arrows */}
               {(h.heatThrowAngle !== 0) && (() => {
                 const angle = h.heatThrowAngle || 0;
                 const absAngle = Math.abs(angle);
                 // Arrow size scales with angle: 15°=small, 30°=medium, 45°=large
                 const sizeMultiplier = absAngle / 45; // 0.33, 0.67, 1.0
-                const chevronSize = 4 * labelScale * (0.6 + sizeMultiplier * 0.4);
-                const strokeW = 1.5 * labelScale * (0.6 + sizeMultiplier * 0.4);
+                const baseArrowLength = 20 * labelScale;
+                const arrowLength = baseArrowLength * (0.5 + sizeMultiplier * 0.5);
+                const arrowWidth = 6 * labelScale * (0.5 + sizeMultiplier * 0.5);
+                const strokeW = 2 * labelScale * (0.5 + sizeMultiplier * 0.3);
 
                 // Arrow spacing along heater length
-                const arrowCount = 5;
+                const arrowCount = 3;
                 const spacing = displayWidth / (arrowCount + 1);
 
                 // Direction: negative = top (negative Y), positive = bottom (positive Y)
                 const direction = angle < 0 ? -1 : 1;
-                // Position just outside the heater edge
-                const arrowY = direction * (displayHeight / 2 + 2 * labelScale);
+                const arrowStartY = direction * (displayHeight / 2 + 5 * labelScale);
 
                 return (
                   <g>
                     {Array.from({ length: arrowCount }, (_, i) => {
                       const arrowX = -displayWidth / 2 + spacing * (i + 1);
-                      // Chevron points: two lines forming a ">" shape pointing in direction
-                      const tipY = arrowY + direction * chevronSize;
+                      // Line ends where arrowhead begins (no overlap)
+                      const lineEndY = arrowStartY + direction * (arrowLength - arrowWidth);
+                      const tipY = arrowStartY + direction * arrowLength;
                       return (
-                        <polyline
-                          key={i}
-                          points={`${arrowX - chevronSize * 0.6},${arrowY} ${arrowX},${tipY} ${arrowX + chevronSize * 0.6},${arrowY}`}
-                          fill="none"
-                          stroke="#dc2626"
-                          strokeWidth={strokeW}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
+                        <g key={i}>
+                          {/* Arrow shaft - stops before arrowhead */}
+                          <line
+                            x1={arrowX}
+                            y1={arrowStartY}
+                            x2={arrowX}
+                            y2={lineEndY}
+                            stroke="#dc2626"
+                            strokeWidth={strokeW}
+                          />
+                          {/* Arrow head */}
+                          <polygon
+                            points={`
+                              ${arrowX},${tipY}
+                              ${arrowX - arrowWidth / 2},${lineEndY}
+                              ${arrowX + arrowWidth / 2},${lineEndY}
+                            `}
+                            fill="#dc2626"
+                          />
+                        </g>
                       );
                     })}
                   </g>

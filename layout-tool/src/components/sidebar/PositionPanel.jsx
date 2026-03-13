@@ -256,15 +256,19 @@ export default function PositionPanel() {
         const heatThrowAngle = selectedHeater.heatThrowAngle || 0;
         const steps = [-45, -30, -15, 0, 15, 30, 45];
         const currentIndex = steps.indexOf(heatThrowAngle);
+        const atMin = currentIndex === 0;
+        const atMax = currentIndex === steps.length - 1;
 
-        const cycleLeft = () => {
-          const newIndex = currentIndex > 0 ? currentIndex - 1 : steps.length - 1;
-          updateHeater(selectedHeater.id, { heatThrowAngle: steps[newIndex] });
+        const goLeft = () => {
+          if (!atMin) {
+            updateHeater(selectedHeater.id, { heatThrowAngle: steps[currentIndex - 1] });
+          }
         };
 
-        const cycleRight = () => {
-          const newIndex = currentIndex < steps.length - 1 ? currentIndex + 1 : 0;
-          updateHeater(selectedHeater.id, { heatThrowAngle: steps[newIndex] });
+        const goRight = () => {
+          if (!atMax) {
+            updateHeater(selectedHeater.id, { heatThrowAngle: steps[currentIndex + 1] });
+          }
         };
 
         const getLabel = () => {
@@ -276,14 +280,15 @@ export default function PositionPanel() {
         return (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <button
-              onClick={cycleLeft}
+              onClick={goLeft}
+              disabled={atMin}
               style={{
                 padding: '6px 10px',
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 3,
-                color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer',
+                color: atMin ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                cursor: atMin ? 'not-allowed' : 'pointer',
                 fontFamily: 'inherit',
                 fontSize: 11,
               }}
@@ -303,14 +308,15 @@ export default function PositionPanel() {
               {getLabel()}
             </div>
             <button
-              onClick={cycleRight}
+              onClick={goRight}
+              disabled={atMax}
               style={{
                 padding: '6px 10px',
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 3,
-                color: 'rgba(255,255,255,0.6)',
-                cursor: 'pointer',
+                color: atMax ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+                cursor: atMax ? 'not-allowed' : 'pointer',
                 fontFamily: 'inherit',
                 fontSize: 11,
               }}
