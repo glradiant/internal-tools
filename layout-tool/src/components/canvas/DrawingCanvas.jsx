@@ -1162,9 +1162,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
           // Normalize angle to 0-360 and check if label would be upside down
           // Text should be readable from bottom or right (CAD convention)
-          // Flip if angle is in (90°, 270°] so text reads left-to-right or bottom-to-top
+          // Flip if angle is in [90°, 270°) so text reads left-to-right or bottom-to-top
           const normalizedAngle = ((h.angleDeg % 360) + 360) % 360;
-          const flipLabel = normalizedAngle > 90 && normalizedAngle <= 270;
+          const flipLabel = normalizedAngle >= 90 && normalizedAngle < 270;
 
           return (
             <g
