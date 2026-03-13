@@ -1160,6 +1160,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           const heaterFontSize = 7 * labelScale;
           const labelOffset = Math.max(14 * labelScale, displayHeight / 2 + 8 * labelScale);
 
+          // Normalize angle to 0-360 and check if label would be upside down
+          const normalizedAngle = ((h.angleDeg % 360) + 360) % 360;
+          const flipLabel = normalizedAngle > 90 && normalizedAngle < 270;
+
           return (
             <g
               key={h.id}
@@ -1177,7 +1181,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                 flipV={h.flipV || false}
               />
               <text
-                y={labelOffset}
+                y={flipLabel ? -labelOffset : labelOffset}
+                transform={flipLabel ? 'rotate(180)' : undefined}
                 textAnchor="middle"
                 fontSize={heaterFontSize}
                 fill={COLORS.heaterNormal}
