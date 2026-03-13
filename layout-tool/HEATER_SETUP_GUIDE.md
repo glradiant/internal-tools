@@ -67,14 +67,16 @@ heater_svgs/
 
 ### File Naming Conventions
 
+**Important:** SVG files represent the *physical drawing* only. BTU ratings, wattages, and other variants are generated from the specs file. One SVG per unique physical size.
+
 **Gas Tube Heaters (HL3, LD3, etc.):**
 ```
-{SERIES}-{LENGTH}{U?}-{BTU}.svg
+{SERIES}-{LENGTH}{U?}.svg
 
 Examples:
-- HL3-20-65.svg    → HL3 series, 20ft straight, 65kBTU
-- HL3-30U-100.svg  → HL3 series, 30ft U-bend, 100kBTU
-- LD3-15-40.svg    → LD3 series, 15ft straight, 40kBTU
+- HL3-20.svg   → HL3 series, 20ft straight (all BTU variants share this SVG)
+- HL3-30U.svg  → HL3 series, 30ft U-bend (all BTU variants share this SVG)
+- LD3-15.svg   → LD3 series, 15ft straight
 ```
 
 **Electric Heaters (ELX):**
@@ -82,10 +84,14 @@ Examples:
 ELX-{LENGTH_INCHES}-{LAMP_COUNT}.svg
 
 Examples:
-- ELX-24-1.svg  → ELX 24" with 1 lamp
+- ELX-24-1.svg  → ELX 24" with 1 lamp (all voltage/wattage variants share this SVG)
 - ELX-33-2.svg  → ELX 33" with 2 lamps
 - ELX-46-3.svg  → ELX 46" with 3 lamps
 ```
+
+**Key Concept:** The catalog system reads each SVG once, then generates multiple models from the specs file. For example:
+- `HL3-20.svg` + specs → HL3 20' 65kBTU, HL3 20' 75kBTU
+- `ELX-24-1.svg` + specs → ELX 24" 120V SW 1500W, ELX 24" 208V MW 750W, etc.
 
 ---
 
@@ -296,9 +302,9 @@ Look for: `Heater Catalog loaded: { categories: [...], totalModels: X, ... }`
 ### Existing SVG Files
 
 Located in `heater_svgs/`:
-- `ELX_Series_Drawings/` - 9 SVGs (24", 33", 46" × 1-3 lamps)
-- `HL3_Series_Drawings/` - 42 SVGs (20-70ft × Straight/U-Bend × various BTU)
-- `LD3_Series_Drawings/` - 9 SVGs (15-30ft × Straight/U-Bend × 40-50kBTU)
+- `ELX_Series_Drawings/` - 9 SVGs (24", 33", 46" × 1-3 lamps) → generates 60+ model variants
+- `HL3_Series_Drawings/` - 12 SVGs (20-70ft × Straight/U-Bend) → generates 42 model variants
+- `LD3_Series_Drawings/` - 5 SVGs (15-30ft × Straight/U-Bend) → generates 9 model variants
 
 ### Catalog System Files
 
@@ -312,24 +318,33 @@ Located in `heater_svgs/`:
 
 ## Adding a New Heater Series - Checklist
 
+### SVG Setup
 1. [ ] Obtain DXF files from manufacturer
 2. [ ] Place DXFs in `block_conversion/heater_blocks/`
 3. [ ] Run `python extract_blocks.py`
-4. [ ] Rename SVGs to follow naming convention
-5. [ ] Organize into folder structure: `{SERIES}_Series_Drawings/Type/Length/`
-6. [ ] Gather specs from manufacturer documentation:
-   - [ ] BTU/wattage ratings
+4. [ ] **Consolidate SVGs** - keep ONE per unique physical size (remove BTU duplicates)
+5. [ ] Rename SVGs to follow naming convention:
+   - Gas: `{SERIES}-{LENGTH}.svg` or `{SERIES}-{LENGTH}U.svg`
+   - Electric: `{SERIES}-{LENGTH}-{LAMPCOUNT}.svg`
+6. [ ] Organize into folder structure: `{SERIES}_Series_Drawings/Type/Length/`
+
+### Specs Setup
+7. [ ] Gather specs from manufacturer documentation:
+   - [ ] BTU/wattage ratings (all variants per size)
    - [ ] Physical dimensions
    - [ ] Weights
    - [ ] Mounting heights
    - [ ] Gas/electrical requirements
    - [ ] Clearances to combustibles
-7. [ ] Create `src/data/{series}Specs.json`
-8. [ ] Add import to `heaterCatalog.js`
-9. [ ] Test catalog loading in dev mode
-10. [ ] Verify heaters appear in model picker
-11. [ ] Test placing heaters on canvas
-12. [ ] Test PDF export with heater labels
+8. [ ] Create `src/data/{series}Specs.json` using appropriate template
+9. [ ] Add import to `heaterCatalog.js` and register in `seriesSpecs` map
+10. [ ] Add processing function if naming differs from HL3/LD3/ELX patterns
+
+### Testing
+11. [ ] Test catalog loading in dev mode (check console for model count)
+12. [ ] Verify heaters appear in model picker with all variants
+13. [ ] Test placing heaters on canvas
+14. [ ] Test PDF export with heater labels
 
 ---
 
