@@ -170,7 +170,7 @@ export async function exportPDF(svgElement) {
   const PAGE_H = 279.4;
   const MARGIN = 4;
   const HEADER_H = 20;
-  const FOOTER_H = 32;
+  const FOOTER_H = 42;
 
   // Drawing area
   const DRAW_X = MARGIN;
@@ -314,7 +314,7 @@ export async function exportPDF(svgElement) {
     doc.line(MARGIN, footerY, PAGE_W - MARGIN, footerY);
 
     // Equipment Schedule (left)
-    const scheduleW = 65;
+    const scheduleW = 90;
     doc.setLineWidth(0.3);
     doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
