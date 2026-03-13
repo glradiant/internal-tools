@@ -1216,50 +1216,40 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                   </text>
                 );
               })()}
-              {/* Heat throw arrows */}
+              {/* Heat throw arrows - simple chevrons */}
               {(h.heatThrowAngle !== 0) && (() => {
                 const angle = h.heatThrowAngle || 0;
                 const absAngle = Math.abs(angle);
                 // Arrow size scales with angle: 15°=small, 30°=medium, 45°=large
                 const sizeMultiplier = absAngle / 45; // 0.33, 0.67, 1.0
-                const baseArrowLength = 20 * labelScale;
-                const arrowLength = baseArrowLength * (0.5 + sizeMultiplier * 0.5);
-                const arrowWidth = 6 * labelScale * (0.5 + sizeMultiplier * 0.5);
+                const chevronSize = 4 * labelScale * (0.6 + sizeMultiplier * 0.4);
+                const strokeW = 1.5 * labelScale * (0.6 + sizeMultiplier * 0.4);
 
                 // Arrow spacing along heater length
-                const arrowCount = 3;
+                const arrowCount = 5;
                 const spacing = displayWidth / (arrowCount + 1);
 
                 // Direction: negative = top (negative Y), positive = bottom (positive Y)
                 const direction = angle < 0 ? -1 : 1;
-                const arrowY = direction * (displayHeight / 2 + 5 * labelScale);
+                // Position just outside the heater edge
+                const arrowY = direction * (displayHeight / 2 + 2 * labelScale);
 
                 return (
                   <g>
                     {Array.from({ length: arrowCount }, (_, i) => {
                       const arrowX = -displayWidth / 2 + spacing * (i + 1);
+                      // Chevron points: two lines forming a ">" shape pointing in direction
+                      const tipY = arrowY + direction * chevronSize;
                       return (
-                        <g key={i} transform={`translate(${arrowX}, ${arrowY})`}>
-                          {/* Arrow line */}
-                          <line
-                            x1={0}
-                            y1={0}
-                            x2={0}
-                            y2={direction * arrowLength}
-                            stroke="#dc2626"
-                            strokeWidth={2 * labelScale * (0.5 + sizeMultiplier * 0.3)}
-                            strokeLinecap="round"
-                          />
-                          {/* Arrow head */}
-                          <polygon
-                            points={`
-                              0,${direction * arrowLength}
-                              ${-arrowWidth / 2},${direction * (arrowLength - arrowWidth)}
-                              ${arrowWidth / 2},${direction * (arrowLength - arrowWidth)}
-                            `}
-                            fill="#dc2626"
-                          />
-                        </g>
+                        <polyline
+                          key={i}
+                          points={`${arrowX - chevronSize * 0.6},${arrowY} ${arrowX},${tipY} ${arrowX + chevronSize * 0.6},${arrowY}`}
+                          fill="none"
+                          stroke="#dc2626"
+                          strokeWidth={strokeW}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
                       );
                     })}
                   </g>
