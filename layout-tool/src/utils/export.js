@@ -319,9 +319,9 @@ export async function exportPDF(svgElement) {
     doc.line(MARGIN + scheduleW, footerY + 0.5, MARGIN + scheduleW, PAGE_H - MARGIN - 0.5);
 
     doc.setFont('courier', 'normal');
-    doc.setFontSize(6);
+    doc.setFontSize(8);
     doc.setTextColor(...GRAY);
-    doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, footerY + 6);
+    doc.text('EQUIPMENT SCHEDULE', MARGIN + 5, footerY + 7);
 
     // Group heaters by model
     const schedule = Object.values(
@@ -334,8 +334,8 @@ export async function exportPDF(svgElement) {
     );
 
     doc.setFont('courier', 'normal');
-    doc.setFontSize(8);
-    let schedY = footerY + 13;
+    doc.setFontSize(10);
+    let schedY = footerY + 15;
     if (schedule.length === 0) {
       doc.setTextColor(...GRAY);
       doc.text('No heaters placed', MARGIN + 5, schedY);
@@ -343,10 +343,10 @@ export async function exportPDF(svgElement) {
       schedule.forEach(({ model, count }) => {
         // Orange swatch
         doc.setFillColor(...ORANGE);
-        doc.rect(MARGIN + 5, schedY - 2.5, 6, 3, 'F');
+        doc.rect(MARGIN + 5, schedY - 3, 7, 4, 'F');
         doc.setTextColor(...NAVY);
-        doc.text(`${count}x ${model.label}`, MARGIN + 13, schedY);
-        schedY += 6;
+        doc.text(`${count}x ${model.label}`, MARGIN + 14, schedY);
+        schedY += 7;
       });
     }
 
@@ -368,31 +368,31 @@ export async function exportPDF(svgElement) {
     const wattsLabel = totalWatts >= 1000 ? 'kW' : 'W';
 
     doc.setFont('courier', 'normal');
-    doc.setFontSize(6);
+    doc.setFontSize(8);
     doc.setTextColor(...GRAY);
     doc.text('TOTAL OUTPUT', totalX + totalW / 2, footerY + 7, { align: 'center' });
 
     if (isMixed) {
       // Show both values stacked when mixed
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setTextColor(...ORANGE);
-      doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 15, { align: 'center' });
+      doc.text(String(totalKbtu), totalX + totalW / 2, footerY + 16, { align: 'center' });
 
       doc.setFont('courier', 'normal');
-      doc.setFontSize(5);
+      doc.setFontSize(7);
       doc.setTextColor(...GRAY);
-      doc.text('kBTU/HR', totalX + totalW / 2, footerY + 19, { align: 'center' });
+      doc.text('kBTU/HR', totalX + totalW / 2, footerY + 21, { align: 'center' });
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
+      doc.setFontSize(20);
       doc.setTextColor(...ORANGE);
-      doc.text(formatWatts(totalWatts), totalX + totalW / 2, footerY + 26, { align: 'center' });
+      doc.text(formatWatts(totalWatts), totalX + totalW / 2, footerY + 28, { align: 'center' });
 
       doc.setFont('courier', 'normal');
-      doc.setFontSize(5);
+      doc.setFontSize(7);
       doc.setTextColor(...GRAY);
-      doc.text(wattsLabel, totalX + totalW / 2, footerY + 30, { align: 'center' });
+      doc.text(wattsLabel, totalX + totalW / 2, footerY + 33, { align: 'center' });
     } else {
       // Single value display - watts for electric only, BTU for gas only
       const isElectricOnly = electricCount > 0;
@@ -400,14 +400,14 @@ export async function exportPDF(svgElement) {
       const outputLabel = isElectricOnly ? wattsLabel : 'kBTU / HR';
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(28);
+      doc.setFontSize(32);
       doc.setTextColor(...ORANGE);
       doc.text(outputValue, totalX + totalW / 2, footerY + 20, { align: 'center' });
 
       doc.setFont('courier', 'normal');
-      doc.setFontSize(7);
+      doc.setFontSize(9);
       doc.setTextColor(...GRAY);
-      doc.text(outputLabel, totalX + totalW / 2, footerY + 27, { align: 'center' });
+      doc.text(outputLabel, totalX + totalW / 2, footerY + 28, { align: 'center' });
     }
 
     // Offices (fills remaining space)
@@ -423,15 +423,15 @@ export async function exportPDF(svgElement) {
       }
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setTextColor(...NAVY);
-      doc.text(office.name, ox + 3, footerY + 7);
+      doc.text(office.name, ox + 3, footerY + 8);
 
       doc.setFont('courier', 'normal');
-      doc.setFontSize(6);
+      doc.setFontSize(8);
       doc.setTextColor(...MID_GRAY);
       office.lines.forEach((line, j) => {
-        doc.text(line, ox + 3, footerY + 13 + j * 4.5);
+        doc.text(line, ox + 3, footerY + 15 + j * 5);
       });
     });
 
