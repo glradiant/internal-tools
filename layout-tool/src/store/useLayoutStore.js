@@ -86,6 +86,7 @@ const useLayoutStore = create((set, get) => ({
   manDoorFlipH: false, // flip H for next man door placement
   manDoorFlipV: false, // flip V for next man door placement
   orthoMode: false, // 90-degree angle lock for drawing
+  outputUnit: 'auto', // 'auto' | 'btu' | 'watts' - auto selects watts if electric heaters present
 
   // Push current state to past stack (call before making changes)
   pushHistory: () => set((s) => {
@@ -354,6 +355,7 @@ const useLayoutStore = create((set, get) => ({
   toggleManDoorFlipH: () => set((s) => ({ manDoorFlipH: !s.manDoorFlipH })),
   toggleManDoorFlipV: () => set((s) => ({ manDoorFlipV: !s.manDoorFlipV })),
   toggleOrthoMode: () => set((s) => ({ orthoMode: !s.orthoMode })),
+  setOutputUnit: (unit) => set({ outputUnit: unit }),
   toggleDimensions: () => set((s) => ({ showDimensions: !s.showDimensions })),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   setGridDivisionFt: (ft) => set({ gridDivisionFt: ft }),
@@ -415,6 +417,7 @@ const useLayoutStore = create((set, get) => ({
     revision: data.revision || 'A',
     gasType: data.gasType || '',
     date: data.date || '',
+    outputUnit: data.outputUnit || 'auto',
     // Add segmentLabels default for backward compatibility
     walls: (data.walls || []).map((w) => ({
       ...w,

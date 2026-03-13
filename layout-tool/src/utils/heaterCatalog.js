@@ -1,8 +1,23 @@
 // Dynamically load all SVG files from heater_svgs folder
 // Vite's import.meta.glob enables us to import all matching files
 
-// Import ELX specs for electric heater configurations
+// Import heater specs for configurations
 import elxSpecs from '../data/elxSpecs.json';
+import hl3Specs from '../data/hl3Specs.json';
+import ld3Specs from '../data/ld3Specs.json';
+
+// Map series names to their specs
+const seriesSpecs = {
+  ELX: elxSpecs,
+  HL3: hl3Specs,
+  LD3: ld3Specs,
+};
+
+// Helper to determine if a series is electric
+const isSeriesElectric = (seriesName) => {
+  const specs = seriesSpecs[seriesName];
+  return specs?.fuelType === 'electric';
+};
 
 // Try multiple path patterns to handle different project structures
 const svgModulesRoot = import.meta.glob('/heater_svgs/**/*.svg', {
@@ -124,7 +139,7 @@ function buildHeaterCatalog() {
               lengthFt: 0, // Not applicable for electric
               lengthIn: parseInt(lengthIn, 10),
               lampCount: parseInt(lampCount, 10),
-              isElectric: true,
+              isElectric: isSeriesElectric('ELX'),
             };
 
             nestedTree['ELX'].children[lengthLabel].children[lampCountLabel].children[voltage].models.push(model);
@@ -185,7 +200,7 @@ function buildHeaterCatalog() {
       dimensions: dimensions,
       kbtu: extractKbtu(fileNameWithoutExt),
       lengthFt: extractLengthFt(fileNameWithoutExt, dimensions),
-      isElectric: false,
+      isElectric: isSeriesElectric(seriesName),
     };
 
     // Add to nested tree

@@ -1,0 +1,29 @@
+{
+  "series": "LD3",
+  "fuelType": "gas",
+  "description": "LD3 Low Intensity Gas Tube Heaters",
+  "models": {
+    "Straight": {
+      "15": {
+        "40": { "kbtu": 40 },
+        "50": { "kbtu": 50 }
+      },
+      "20": {
+        "40": { "kbtu": 40 },
+        "50": { "kbtu": 50 }
+      },
+      "30": {
+        "50": { "kbtu": 50 }
+      }
+    },
+    "U-Bend": {
+      "20": {
+        "40": { "kbtu": 40 },
+        "50": { "kbtu": 50 }
+      },
+      "30": {
+        "50": { "kbtu": 50 }
+      }
+    }
+  }
+}

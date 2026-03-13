@@ -9,12 +9,22 @@ export default function SummaryPanel({ onExportPDF }) {
   const projectName = useLayoutStore((s) => s.projectName);
   const clearAll = useLayoutStore((s) => s.clearAll);
   const loadLayout = useLayoutStore((s) => s.loadLayout);
+  const outputUnit = useLayoutStore((s) => s.outputUnit);
+  const setOutputUnit = useLayoutStore((s) => s.setOutputUnit);
   const fileInputRef = useRef(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const totalKbtu = heaters.reduce((s, h) => s + h.model.kbtu, 0);
+  const totalKbtu = heaters.reduce((s, h) => s + (h.model.kbtu || 0), 0);
+  const totalWatts = heaters.reduce((s, h) => s + (h.model.watts || 0), 0);
+  const electricCount = heaters.filter(h => h.model.isElectric).length;
+  const gasCount = heaters.length - electricCount;
   const overheadDoors = doors.filter(d => d.doorType !== 'man').length;
   const manDoors = doors.filter(d => d.doorType === 'man').length;
+
+  // Determine effective unit (auto: watts if more electric than gas, otherwise BTU)
+  const effectiveUnit = outputUnit === 'auto'
+    ? (electricCount > gasCount ? 'watts' : 'btu')
+    : outputUnit;
 
   const handleSave = () => {
     const state = useLayoutStore.getState();
@@ -39,6 +49,7 @@ export default function SummaryPanel({ onExportPDF }) {
       revision: state.revision,
       gasType: state.gasType,
       date: state.date,
+      outputUnit: state.outputUnit,
       walls: state.walls,
       doors: state.doors,
       heaters: heatersForSave,
@@ -80,12 +91,14 @@ export default function SummaryPanel({ onExportPDF }) {
     e.target.value = '';
   };
 
+  // Format watts for display (kW if >= 1000)
+  const formatWatts = (w) => w >= 1000 ? `${(w / 1000).toFixed(1)}kW` : `${w}W`;
+
   const stats = [
     ['Buildings', walls.length],
     ['Overhead Doors', overheadDoors],
     ['Man Doors', manDoors],
     ['Heaters', heaters.length],
-    ['Total kBTU', totalKbtu],
   ];
 
   const btnStyle = {
@@ -118,6 +131,38 @@ export default function SummaryPanel({ onExportPDF }) {
           <span style={{ color: val > 0 ? '#f37021' : 'rgba(255,255,255,0.2)' }}>{val}</span>
         </div>
       ))}
+
+      {/* Total Output with unit selector */}
+      <div style={{ marginTop: 8, marginBottom: 8, padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: 4 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>Total Output</span>
+          <span style={{ color: '#f37021', fontSize: 12, fontWeight: 600 }}>
+            {effectiveUnit === 'watts' ? formatWatts(totalWatts) : `${totalKbtu} kBTU`}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {['auto', 'btu', 'watts'].map((unit) => (
+            <button
+              key={unit}
+              onClick={() => setOutputUnit(unit)}
+              style={{
+                flex: 1,
+                padding: '4px 6px',
+                background: outputUnit === unit ? '#f37021' : 'rgba(255,255,255,0.05)',
+                border: 'none',
+                borderRadius: 3,
+                color: outputUnit === unit ? 'white' : 'rgba(255,255,255,0.4)',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 8,
+                textTransform: 'uppercase',
+              }}
+            >
+              {unit === 'auto' ? `Auto${electricCount > gasCount ? ' (W)' : ' (BTU)'}` : unit}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Primary action - Download PDF */}
       <button

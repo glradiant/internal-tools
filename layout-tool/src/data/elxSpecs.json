@@ -1,4 +1,7 @@
 {
+  "series": "ELX",
+  "fuelType": "electric",
+  "description": "ELX Electric Infrared Heaters",
   "ELX": {
     "24": {
       "1": {

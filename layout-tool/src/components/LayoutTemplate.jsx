@@ -16,8 +16,25 @@ export default function LayoutTemplate({ store, svgMarkup }) {
     }, {})
   );
 
-  // Sum all heater kBTU values
-  const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + h.model.kbtu, 0);
+  // Sum all heater kBTU and watts values
+  const totalKbtu = (store.heaters || []).reduce((sum, h) => sum + (h.model.kbtu || 0), 0);
+  const totalWatts = (store.heaters || []).reduce((sum, h) => sum + (h.model.watts || 0), 0);
+  const electricCount = (store.heaters || []).filter(h => h.model.isElectric).length;
+  const gasCount = (store.heaters || []).length - electricCount;
+
+  // Determine effective unit (auto: watts if more electric than gas, otherwise BTU)
+  const outputUnit = store.outputUnit || 'auto';
+  const effectiveUnit = outputUnit === 'auto'
+    ? (electricCount > gasCount ? 'watts' : 'btu')
+    : outputUnit;
+
+  // Format output value and label
+  const outputValue = effectiveUnit === 'watts'
+    ? (totalWatts >= 1000 ? (totalWatts / 1000).toFixed(1) : totalWatts)
+    : totalKbtu;
+  const outputLabel = effectiveUnit === 'watts'
+    ? (totalWatts >= 1000 ? 'kW' : 'WATTS')
+    : 'kBTU / HR';
 
   return (
     <div className="layout-sheet">
@@ -107,7 +124,7 @@ export default function LayoutTemplate({ store, svgMarkup }) {
               fontSize="30"
               fontWeight="700"
               fill="#f37021"
-            >{totalKbtu}</text>
+            >{outputValue}</text>
             <text
               x="42" y="72"
               textAnchor="middle"
@@ -115,7 +132,7 @@ export default function LayoutTemplate({ store, svgMarkup }) {
               fontSize="6.5"
               letterSpacing="1.5"
               fill="#8AAABF"
-            >kBTU / HR</text>
+            >{outputLabel}</text>
           </svg>
         </div>
 
