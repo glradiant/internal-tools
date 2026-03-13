@@ -1185,6 +1185,47 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
               data-entity-type="heater"
               style={{ cursor: activeTool === 'select' ? (selectedIds.includes(h.id) ? 'move' : 'pointer') : undefined }}
             >
+              {/* Clearance to combustibles rectangle */}
+              {h.showClearance && h.model?.clearances && (() => {
+                // Determine which clearance config to use based on heat throw angle
+                const heatAngle = Math.abs(h.heatThrowAngle || 0);
+                // Use 45deg clearances if tilted 30° or more, otherwise 0deg
+                const configKey = heatAngle >= 30 ? '45deg' : '0deg';
+                const clearance = h.model.clearances[configKey] || h.model.clearances['0deg'];
+
+                if (!clearance) return null;
+
+                // Convert inches to pixels (GRID = 1 foot = 12 inches)
+                const inchToPx = GRID / 12;
+
+                // sideFront/sideBehind are perpendicular to heater length
+                // For gas heaters: sideFront, sideBehind
+                // For electric heaters: we normalized to sideFront, sideBehind in catalog
+                const frontClearance = (clearance.sideFront || 0) * inchToPx;
+                const behindClearance = (clearance.sideBehind || 0) * inchToPx;
+                const endClearance = (clearance.end || 12) * inchToPx; // Default 12" end clearance
+
+                // Rectangle extends from heater center
+                // In heater local coords: X is along length, Y is perpendicular
+                const rectWidth = displayWidth + endClearance * 2;
+                const rectHeight = frontClearance + behindClearance;
+                const rectX = -displayWidth / 2 - endClearance;
+                // Center the clearance zone on the heater, offset by difference between front/behind
+                const rectY = -behindClearance;
+
+                return (
+                  <rect
+                    x={rectX}
+                    y={rectY}
+                    width={rectWidth}
+                    height={rectHeight}
+                    fill="rgba(255, 0, 0, 0.08)"
+                    stroke="rgba(255, 0, 0, 0.4)"
+                    strokeWidth={1}
+                    strokeDasharray="4,2"
+                  />
+                );
+              })()}
               <HeaterGlyph
                 model={h.model}
                 lengthPx={displayWidth}
