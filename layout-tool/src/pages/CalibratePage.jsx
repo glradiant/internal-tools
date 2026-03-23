@@ -2,6 +2,9 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { HEATER_MODELS_FROM_SVG } from '../utils/heaterCatalog';
 import { BUILDER_PARTS } from '../utils/builderPartsCatalog';
 import { loadCalibration, saveCalibration } from '../utils/calibrationStorage';
+import { supabase } from '../lib/supabase';
+
+const ALLOWED_EMAILS = ['josh@glradiant.com'];
 
 // ── Color inversion for SVGs on white background ────────────────────────
 // Same logic as HeaterGlyph.jsx — converts light CAD colors to darker equivalents
@@ -131,6 +134,33 @@ function getBuilderSvgs() {
 }
 
 export default function CalibratePage() {
+  const [userEmail, setUserEmail] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email || null);
+      setAuthLoading(false);
+    });
+  }, []);
+
+  if (authLoading) {
+    return <div style={{ padding: 40, color: '#999' }}>Loading...</div>;
+  }
+
+  if (!ALLOWED_EMAILS.includes(userEmail)) {
+    return (
+      <div style={{ padding: 40, color: '#999', textAlign: 'center', marginTop: 100 }}>
+        <h2 style={{ color: 'white' }}>Access Denied</h2>
+        <p>This tool is restricted. Contact Josh if you need access.</p>
+      </div>
+    );
+  }
+
+  return <CalibratePageInner />;
+}
+
+function CalibratePageInner() {
   const [mode, setMode] = useState('builder'); // 'heaters' | 'builder'
   const [heaterSvgs] = useState(() => getUniqueSvgs());
   const [builderSvgs] = useState(() => getBuilderSvgs());

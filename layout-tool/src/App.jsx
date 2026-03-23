@@ -11,9 +11,6 @@ export default function App() {
       {/* Reset password route - outside AuthGuard since user clicks link from email */}
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      {/* Calibration tool - outside AuthGuard (dev tool) */}
-      <Route path="/calibrate" element={<CalibratePage />} />
-
       {/* All other routes require authentication */}
       <Route
         path="/*"
@@ -22,6 +19,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/layout/:id" element={<LayoutCanvas />} />
+              <Route path="/calibrate" element={<CalibratePage />} />
             </Routes>
           </AuthGuard>
         }
