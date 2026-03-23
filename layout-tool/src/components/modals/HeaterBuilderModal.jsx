@@ -99,6 +99,12 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     setRecipe((prev) => prev.slice(0, -1));
   };
 
+  const toggleFlip = (index) => {
+    setRecipe((prev) => prev.map((r, i) =>
+      i === index ? { ...r, flipped: !r.flipped } : r
+    ));
+  };
+
   const handleSave = () => {
     const result = composeHeaterSvg(recipe, getBuilderPart);
     if (!result) return;
@@ -226,12 +232,18 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                   style={{ width: '100%', height: '100%', padding: 16 }}
                   preserveAspectRatio="xMidYMid meet"
                 >
-                  {placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
+                  {placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
                     const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type));
+                    const vb = part.dimensions.viewBox;
+                    let transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+                    if (flipped) {
+                      const centerY = vb.y + vb.height / 2;
+                      transform += ` translate(0, ${2 * centerY}) scale(1, -1)`;
+                    }
                     return (
                       <g
                         key={idx}
-                        transform={`translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`}
+                        transform={transform}
                         dangerouslySetInnerHTML={{ __html: inner }}
                       />
                     );
@@ -388,6 +400,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
             <div style={{ maxHeight: 150, overflowY: 'auto' }}>
               {recipe.map((r, i) => {
                 const part = getBuilderPart(r.partId);
+                const isTurn = part?.type === 'turn90' || part?.type === 'turn180';
                 return (
                   <div
                     key={i}
@@ -396,9 +409,30 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                       color: 'rgba(255,255,255,0.5)',
                       padding: '3px 0',
                       borderBottom: '1px solid rgba(255,255,255,0.04)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
                     }}
                   >
-                    {i + 1}. {part?.label || r.partId}
+                    <span>{i + 1}. {part?.label || r.partId}{r.flipped ? ' (flipped)' : ''}</span>
+                    {isTurn && (
+                      <button
+                        onClick={() => toggleFlip(i)}
+                        style={{
+                          background: r.flipped ? 'rgba(243,112,33,0.2)' : 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: 3,
+                          color: r.flipped ? '#f37021' : 'rgba(255,255,255,0.4)',
+                          cursor: 'pointer',
+                          fontSize: 9,
+                          padding: '1px 6px',
+                          fontFamily: 'inherit',
+                        }}
+                        title="Flip turn direction"
+                      >
+                        Flip
+                      </button>
+                    )}
                   </div>
                 );
               })}

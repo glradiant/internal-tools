@@ -46,9 +46,37 @@ function toMm(point, scale) {
 }
 
 /**
+ * Get the effective inlet/outlet for a part, accounting for vertical flip.
+ * When flipped, Y coordinates are mirrored around the viewBox vertical center,
+ * and vertical angles are inverted (270° ↔ 90°).
+ */
+function getEffectiveConnections(part, flipped) {
+  if (!flipped) return { inlet: part.inlet, outlet: part.outlet };
+
+  const vb = part.dimensions.viewBox;
+  const centerY = vb.y + vb.height / 2;
+
+  const mirrorPoint = (pt) => {
+    if (!pt) return pt;
+    const mirroredY = 2 * centerY - pt.y;
+    // Mirror the angle: 270° (up) becomes 90° (down) and vice versa
+    let mirroredAngle = pt.angle;
+    if (pt.angle === 270) mirroredAngle = 90;
+    else if (pt.angle === 90) mirroredAngle = 270;
+    return { x: pt.x, y: mirroredY, angle: mirroredAngle };
+  };
+
+  return {
+    inlet: mirrorPoint(part.inlet),
+    outlet: mirrorPoint(part.outlet),
+  };
+}
+
+/**
  * Calculate the placement for each part in the assembly.
  * All coordinates are in mm (normalized from each part's viewBox scale).
- * Returns an array of { part, worldX, worldY, rotation, scale } objects.
+ * Recipe entries: { partId, flipped? } where flipped mirrors turns vertically.
+ * Returns an array of { part, worldX, worldY, rotation, scale, flipped } objects.
  */
 export function calculatePlacements(recipe, getPartFn) {
   if (!recipe || recipe.length === 0) return [];
@@ -60,6 +88,8 @@ export function calculatePlacements(recipe, getPartFn) {
     if (!part) continue;
 
     const scale = getPartScale(part);
+    const flipped = !!recipe[i].flipped;
+    const { inlet, outlet } = getEffectiveConnections(part, flipped);
 
     if (i === 0) {
       placements.push({
@@ -68,25 +98,27 @@ export function calculatePlacements(recipe, getPartFn) {
         worldY: 0,
         rotation: 0,
         scale,
+        flipped,
+        effectiveOutlet: outlet,
       });
       continue;
     }
 
     const prev = placements[placements.length - 1];
-    if (!prev || !prev.part.outlet) continue;
+    if (!prev || !prev.effectiveOutlet) continue;
 
     // Previous part's outlet in mm
-    const prevOutletMm = toMm(prev.part.outlet, prev.scale);
+    const prevOutletMm = toMm(prev.effectiveOutlet, prev.scale);
     const prevOutletRotated = rotatePoint(prevOutletMm.x, prevOutletMm.y, prev.rotation);
     const worldOutletX = prev.worldX + prevOutletRotated.x;
     const worldOutletY = prev.worldY + prevOutletRotated.y;
 
     // Calculate rotation for this part
-    const prevWorldOutletAngle = (prev.part.outlet.angle + prev.rotation) % 360;
-    const rotation = ((prevWorldOutletAngle + 180 - part.inlet.angle) % 360 + 360) % 360;
+    const prevWorldOutletAngle = (prev.effectiveOutlet.angle + prev.rotation) % 360;
+    const rotation = ((prevWorldOutletAngle + 180 - inlet.angle) % 360 + 360) % 360;
 
     // This part's inlet in mm
-    const inletMm = toMm(part.inlet, scale);
+    const inletMm = toMm(inlet, scale);
     const inletRotated = rotatePoint(inletMm.x, inletMm.y, rotation);
     const worldX = worldOutletX - inletRotated.x;
     const worldY = worldOutletY - inletRotated.y;
@@ -97,6 +129,8 @@ export function calculatePlacements(recipe, getPartFn) {
       worldY,
       rotation,
       scale,
+      flipped,
+      effectiveOutlet: outlet,
     });
   }
 
@@ -109,9 +143,10 @@ export function calculatePlacements(recipe, getPartFn) {
 export function computeBoundingBox(placements) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-  for (const { part, worldX, worldY, rotation, scale } of placements) {
+  for (const { part, worldX, worldY, rotation, scale, flipped } of placements) {
     const vb = part.dimensions.viewBox;
     // Transform all four corners of the part's viewBox (converted to mm)
+    // Flip doesn't change the bounding box corners, only internal content
     const corners = [
       { x: vb.x * scale, y: vb.y * scale },
       { x: (vb.x + vb.width) * scale, y: vb.y * scale },
@@ -211,11 +246,16 @@ export function composeHeaterSvg(recipe, getPartFn) {
 
   // Build SVG groups for each part
   // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
-  const groups = placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
+  const groups = placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
     const innerSvg = stripAndNamespace(part.svgContent, idx, part.type);
-    // Transform order: translate -> rotate -> scale (applied right to left)
-    // The scale converts the part's native viewBox coordinates to mm
-    const transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+    const vb = part.dimensions.viewBox;
+    // Transform order: translate -> rotate -> scale -> (flip if needed)
+    // Flip mirrors Y around the viewBox vertical center
+    let transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+    if (flipped) {
+      const centerY = vb.y + vb.height / 2;
+      transform += ` translate(0, ${2 * centerY}) scale(1, -1)`;
+    }
     return `<g transform="${transform}" data-part="${part.partId}" data-index="${idx}">${innerSvg}</g>`;
   });
 
@@ -248,13 +288,13 @@ export function getLastOutlet(recipe, getPartFn) {
   if (placements.length === 0) return null;
 
   const last = placements[placements.length - 1];
-  if (!last.part.outlet) return null;
+  if (!last.effectiveOutlet) return null;
 
-  const outletMm = toMm(last.part.outlet, last.scale);
+  const outletMm = toMm(last.effectiveOutlet, last.scale);
   const outletRotated = rotatePoint(outletMm.x, outletMm.y, last.rotation);
   return {
     x: last.worldX + outletRotated.x,
     y: last.worldY + outletRotated.y,
-    angle: (last.part.outlet.angle + last.rotation) % 360,
+    angle: (last.effectiveOutlet.angle + last.rotation) % 360,
   };
 }
