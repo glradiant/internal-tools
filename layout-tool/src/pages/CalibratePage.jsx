@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { HEATER_MODELS_FROM_SVG } from '../utils/heaterCatalog';
 import { BUILDER_PARTS } from '../utils/builderPartsCatalog';
+import { loadCalibration, saveCalibration } from '../utils/calibrationStorage';
 
 // ── Color inversion for SVGs on white background ────────────────────────
 // Same logic as HeaterGlyph.jsx — converts light CAD colors to darker equivalents
@@ -143,13 +144,22 @@ export default function CalibratePage() {
     } catch { return {}; }
   });
 
-  // Builder part anchors (inlet/outlet)
+  // Builder part anchors (inlet/outlet) — loaded from Supabase, cached in localStorage
   const [builderAnchors, setBuilderAnchors] = useState(() => {
     try {
       const saved = localStorage.getItem('builderPartAnchors');
       return saved ? JSON.parse(saved) : {};
     } catch { return {}; }
   });
+
+  // Load calibration from Supabase on mount (overrides localStorage with shared data)
+  useEffect(() => {
+    loadCalibration().then((data) => {
+      if (data && Object.keys(data).length > 0) {
+        setBuilderAnchors(data);
+      }
+    });
+  }, []);
 
   const [activePointType, setActivePointType] = useState(mode === 'builder' ? 'inlet' : 'reflectorTopLeft');
   const [directionForNext, setDirectionForNext] = useState(0);
@@ -187,7 +197,8 @@ export default function CalibratePage() {
     localStorage.setItem('heaterAnchors', JSON.stringify(heaterAnchors));
   }, [heaterAnchors]);
   useEffect(() => {
-    localStorage.setItem('builderPartAnchors', JSON.stringify(builderAnchors));
+    // Save to both localStorage and Supabase
+    saveCalibration(builderAnchors);
   }, [builderAnchors]);
 
   // Reset selection when switching modes

@@ -4,6 +4,7 @@
  */
 
 import defaultConnections from '../data/builderPartsDefaults.json';
+import { loadCalibrationSync } from './calibrationStorage';
 
 // Load all builder part SVGs
 const svgModulesRoot = import.meta.glob('/heater_svgs/LS3_Builder_Parts/*.svg', {
@@ -61,14 +62,8 @@ const SKIP_FILES = [
 function buildPartsCatalog() {
   const parts = [];
 
-  // Load any saved calibration overrides from localStorage
-  let calibrationOverrides = {};
-  try {
-    const stored = localStorage.getItem('builderPartAnchors');
-    if (stored) calibrationOverrides = JSON.parse(stored);
-  } catch {
-    // ignore parse errors
-  }
+  // Load calibration overrides (localStorage cache, synced from Supabase)
+  const calibrationOverrides = loadCalibrationSync();
 
   for (const [path, svgContent] of Object.entries(svgModules)) {
     // Extract filename
@@ -82,10 +77,19 @@ function buildPartsCatalog() {
       continue;
     }
 
-    // Use calibration overrides if available, otherwise use defaults
+    // Use calibration overrides for positions (x,y) but always use defaults for angles
+    // Angles have specific mathematical meaning for the composition engine
     const overrides = calibrationOverrides[fileName];
-    const inlet = overrides?.inlet ?? defaults.inlet;
-    const outlet = overrides?.outlet ?? defaults.outlet;
+    const inlet = defaults.inlet ? {
+      x: overrides?.inlet?.x ?? defaults.inlet.x,
+      y: overrides?.inlet?.y ?? defaults.inlet.y,
+      angle: defaults.inlet.angle, // Always use default angle
+    } : null;
+    const outlet = defaults.outlet ? {
+      x: overrides?.outlet?.x ?? defaults.outlet.x,
+      y: overrides?.outlet?.y ?? defaults.outlet.y,
+      angle: defaults.outlet.angle, // Always use default angle
+    } : null;
 
     const partId = fileName.replace('.svg', '').toLowerCase().replace(/[^a-z0-9]/g, '_');
 
