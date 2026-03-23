@@ -47,6 +47,8 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     BURNER_PART ? [{ partId: BURNER_PART.partId }] : []
   );
   const [label, setLabel] = useState('');
+  const [series, setSeries] = useState('LS3');
+  const [kbtu, setKbtu] = useState('');
   const previewRef = useRef(null);
 
   // Calculate placements for the current recipe
@@ -92,7 +94,8 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     const result = composeHeaterSvg(recipe, getBuilderPart);
     if (!result) return;
 
-    const customLabel = label.trim() || `LS3 Custom ${totalLengthFt}'`;
+    const kbtuVal = parseInt(kbtu, 10) || 0;
+    const customLabel = label.trim() || `${series} Custom ${totalLengthFt}'${kbtuVal ? ` ${kbtuVal}kBTU` : ''}`;
     const model = {
       id: `custom__${crypto.randomUUID()}`,
       label: customLabel,
@@ -100,8 +103,9 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
       svgContent: result.svgContent,
       svgPath: null,
       dimensions: result.dimensions,
-      kbtu: 0,
+      kbtu: kbtuVal,
       lengthFt: totalLengthFt,
+      series,
       isElectric: false,
       isCustom: true,
       builderRecipe: recipe,
@@ -115,7 +119,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     if (!label) return; // Don't override if user has typed something
   }, [recipe]);
 
-  const defaultLabel = `LS3 Custom ${totalLengthFt}'${partCounts.turns90 > 0 ? ` ${partCounts.turns90}x90°` : ''}${partCounts.turns180 > 0 ? ` ${partCounts.turns180}x180°` : ''}`;
+  const defaultLabel = `${series} Custom ${totalLengthFt}'${kbtu ? ` ${kbtu}kBTU` : ''}${partCounts.turns90 > 0 ? ` ${partCounts.turns90}x90°` : ''}${partCounts.turns180 > 0 ? ` ${partCounts.turns180}x180°` : ''}`;
 
   return (
     <div
@@ -400,9 +404,45 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
             borderTop: '1px solid rgba(255,255,255,0.08)',
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            gap: 10,
           }}
         >
+          <select
+            value={series}
+            onChange={(e) => setSeries(e.target.value)}
+            style={{
+              padding: '8px 10px',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 4,
+              color: 'white',
+              fontSize: 12,
+              fontFamily: 'inherit',
+              outline: 'none',
+            }}
+          >
+            <option value="LS3">LS3</option>
+            <option value="HL3">HL3</option>
+            <option value="LD3">LD3</option>
+          </select>
+          <input
+            type="number"
+            value={kbtu}
+            onChange={(e) => setKbtu(e.target.value)}
+            placeholder="kBTU"
+            style={{
+              width: 70,
+              padding: '8px 10px',
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 4,
+              color: 'white',
+              fontSize: 12,
+              fontFamily: 'inherit',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
           <input
             type="text"
             value={label}
