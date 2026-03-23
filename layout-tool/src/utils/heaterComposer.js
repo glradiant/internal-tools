@@ -76,7 +76,7 @@ function getEffectiveConnections(part, flipped) {
  * Calculate the placement for each part in the assembly.
  * All coordinates are in mm (normalized from each part's viewBox scale).
  * Recipe entries: { partId, flipped? } where flipped mirrors turns vertically.
- * Returns an array of { part, worldX, worldY, rotation, scale, flipped } objects.
+ * Returns an array of { part, worldX, worldY, rotation, scale, flipped, effectiveOutlet } objects.
  */
 export function calculatePlacements(recipe, getPartFn) {
   if (!recipe || recipe.length === 0) return [];
@@ -138,31 +138,43 @@ export function calculatePlacements(recipe, getPartFn) {
 }
 
 /**
+ * Compute the axis-aligned bounding box of a single placed part in world (mm) coordinates.
+ */
+function computePartAABB({ part, worldX, worldY, rotation, scale }) {
+  const vb = part.dimensions.viewBox;
+  const corners = [
+    { x: vb.x * scale, y: vb.y * scale },
+    { x: (vb.x + vb.width) * scale, y: vb.y * scale },
+    { x: vb.x * scale, y: (vb.y + vb.height) * scale },
+    { x: (vb.x + vb.width) * scale, y: (vb.y + vb.height) * scale },
+  ];
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const corner of corners) {
+    const rotated = rotatePoint(corner.x, corner.y, rotation);
+    const wx = worldX + rotated.x;
+    const wy = worldY + rotated.y;
+    minX = Math.min(minX, wx);
+    minY = Math.min(minY, wy);
+    maxX = Math.max(maxX, wx);
+    maxY = Math.max(maxY, wy);
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+/**
  * Compute the bounding box of all placed parts in world (mm) coordinates.
  */
 export function computeBoundingBox(placements) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-  for (const { part, worldX, worldY, rotation, scale, flipped } of placements) {
-    const vb = part.dimensions.viewBox;
-    // Transform all four corners of the part's viewBox (converted to mm)
-    // Flip doesn't change the bounding box corners, only internal content
-    const corners = [
-      { x: vb.x * scale, y: vb.y * scale },
-      { x: (vb.x + vb.width) * scale, y: vb.y * scale },
-      { x: vb.x * scale, y: (vb.y + vb.height) * scale },
-      { x: (vb.x + vb.width) * scale, y: (vb.y + vb.height) * scale },
-    ];
-
-    for (const corner of corners) {
-      const rotated = rotatePoint(corner.x, corner.y, rotation);
-      const wx = worldX + rotated.x;
-      const wy = worldY + rotated.y;
-      minX = Math.min(minX, wx);
-      minY = Math.min(minY, wy);
-      maxX = Math.max(maxX, wx);
-      maxY = Math.max(maxY, wy);
-    }
+  for (const placement of placements) {
+    const aabb = computePartAABB(placement);
+    minX = Math.min(minX, aabb.minX);
+    minY = Math.min(minY, aabb.minY);
+    maxX = Math.max(maxX, aabb.maxX);
+    maxY = Math.max(maxY, aabb.maxY);
   }
 
   const w = maxX - minX;
@@ -179,10 +191,92 @@ export function computeBoundingBox(placements) {
 }
 
 /**
- * Color remapping per part type to match catalog heater conventions.
- * Catalog uses: yellow=centerline, red=first tube, white=second tube, purple=burner detail, green=burner outline
- * Builder parts use different CAD layer colors that need remapping.
+ * Check if two AABBs overlap, with a shrink tolerance so parts that
+ * touch at connection edges don't count as overlapping.
  */
+function aabbsOverlap(a, b, tolerance = 0.5) {
+  // Shrink both boxes by tolerance before checking
+  const a2 = { minX: a.minX + tolerance, minY: a.minY + tolerance, maxX: a.maxX - tolerance, maxY: a.maxY - tolerance };
+  const b2 = { minX: b.minX + tolerance, minY: b.minY + tolerance, maxX: b.maxX - tolerance, maxY: b.maxY - tolerance };
+
+  if (a2.minX >= a2.maxX || a2.minY >= a2.maxY) return false;
+  if (b2.minX >= b2.maxX || b2.minY >= b2.maxY) return false;
+
+  return a2.minX < b2.maxX && a2.maxX > b2.minX && a2.minY < b2.maxY && a2.maxY > b2.minY;
+}
+
+/**
+ * Detect overlapping parts and configuration warnings.
+ * Returns an array of { type, message, indices } warning objects.
+ */
+export function detectWarnings(recipe, placements, getPartFn) {
+  const warnings = [];
+
+  const funnyOverlapMessages = [
+    "Uhh, are you sure about that? Parts are overlapping.",
+    "Houston, we have a problem. Your parts are having a meeting in the same spot.",
+    "Dude, what are you doing? Those parts are occupying the same space.",
+    "That's not how physics works. Parts are overlapping.",
+    "Congratulations, you've discovered quantum tunneling. Parts are overlapping.",
+    "I'm not a physicist, but I don't think two things can be in the same place at once.",
+  ];
+
+  const funnyLengthMessages = [
+    "That's... a LOT of tube. 85+ feet, are you heating an airport?",
+    "Sir, this is a heater, not the Alaska Pipeline.",
+    "85+ feet?! Are you trying to heat the entire state?",
+    "Bro, at this length you might need two heaters instead.",
+    "That's longer than a blue whale. Just saying. 85+ feet of tube.",
+    "I hope you have a really long building. That's 85+ feet of tube.",
+  ];
+
+  const funnyUTurnMessages = [
+    "Those two 90° turns make a U-turn. Maybe just use a 180° (RUP) instead?",
+    "Pro tip: two 90s in a U = one 180. Just use a RUP, my dude.",
+    "I see you like doing things the hard way. Two 90° turns could be one 180°.",
+    "That U-turn with two 90s is giving me anxiety. A 180° turn exists, you know.",
+  ];
+
+  // Check for overlapping parts (skip adjacent pairs, they touch at connections)
+  const aabbs = placements.map(p => computePartAABB(p));
+  for (let i = 0; i < aabbs.length; i++) {
+    for (let j = i + 2; j < aabbs.length; j++) {
+      if (aabbsOverlap(aabbs[i], aabbs[j])) {
+        const msg = funnyOverlapMessages[Math.floor(Math.random() * funnyOverlapMessages.length)];
+        warnings.push({ type: 'overlap', message: msg, indices: [i, j] });
+        // Only show one overlap warning
+        break;
+      }
+    }
+    if (warnings.some(w => w.type === 'overlap')) break;
+  }
+
+  // Check for tube length >= 85'
+  const totalLengthFt = recipe.reduce((sum, r) => sum + (getPartFn(r.partId)?.lengthFt || 0), 0);
+  if (totalLengthFt >= 85) {
+    const msg = funnyLengthMessages[Math.floor(Math.random() * funnyLengthMessages.length)];
+    warnings.push({ type: 'length', message: msg });
+  }
+
+  // Check for consecutive 90° turns forming a U-turn (both same flip state = U, different = S)
+  for (let i = 1; i < recipe.length; i++) {
+    const currPart = getPartFn(recipe[i].partId);
+    const prevPart = getPartFn(recipe[i - 1].partId);
+    if (currPart?.type === 'turn90' && prevPart?.type === 'turn90') {
+      // Same flip = U-turn shape, different flip = S-turn shape
+      const currFlipped = !!recipe[i].flipped;
+      const prevFlipped = !!recipe[i - 1].flipped;
+      if (currFlipped === prevFlipped) {
+        // U-turn: warn user
+        const msg = funnyUTurnMessages[Math.floor(Math.random() * funnyUTurnMessages.length)];
+        warnings.push({ type: 'u-turn', message: msg, indices: [i - 1, i] });
+      }
+    }
+  }
+
+  return warnings;
+}
+
 /**
  * Color remapping per part type to match catalog heater conventions.
  * Catalog: yellow=centerline, red=first tube, white=subsequent tubes,

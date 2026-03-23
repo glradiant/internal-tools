@@ -1,29 +1,7 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { BUILDER_PARTS, getBuilderPart } from '../../utils/builderPartsCatalog';
-import { calculatePlacements, computeBoundingBox, composeHeaterSvg, stripAndNamespace } from '../../utils/heaterComposer';
+import { calculatePlacements, computeBoundingBox, composeHeaterSvg, stripAndNamespace, detectWarnings } from '../../utils/heaterComposer';
 
-// Color inversion for white/light SVG colors (same as HeaterGlyph)
-function invertColorForWhiteBg(color) {
-  if (!color || color === 'none') return color;
-  const c = color.toLowerCase().trim();
-  if (c === 'white' || c === '#fff' || c === '#ffffff') return '#1B3557';
-  if (c === '#ffff00' || c === 'yellow') return '#f37021';
-  if (c === '#cccccc' || c === '#ccc') return '#666666';
-  const hexMatch = c.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/);
-  if (hexMatch) {
-    let hex = hexMatch[1];
-    if (hex.length === 3) hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    if (r * 0.299 + g * 0.587 + b * 0.114 > 200) {
-      return `#${(255 - r).toString(16).padStart(2, '0')}${(255 - g).toString(16).padStart(2, '0')}${(255 - b).toString(16).padStart(2, '0')}`;
-    }
-  }
-  return color;
-}
-
-// Process SVG content: invert colors for display on white/light backgrounds
 // Color inversion for preview on white background (after catalog color remap)
 function invertForPreview(svgInner) {
   return svgInner
@@ -42,11 +20,12 @@ const TURN_PARTS = BUILDER_PARTS.filter((p) => p.type === 'turn90' || p.type ===
 const BURNER_PART = BUILDER_PARTS.find((p) => p.type === 'burner' && !p.isStainless);
 
 export default function HeaterBuilderModal({ onClose, onSave }) {
-  // Recipe: array of { partId }
+  // Recipe: array of { partId, flipped? }
   const [recipe, setRecipe] = useState(
     BURNER_PART ? [{ partId: BURNER_PART.partId }] : []
   );
   const [label, setLabel] = useState('');
+  const [labelEdited, setLabelEdited] = useState(false);
   const [series, setSeries] = useState('LS3');
   const [kbtu, setKbtu] = useState('');
   const previewRef = useRef(null);
@@ -60,15 +39,30 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  // Use a revision counter to force re-render on recipe changes (fixes flip disappearing bug)
+  const [revision, setRevision] = useState(0);
+  const updateRecipe = useCallback((updater) => {
+    setRecipe(updater);
+    setRevision(r => r + 1);
+  }, []);
+
   // Calculate placements for the current recipe
   const placements = useMemo(
     () => calculatePlacements(recipe, getBuilderPart),
-    [recipe]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recipe, revision]
   );
 
   const bbox = useMemo(
     () => (placements.length > 0 ? computeBoundingBox(placements) : null),
     [placements]
+  );
+
+  // Warnings (overlap, length, U-turn)
+  const warnings = useMemo(
+    () => detectWarnings(recipe, placements, getBuilderPart),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recipe, revision, placements]
   );
 
   // Total tube length
@@ -91,18 +85,40 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
   }, [recipe]);
 
   const addPart = (partId) => {
-    setRecipe((prev) => [...prev, { partId }]);
+    const part = getBuilderPart(partId);
+    // Smart default: if adding a 90° turn after an existing 90° turn, default to S-config (flipped)
+    if (part?.type === 'turn90' && recipe.length > 0) {
+      const lastEntry = recipe[recipe.length - 1];
+      const lastPart = getBuilderPart(lastEntry.partId);
+      if (lastPart?.type === 'turn90') {
+        // S-config = opposite flip state from the previous 90
+        const flipped = !lastEntry.flipped;
+        updateRecipe((prev) => [...prev, { partId, flipped }]);
+        return;
+      }
+    }
+    updateRecipe((prev) => [...prev, { partId }]);
   };
 
   const removeLast = () => {
     if (recipe.length <= 1) return; // Keep burner
-    setRecipe((prev) => prev.slice(0, -1));
+    updateRecipe((prev) => prev.slice(0, -1));
+  };
+
+  const removePart = (index) => {
+    if (index === 0) return; // Can't remove burner
+    updateRecipe((prev) => prev.filter((_, i) => i !== index));
   };
 
   const toggleFlip = (index) => {
-    setRecipe((prev) => prev.map((r, i) =>
+    updateRecipe((prev) => prev.map((r, i) =>
       i === index ? { ...r, flipped: !r.flipped } : r
     ));
+  };
+
+  const resetRecipe = () => {
+    updateRecipe(() => BURNER_PART ? [{ partId: BURNER_PART.partId }] : []);
+    setLabelEdited(false);
   };
 
   const handleSave = () => {
@@ -110,7 +126,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     if (!result) return;
 
     const kbtuVal = parseInt(kbtu, 10) || 0;
-    const customLabel = label.trim() || `${series} Custom ${totalLengthFt}'${kbtuVal ? ` ${kbtuVal}kBTU` : ''}`;
+    const customLabel = label.trim() || defaultLabel;
     const model = {
       id: `custom__${crypto.randomUUID()}`,
       label: customLabel,
@@ -129,12 +145,17 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     onSave(model);
   };
 
-  // Auto-generate label suggestion
-  useEffect(() => {
-    if (!label) return; // Don't override if user has typed something
-  }, [recipe]);
-
   const defaultLabel = `${series} Custom ${totalLengthFt}'${kbtu ? ` ${kbtu}kBTU` : ''}${partCounts.turns90 > 0 ? ` ${partCounts.turns90}x90°` : ''}${partCounts.turns180 > 0 ? ` ${partCounts.turns180}x180°` : ''}`;
+
+  // Keep label synced with default until user manually edits it
+  useEffect(() => {
+    if (!labelEdited) {
+      setLabel(defaultLabel);
+    }
+  }, [defaultLabel, labelEdited]);
+
+  // Generate a unique key for the entire SVG so React fully re-renders on any recipe/flip change
+  const svgKey = recipe.map((r, i) => `${r.partId}${r.flipped ? 'f' : ''}`).join('-') + `-r${revision}`;
 
   return (
     <div
@@ -228,6 +249,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
             >
               {bbox && placements.length > 0 ? (
                 <svg
+                  key={svgKey}
                   viewBox={`${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`}
                   style={{ width: '100%', height: '100%', padding: 16 }}
                   preserveAspectRatio="xMidYMid meet"
@@ -235,18 +257,18 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                   {(() => {
                     let tubeCount = 0;
                     return placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
-                    const isFirstTube = part.type === 'tube' && tubeCount === 0;
-                    if (part.type === 'tube') tubeCount++;
-                    const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type, isFirstTube));
-                    const vb = part.dimensions.viewBox;
-                    const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
-                    const flipTransform = flipped ? `translate(0,${vb.y * 2 + vb.height}) scale(1,-1)` : '';
-                    return (
-                      <g key={`${idx}-${flipped ? 'f' : 'n'}`} transform={outerTransform}>
-                        <g transform={flipTransform} dangerouslySetInnerHTML={{ __html: inner }} />
-                      </g>
-                    );
-                  });
+                      const isFirstTube = part.type === 'tube' && tubeCount === 0;
+                      if (part.type === 'tube') tubeCount++;
+                      const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type, isFirstTube));
+                      const vb = part.dimensions.viewBox;
+                      const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+                      const flipTransform = flipped ? `translate(0,${vb.y * 2 + vb.height}) scale(1,-1)` : '';
+                      return (
+                        <g key={`${idx}-${flipped ? 'f' : 'n'}-${revision}`} transform={outerTransform}>
+                          <g transform={flipTransform} dangerouslySetInnerHTML={{ __html: inner }} />
+                        </g>
+                      );
+                    });
                   })()}
                 </svg>
               ) : (
@@ -273,6 +295,27 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
               {partCounts.turns90 > 0 && <span>90° Turns: {partCounts.turns90}</span>}
               {partCounts.turns180 > 0 && <span>180° Turns: {partCounts.turns180}</span>}
             </div>
+
+            {/* Warnings */}
+            {warnings.length > 0 && (
+              <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {warnings.map((w, i) => (
+                  <div
+                    key={`${w.type}-${i}`}
+                    style={{
+                      fontSize: 10,
+                      padding: '6px 10px',
+                      borderRadius: 4,
+                      background: w.type === 'overlap' ? 'rgba(255,60,60,0.15)' : 'rgba(255,180,0,0.15)',
+                      border: `1px solid ${w.type === 'overlap' ? 'rgba(255,60,60,0.3)' : 'rgba(255,180,0,0.3)'}`,
+                      color: w.type === 'overlap' ? '#ff6b6b' : '#ffbb33',
+                    }}
+                  >
+                    {w.message}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Parts Palette */}
@@ -366,25 +409,43 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
               ))}
             </div>
 
-            {/* Undo */}
-            <button
-              onClick={removeLast}
-              disabled={recipe.length <= 1}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                marginBottom: 16,
-                background: recipe.length > 1 ? 'rgba(255,100,100,0.1)' : 'rgba(255,255,255,0.02)',
-                border: '1px solid rgba(255,100,100,0.2)',
-                borderRadius: 4,
-                color: recipe.length > 1 ? 'rgba(255,100,100,0.8)' : 'rgba(255,255,255,0.2)',
-                cursor: recipe.length > 1 ? 'pointer' : 'default',
-                fontFamily: 'inherit',
-                fontSize: 11,
-              }}
-            >
-              Remove Last Part
-            </button>
+            {/* Action buttons */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+              <button
+                onClick={removeLast}
+                disabled={recipe.length <= 1}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: recipe.length > 1 ? 'rgba(255,100,100,0.1)' : 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,100,100,0.2)',
+                  borderRadius: 4,
+                  color: recipe.length > 1 ? 'rgba(255,100,100,0.8)' : 'rgba(255,255,255,0.2)',
+                  cursor: recipe.length > 1 ? 'pointer' : 'default',
+                  fontFamily: 'inherit',
+                  fontSize: 11,
+                }}
+              >
+                Undo
+              </button>
+              <button
+                onClick={resetRecipe}
+                disabled={recipe.length <= 1}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  background: recipe.length > 1 ? 'rgba(255,180,0,0.1)' : 'rgba(255,255,255,0.02)',
+                  border: '1px solid rgba(255,180,0,0.2)',
+                  borderRadius: 4,
+                  color: recipe.length > 1 ? 'rgba(255,180,0,0.8)' : 'rgba(255,255,255,0.2)',
+                  cursor: recipe.length > 1 ? 'pointer' : 'default',
+                  fontFamily: 'inherit',
+                  fontSize: 11,
+                }}
+              >
+                Reset
+              </button>
+            </div>
 
             {/* Recipe list */}
             <div
@@ -397,10 +458,11 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
             >
               CURRENT PARTS
             </div>
-            <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+            <div style={{ maxHeight: 200, overflowY: 'auto' }}>
               {recipe.map((r, i) => {
                 const part = getBuilderPart(r.partId);
                 const isTurn = part?.type === 'turn90' || part?.type === 'turn180';
+                const isBurner = i === 0;
                 return (
                   <div
                     key={i}
@@ -411,28 +473,51 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                       borderBottom: '1px solid rgba(255,255,255,0.04)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      gap: 6,
                     }}
                   >
-                    <span>{i + 1}. {part?.label || r.partId}{r.flipped ? ' (flipped)' : ''}</span>
-                    {isTurn && (
-                      <button
-                        onClick={() => toggleFlip(i)}
-                        style={{
-                          background: r.flipped ? 'rgba(243,112,33,0.2)' : 'rgba(255,255,255,0.05)',
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          borderRadius: 3,
-                          color: r.flipped ? '#f37021' : 'rgba(255,255,255,0.4)',
-                          cursor: 'pointer',
-                          fontSize: 9,
-                          padding: '1px 6px',
-                          fontFamily: 'inherit',
-                        }}
-                        title="Flip turn direction"
-                      >
-                        Flip
-                      </button>
-                    )}
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {i + 1}. {part?.label || r.partId}{r.flipped ? ' (flipped)' : ''}
+                    </span>
+                    <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                      {isTurn && (
+                        <button
+                          onClick={() => toggleFlip(i)}
+                          style={{
+                            background: r.flipped ? 'rgba(243,112,33,0.2)' : 'rgba(255,255,255,0.05)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            borderRadius: 3,
+                            color: r.flipped ? '#f37021' : 'rgba(255,255,255,0.4)',
+                            cursor: 'pointer',
+                            fontSize: 9,
+                            padding: '1px 6px',
+                            fontFamily: 'inherit',
+                          }}
+                          title="Flip turn direction"
+                        >
+                          Flip
+                        </button>
+                      )}
+                      {!isBurner && (
+                        <button
+                          onClick={() => removePart(i)}
+                          style={{
+                            background: 'rgba(255,60,60,0.08)',
+                            border: '1px solid rgba(255,60,60,0.2)',
+                            borderRadius: 3,
+                            color: 'rgba(255,100,100,0.6)',
+                            cursor: 'pointer',
+                            fontSize: 9,
+                            padding: '1px 5px',
+                            fontFamily: 'inherit',
+                            lineHeight: 1,
+                          }}
+                          title="Remove this part"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -489,8 +574,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
           <input
             type="text"
             value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            placeholder={defaultLabel}
+            onChange={(e) => { setLabel(e.target.value); setLabelEdited(true); }}
             style={{
               flex: 1,
               padding: '8px 12px',
