@@ -50,14 +50,7 @@ function extractDimensions(svgContent) {
   };
 }
 
-// Skip reference/assembly files and variants we don't need
-const SKIP_FILES = [
-  'LS3_10ft_Assy.svg',
-  'Burner_Box_Alt.svg',
-  'REP_SS_90.svg',
-  'RUP_SS_180.svg',
-  '10ft_Tube_RR.svg',
-];
+const SKIP_FILES = [];
 
 function buildPartsCatalog() {
   const parts = [];
