@@ -51,6 +51,15 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
   const [kbtu, setKbtu] = useState('');
   const previewRef = useRef(null);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   // Calculate placements for the current recipe
   const placements = useMemo(
     () => calculatePlacements(recipe, getBuilderPart),
@@ -159,7 +168,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
           }}
         >
           <div style={{ color: 'white', fontSize: 15, fontWeight: 500 }}>
-            Custom Heater Builder
+            Build Custom Unit
           </div>
           <button
             onClick={onClose}
@@ -421,9 +430,9 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
               outline: 'none',
             }}
           >
-            <option value="LS3">LS3</option>
-            <option value="HL3">HL3</option>
-            <option value="LD3">LD3</option>
+            <option value="LS3" style={{ background: '#1B2B3D', color: 'white' }}>LS3</option>
+            <option value="HL3" style={{ background: '#1B2B3D', color: 'white' }}>HL3</option>
+            <option value="LD3" style={{ background: '#1B2B3D', color: 'white' }}>LD3</option>
           </select>
           <input
             type="number"

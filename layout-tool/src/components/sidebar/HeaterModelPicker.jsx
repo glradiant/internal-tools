@@ -207,7 +207,7 @@ export default function HeaterModelPicker({ onOpenBuilder }) {
             fontWeight: 500,
           }}
         >
-          + Build Custom LS3
+          + Build Custom Unit
         </button>
         {customHeaters.map((ch) => {
           const isSelected = selectedModelId === ch.id;
