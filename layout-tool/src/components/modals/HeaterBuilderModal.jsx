@@ -176,6 +176,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
           background: '#1B2B3D',
           borderRadius: 10,
           width: 820,
+          height: 600,
           maxWidth: '95vw',
           maxHeight: '90vh',
           display: 'flex',
@@ -214,7 +215,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
         </div>
 
         {/* Body */}
-        <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           {/* Preview Pane */}
           <div
             style={{
@@ -223,6 +224,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
               display: 'flex',
               flexDirection: 'column',
               borderRight: '1px solid rgba(255,255,255,0.08)',
+              minHeight: 0,
             }}
           >
             <div
@@ -320,7 +322,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
           </div>
 
           {/* Parts Palette */}
-          <div style={{ width: 280, padding: 20, overflowY: 'auto' }}>
+          <div style={{ width: 280, padding: 20, overflowY: 'auto', minHeight: 0 }}>
             <div
               style={{
                 fontSize: 8,
