@@ -13,7 +13,7 @@ import SummaryPanel from './SummaryPanel';
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
 
-export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
+export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpenBuilder }) {
   const activeTool = useLayoutStore((s) => s.activeTool);
   const selectedIds = useLayoutStore((s) => s.selectedIds);
   const heaters = useLayoutStore((s) => s.heaters);
@@ -95,7 +95,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange }) {
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         <ProjectFields />
         <ToolPanel />
-        {activeTool === 'heater' && <HeaterModelPicker />}
+        {activeTool === 'heater' && <HeaterModelPicker onOpenBuilder={onOpenBuilder} />}
         {activeTool === 'man-door' && <ManDoorSettings />}
         {selectedHeaterCount === 1 && <PositionPanel />}
         {selectedHeaterCount >= 2 && <DistributionPanel />}

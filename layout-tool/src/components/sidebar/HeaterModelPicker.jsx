@@ -2,8 +2,10 @@ import { useState } from 'react';
 import useLayoutStore from '../../store/useLayoutStore';
 import { HEATER_TREE, hasSvgHeaters } from '../../utils/heaterCatalog';
 
-export default function HeaterModelPicker() {
+export default function HeaterModelPicker({ onOpenBuilder }) {
   const selectedModelId = useLayoutStore((s) => s.selectedModelId);
+  const customHeaters = useLayoutStore((s) => s.customHeaters);
+  const removeCustomHeater = useLayoutStore((s) => s.removeCustomHeater);
   const heaterAngle = useLayoutStore((s) => s.heaterAngle);
   const heaterFlipH = useLayoutStore((s) => s.heaterFlipH);
   const heaterFlipV = useLayoutStore((s) => s.heaterFlipV);
@@ -183,6 +185,84 @@ export default function HeaterModelPicker() {
         borderBottom: '1px solid rgba(255,255,255,0.07)',
       }}
     >
+      {/* Custom Heaters Section */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>
+          CUSTOM HEATERS
+        </div>
+        <button
+          onClick={onOpenBuilder}
+          style={{
+            width: '100%',
+            padding: '8px 10px',
+            marginBottom: 6,
+            background: 'rgba(243,112,33,0.1)',
+            border: '1px solid rgba(243,112,33,0.3)',
+            borderRadius: 4,
+            color: '#f37021',
+            cursor: 'pointer',
+            textAlign: 'left',
+            fontFamily: 'inherit',
+            fontSize: 10,
+            fontWeight: 500,
+          }}
+        >
+          + Build Custom Unit
+        </button>
+        {customHeaters.map((ch) => {
+          const isSelected = selectedModelId === ch.id;
+          return (
+            <div
+              key={ch.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                marginBottom: 2,
+              }}
+            >
+              <button
+                onClick={() => setSelectedModel(ch.id)}
+                style={{
+                  flex: 1,
+                  padding: '5px 8px',
+                  background: isSelected ? 'rgba(243,112,33,0.15)' : 'transparent',
+                  border: isSelected
+                    ? '1px solid rgba(243,112,33,0.5)'
+                    : '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 3,
+                  color: isSelected ? '#f37021' : 'rgba(255,255,255,0.45)',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontFamily: 'inherit',
+                  fontSize: 9,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {ch.label}
+              </button>
+              <button
+                onClick={() => removeCustomHeater(ch.id)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,100,100,0.5)',
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  padding: '2px 4px',
+                  lineHeight: 1,
+                }}
+                title="Delete custom heater"
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
       <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>
         HEATER MODELS
       </div>

@@ -54,6 +54,9 @@ function buildHeaterCatalog() {
     const parts = normalizedPath.split('/');
     if (parts.length < 2) continue;
 
+    // Skip builder parts folder - handled by builderPartsCatalog.js
+    if (normalizedPath.startsWith('LS3_Builder_Parts/')) continue;
+
     const fileName = parts[parts.length - 1];
     const fileNameWithoutExt = fileName.replace('.svg', '');
 

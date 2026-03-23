@@ -64,6 +64,7 @@ const useLayoutStore = create((set, get) => ({
   doors: [],
   heaters: [],
   dimensions: [], // Manual dimension lines: { id, x1, y1, x2, y2 }
+  customHeaters: [], // Custom-built heater models from the builder
 
   // Undo/redo stacks (stores entity snapshots only)
   past: [],    // States we can undo to
@@ -404,6 +405,17 @@ const useLayoutStore = create((set, get) => ({
     }));
   },
 
+  // Custom heater actions (builder)
+  addCustomHeater: (model) => set((s) => ({
+    customHeaters: [...s.customHeaters, model],
+  })),
+  removeCustomHeater: (id) => set((s) => ({
+    customHeaters: s.customHeaters.filter((h) => h.id !== id),
+  })),
+  updateCustomHeater: (id, updates) => set((s) => ({
+    customHeaters: s.customHeaters.map((h) => h.id === id ? { ...h, ...updates } : h),
+  })),
+
   // Bulk actions
   clearAll: () => {
     get().pushHistory();
@@ -446,6 +458,7 @@ const useLayoutStore = create((set, get) => ({
       labelRotation: d.labelRotation ?? null,
       labelVisible: d.labelVisible ?? true,
     })),
+    customHeaters: data.customHeaters || [],
     selectedIds: [],
     activeTool: 'select',
     // Reset history when loading a new layout

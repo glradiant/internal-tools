@@ -44,21 +44,24 @@ function LabelEditor({
   onReset,
   showReset = true,
 }) {
-  const [customText, setCustomText] = useState(labelText || '');
+  // Show the actual default label as editable text (not just a placeholder)
+  const [customText, setCustomText] = useState(labelText || defaultLabel || '');
   const [rotationInput, setRotationInput] = useState(
     labelRotation !== null && labelRotation !== undefined ? String(labelRotation) : ''
   );
 
   // Sync local state when props change
   useEffect(() => {
-    setCustomText(labelText || '');
+    setCustomText(labelText || defaultLabel || '');
     setRotationInput(
       labelRotation !== null && labelRotation !== undefined ? String(labelRotation) : ''
     );
-  }, [labelText, labelRotation]);
+  }, [labelText, labelRotation, defaultLabel]);
 
   const handleTextBlur = () => {
-    const newText = customText.trim() === '' ? null : customText;
+    // If the user cleared the text or set it back to the default, store null (use default)
+    const trimmed = customText.trim();
+    const newText = trimmed === '' || trimmed === defaultLabel ? null : trimmed;
     onUpdate({ labelText: newText });
   };
 
@@ -100,7 +103,6 @@ function LabelEditor({
           onChange={(e) => setCustomText(e.target.value)}
           onBlur={handleTextBlur}
           onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
-          placeholder={defaultLabel}
           style={inputStyle}
         />
       </div>
