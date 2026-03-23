@@ -213,28 +213,28 @@ export function detectWarnings(recipe, placements, getPartFn) {
   const warnings = [];
 
   const funnyOverlapMessages = [
-    "Uhh, are you sure about that? Parts are overlapping.",
-    "Houston, we have a problem. Your parts are having a meeting in the same spot.",
-    "Dude, what are you doing? Those parts are occupying the same space.",
-    "That's not how physics works. Parts are overlapping.",
-    "Congratulations, you've discovered quantum tunneling. Parts are overlapping.",
-    "I'm not a physicist, but I don't think two things can be in the same place at once.",
+    "Uhh, are you sure about that? Your parts are running into each other.",
+    "Houston, we have a problem. Those parts are crashing into each other.",
+    "Dude, what are you doing? You've got parts stacked on top of each other.",
+    "Hey, your heater is trying to eat itself. Parts are overlapping.",
+    "That doesn't look right... you've got parts going through each other.",
+    "I don't think that's gonna work. Some of those parts are colliding.",
   ];
 
-  const funnyLengthMessages = [
-    "That's... a LOT of tube. 85+ feet, are you heating an airport?",
-    "Sir, this is a heater, not the Alaska Pipeline.",
-    "85+ feet?! Are you trying to heat the entire state?",
-    "Bro, at this length you might need two heaters instead.",
-    "That's longer than a blue whale. Just saying. 85+ feet of tube.",
-    "I hope you have a really long building. That's 85+ feet of tube.",
+  const funnyLengthMessages = (ft) => [
+    `That's... a LOT of tube. ${ft} feet, are you heating an airport?`,
+    `Sir, this is a heater, not the Alaska Pipeline. ${ft} feet is wild.`,
+    `${ft} feet of tube?! Are you trying to heat the entire building from one end to the other?`,
+    `Bro, ${ft} feet... at this point you might need two heaters instead.`,
+    `${ft} feet of tube. That's longer than a blue whale. Just saying.`,
+    `${ft} feet?! I hope you've got a really long building for all that.`,
   ];
 
   const funnyUTurnMessages = [
-    "Those two 90° turns make a U-turn. Maybe just use a 180° (RUP) instead?",
+    "Those two 90s make a U-turn. You could just use a 180 (RUP) instead.",
     "Pro tip: two 90s in a U = one 180. Just use a RUP, my dude.",
-    "I see you like doing things the hard way. Two 90° turns could be one 180°.",
-    "That U-turn with two 90s is giving me anxiety. A 180° turn exists, you know.",
+    "Two 90° turns doing a U-turn? There's literally a 180° part for that.",
+    "That U-turn with two 90s is giving me anxiety. A RUP exists, you know.",
   ];
 
   // Check for overlapping parts (skip adjacent pairs, they touch at connections)
@@ -254,7 +254,8 @@ export function detectWarnings(recipe, placements, getPartFn) {
   // Check for tube length >= 85'
   const totalLengthFt = recipe.reduce((sum, r) => sum + (getPartFn(r.partId)?.lengthFt || 0), 0);
   if (totalLengthFt >= 85) {
-    const msg = funnyLengthMessages[Math.floor(Math.random() * funnyLengthMessages.length)];
+    const msgs = funnyLengthMessages(totalLengthFt);
+    const msg = msgs[Math.floor(Math.random() * msgs.length)];
     warnings.push({ type: 'length', message: msg });
   }
 
