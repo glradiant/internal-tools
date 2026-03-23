@@ -144,14 +144,51 @@ export function computeBoundingBox(placements) {
 }
 
 /**
- * Strip the outer <svg> wrapper and namespace CSS classes to avoid
- * collisions when multiple parts use the same class names (C1, C2, etc.)
+ * Color remapping per part type to match catalog heater conventions.
+ * Catalog uses: yellow=centerline, red=first tube, white=second tube, purple=burner detail, green=burner outline
+ * Builder parts use different CAD layer colors that need remapping.
  */
-function stripAndNamespace(svgContent, partIndex) {
+const COLOR_REMAP = {
+  burner: {
+    '#999999': '#bf7fff', // grey structure → purple (reflector detail)
+    '#00ff00': '#00ff00', // green → green (burner outline, keep)
+    '#00ffff': '#bf7fff', // cyan → purple (burner detail)
+    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
+  },
+  tube: {
+    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
+    '#ffffff': '#ff0000', // white → red (tube body)
+  },
+  turn90: {
+    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
+    '#ff00ff': '#ff0000', // magenta → red (structure)
+  },
+  turn180: {
+    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
+    '#ff00ff': '#ff0000', // magenta → red (structure)
+  },
+};
+
+/**
+ * Strip the outer <svg> wrapper, namespace CSS classes, and remap colors
+ * to match the catalog heater color conventions.
+ */
+export function stripAndNamespace(svgContent, partIndex, partType) {
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
   let inner = match ? match[1] : content;
 
+  // Remap colors in style blocks to match catalog convention
+  const remap = COLOR_REMAP[partType];
+  if (remap) {
+    for (const [from, to] of Object.entries(remap)) {
+      if (from !== to) {
+        inner = inner.replace(new RegExp(from.replace('#', '#'), 'gi'), to);
+      }
+    }
+  }
+
+  // Namespace CSS class names to avoid collisions between parts
   const prefix = `p${partIndex}_`;
   inner = inner.replace(/\.C(\d+)\s*\{/g, `.${prefix}C$1 {`);
   inner = inner.replace(/class="C(\d+)"/g, `class="${prefix}C$1"`);
@@ -175,7 +212,7 @@ export function composeHeaterSvg(recipe, getPartFn) {
   // Build SVG groups for each part
   // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
   const groups = placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
-    const innerSvg = stripAndNamespace(part.svgContent, idx);
+    const innerSvg = stripAndNamespace(part.svgContent, idx, part.type);
     // Transform order: translate -> rotate -> scale (applied right to left)
     // The scale converts the part's native viewBox coordinates to mm
     const transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;

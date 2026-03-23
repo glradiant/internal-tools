@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { BUILDER_PARTS, getBuilderPart } from '../../utils/builderPartsCatalog';
-import { calculatePlacements, computeBoundingBox, composeHeaterSvg } from '../../utils/heaterComposer';
+import { calculatePlacements, computeBoundingBox, composeHeaterSvg, stripAndNamespace } from '../../utils/heaterComposer';
 
 // Color inversion for white/light SVG colors (same as HeaterGlyph)
 function invertColorForWhiteBg(color) {
@@ -24,7 +24,8 @@ function invertColorForWhiteBg(color) {
 }
 
 // Process SVG content: invert colors for display on white/light backgrounds
-function processColors(svgInner) {
+// Color inversion for preview on white background (after catalog color remap)
+function invertForPreview(svgInner) {
   return svgInner
     .replace(/stroke:\s*#fff(?:fff)?(?![0-9a-f])/gi, 'stroke: #1B3557')
     .replace(/stroke:\s*white/gi, 'stroke: #1B3557')
@@ -32,28 +33,7 @@ function processColors(svgInner) {
     .replace(/fill:\s*#fff(?:fff)?(?![0-9a-f])/gi, 'fill: #1B3557')
     .replace(/fill:\s*white/gi, 'fill: #1B3557')
     .replace(/#ffffff/gi, '#1B3557')
-    .replace(/#ffff00/gi, '#f37021')
-    .replace(/#ff00ff/gi, '#cc44cc');
-}
-
-/**
- * Strip SVG wrapper and namespace CSS classes to avoid conflicts
- * when multiple parts share the same class names (C1, C2, etc.)
- */
-function stripAndNamespace(svgContent, partIndex) {
-  let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
-  const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-  let inner = match ? match[1] : content;
-
-  // Namespace CSS class names to avoid collisions between parts
-  // e.g. .C1 becomes .p0_C1, .C2 becomes .p0_C2, etc.
-  const prefix = `p${partIndex}_`;
-  // Replace class definitions in <style> blocks
-  inner = inner.replace(/\.C(\d+)\s*\{/g, `.${prefix}C$1 {`);
-  // Replace class references in class="C1" attributes
-  inner = inner.replace(/class="C(\d+)"/g, `class="${prefix}C$1"`);
-
-  return processColors(inner);
+    .replace(/#ffff00/gi, '#f37021');
 }
 
 // Available parts for the palette, grouped by type
@@ -234,7 +214,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                   preserveAspectRatio="xMidYMid meet"
                 >
                   {placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
-                    const inner = stripAndNamespace(part.svgContent, idx);
+                    const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type));
                     return (
                       <g
                         key={idx}
