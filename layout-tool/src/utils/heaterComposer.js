@@ -92,11 +92,13 @@ export function calculatePlacements(recipe, getPartFn) {
     const { inlet, outlet } = getEffectiveConnections(part, flipped);
 
     if (i === 0) {
+      // Support initial rotation on burner (90° increments)
+      const initialRotation = recipe[i].rotation || 0;
       placements.push({
         part,
         worldX: 0,
         worldY: 0,
-        rotation: 0,
+        rotation: initialRotation,
         scale,
         flipped,
         effectiveOutlet: outlet,
@@ -405,6 +407,39 @@ export function composeHeaterSvg(recipe, getPartFn) {
 ${groups.join('\n')}
 </svg>`;
 
+  // Calculate label anchor: center of the first straight run (all consecutive tubes before the first turn)
+  // Falls back to center of overall bbox if no tubes found
+  let labelAnchor = { x: bbox.x + bbox.width / 2, y: bbox.y + bbox.height / 2 };
+  {
+    // Find all consecutive tube placements before the first turn
+    let runMinX = Infinity, runMinY = Infinity, runMaxX = -Infinity, runMaxY = -Infinity;
+    let foundTube = false;
+    for (const p of placements) {
+      if (p.part.type === 'tube') {
+        foundTube = true;
+        const aabb = computePartAABB(p);
+        runMinX = Math.min(runMinX, aabb.minX);
+        runMinY = Math.min(runMinY, aabb.minY);
+        runMaxX = Math.max(runMaxX, aabb.maxX);
+        runMaxY = Math.max(runMaxY, aabb.maxY);
+      } else if (foundTube) {
+        // Hit a non-tube after tubes — end of first straight run
+        break;
+      }
+    }
+    if (foundTube) {
+      const pad = bbox.height * 0.03;
+      labelAnchor = {
+        x: (runMinX + runMaxX) / 2,
+        y: runMaxY + pad, // just below the first run
+      };
+      // If label would be too close to bottom edge, put it above instead
+      if (labelAnchor.y > bbox.y + bbox.height * 0.85) {
+        labelAnchor.y = runMinY - pad;
+      }
+    }
+  }
+
   return {
     svgContent,
     dimensions: {
@@ -413,6 +448,7 @@ ${groups.join('\n')}
       height: heightMm * 3.78,
       aspectRatio: bbox.width / bbox.height,
     },
+    labelAnchor,
   };
 }
 

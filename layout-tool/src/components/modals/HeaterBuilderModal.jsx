@@ -117,6 +117,15 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     ));
   };
 
+  const rotateBurner = (direction) => {
+    updateRecipe((prev) => prev.map((r, i) => {
+      if (i !== 0) return r;
+      const current = r.rotation || 0;
+      const next = ((current + direction * 90) % 360 + 360) % 360;
+      return { ...r, rotation: next };
+    }));
+  };
+
   const resetRecipe = () => {
     updateRecipe(() => BURNER_PART ? [{ partId: BURNER_PART.partId }] : []);
     setLabelEdited(false);
@@ -141,6 +150,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
       isElectric: false,
       isCustom: true,
       builderRecipe: recipe,
+      labelAnchor: result.labelAnchor,
     };
 
     onSave(model);
@@ -481,9 +491,45 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                     }}
                   >
                     <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {i + 1}. {part?.label || r.partId}{r.flipped ? ' (flipped)' : ''}
+                      {i + 1}. {part?.label || r.partId}{r.flipped ? ' (flipped)' : ''}{r.rotation ? ` (${r.rotation}°)` : ''}
                     </span>
                     <div style={{ display: 'flex', gap: 3, flexShrink: 0 }}>
+                      {isBurner && (
+                        <>
+                          <button
+                            onClick={() => rotateBurner(-1)}
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: 3,
+                              color: 'rgba(255,255,255,0.4)',
+                              cursor: 'pointer',
+                              fontSize: 9,
+                              padding: '1px 5px',
+                              fontFamily: 'inherit',
+                            }}
+                            title="Rotate burner 90° left"
+                          >
+                            ↺
+                          </button>
+                          <button
+                            onClick={() => rotateBurner(1)}
+                            style={{
+                              background: 'rgba(255,255,255,0.05)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              borderRadius: 3,
+                              color: 'rgba(255,255,255,0.4)',
+                              cursor: 'pointer',
+                              fontSize: 9,
+                              padding: '1px 5px',
+                              fontFamily: 'inherit',
+                            }}
+                            title="Rotate burner 90° right"
+                          >
+                            ↻
+                          </button>
+                        </>
+                      )}
                       {isTurn && (
                         <button
                           onClick={() => toggleFlip(i)}

@@ -1204,6 +1204,31 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
                 const manualRotation = useManualRotation ? h.labelRotation : 0;
                 const effectiveFlipLabel = useManualRotation ? false : flipLabel;
 
+                // For custom heaters with a labelAnchor, position relative to the first tube run
+                const anchor = h.model.labelAnchor;
+                const vb = h.model.dimensions?.viewBox;
+                if (anchor && vb && h.model.isCustom) {
+                  const pxPerUnit = displayWidth / vb.width;
+                  // Convert from viewBox coords to local px (heater origin is at center)
+                  const lx = (anchor.x - vb.x) * pxPerUnit - displayWidth / 2;
+                  const ly = (anchor.y - vb.y) * pxPerUnit - displayHeight / 2;
+                  return (
+                    <text
+                      x={effectiveFlipLabel ? -lx : lx}
+                      y={effectiveFlipLabel ? -ly : ly}
+                      transform={useManualRotation
+                        ? `rotate(${manualRotation})`
+                        : (effectiveFlipLabel ? 'rotate(180)' : undefined)}
+                      textAnchor="middle"
+                      fontSize={adjustedFontSize}
+                      fill={COLORS.heaterNormal}
+                      fontFamily="'DM Mono', monospace"
+                    >
+                      {labelText}
+                    </text>
+                  );
+                }
+
                 return (
                   <text
                     y={effectiveFlipLabel ? -labelOffset : labelOffset}
