@@ -36,10 +36,24 @@ function processColors(svgInner) {
     .replace(/#ff00ff/gi, '#cc44cc');
 }
 
-function stripSvgWrapper(svgContent) {
+/**
+ * Strip SVG wrapper and namespace CSS classes to avoid conflicts
+ * when multiple parts share the same class names (C1, C2, etc.)
+ */
+function stripAndNamespace(svgContent, partIndex) {
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-  return match ? match[1] : content;
+  let inner = match ? match[1] : content;
+
+  // Namespace CSS class names to avoid collisions between parts
+  // e.g. .C1 becomes .p0_C1, .C2 becomes .p0_C2, etc.
+  const prefix = `p${partIndex}_`;
+  // Replace class definitions in <style> blocks
+  inner = inner.replace(/\.C(\d+)\s*\{/g, `.${prefix}C$1 {`);
+  // Replace class references in class="C1" attributes
+  inner = inner.replace(/class="C(\d+)"/g, `class="${prefix}C$1"`);
+
+  return processColors(inner);
 }
 
 // Available parts for the palette, grouped by type
@@ -219,12 +233,12 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                   style={{ width: '100%', height: '100%', padding: 16 }}
                   preserveAspectRatio="xMidYMid meet"
                 >
-                  {placements.map(({ part, worldX, worldY, rotation }, idx) => {
-                    const inner = processColors(stripSvgWrapper(part.svgContent));
+                  {placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
+                    const inner = stripAndNamespace(part.svgContent, idx);
                     return (
                       <g
                         key={idx}
-                        transform={`translate(${worldX}, ${worldY}) rotate(${rotation})`}
+                        transform={`translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`}
                         dangerouslySetInnerHTML={{ __html: inner }}
                       />
                     );

@@ -144,13 +144,19 @@ export function computeBoundingBox(placements) {
 }
 
 /**
- * Strip the outer <svg> wrapper from SVG content, returning just the inner elements.
+ * Strip the outer <svg> wrapper and namespace CSS classes to avoid
+ * collisions when multiple parts use the same class names (C1, C2, etc.)
  */
-function stripSvgWrapper(svgContent) {
+function stripAndNamespace(svgContent, partIndex) {
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
-  if (match) return match[1];
-  return content;
+  let inner = match ? match[1] : content;
+
+  const prefix = `p${partIndex}_`;
+  inner = inner.replace(/\.C(\d+)\s*\{/g, `.${prefix}C$1 {`);
+  inner = inner.replace(/class="C(\d+)"/g, `class="${prefix}C$1"`);
+
+  return inner;
 }
 
 /**
@@ -169,7 +175,7 @@ export function composeHeaterSvg(recipe, getPartFn) {
   // Build SVG groups for each part
   // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
   const groups = placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
-    const innerSvg = stripSvgWrapper(part.svgContent);
+    const innerSvg = stripAndNamespace(part.svgContent, idx);
     // Transform order: translate -> rotate -> scale (applied right to left)
     // The scale converts the part's native viewBox coordinates to mm
     const transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
