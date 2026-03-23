@@ -2,6 +2,9 @@
  * Heater Composer
  * Composes multiple builder parts into a single SVG for use as a heater model.
  *
+ * Each part SVG has a different viewBox scale (viewBox units per mm).
+ * We normalize all parts to mm coordinates before positioning.
+ *
  * Connection algorithm:
  * - Each part has inlet/outlet points with position (x,y in viewBox coords) and angle (outward normal).
  * - To connect part B after part A: B's inlet faces A's outlet (180° apart in world space).
@@ -13,7 +16,6 @@ const DEG_TO_RAD = Math.PI / 180;
 
 /**
  * Rotate a point (x, y) by angleDeg degrees around origin.
- * SVG coordinate system: Y increases downward.
  */
 function rotatePoint(x, y, angleDeg) {
   const rad = angleDeg * DEG_TO_RAD;
@@ -26,8 +28,27 @@ function rotatePoint(x, y, angleDeg) {
 }
 
 /**
+ * Get the mm-per-viewBox-unit scale factor for a part.
+ * Uses the SVG's declared width in mm and viewBox width.
+ */
+function getPartScale(part) {
+  const vb = part.dimensions.viewBox;
+  const widthMm = part.dimensions.widthMm;
+  if (!widthMm || !vb.width) return 1;
+  return widthMm / vb.width;
+}
+
+/**
+ * Convert a point from viewBox coords to mm coords for a given part.
+ */
+function toMm(point, scale) {
+  return { x: point.x * scale, y: point.y * scale };
+}
+
+/**
  * Calculate the placement for each part in the assembly.
- * Returns an array of { part, worldX, worldY, rotation } objects.
+ * All coordinates are in mm (normalized from each part's viewBox scale).
+ * Returns an array of { part, worldX, worldY, rotation, scale } objects.
  */
 export function calculatePlacements(recipe, getPartFn) {
   if (!recipe || recipe.length === 0) return [];
@@ -38,13 +59,15 @@ export function calculatePlacements(recipe, getPartFn) {
     const part = getPartFn(recipe[i].partId);
     if (!part) continue;
 
+    const scale = getPartScale(part);
+
     if (i === 0) {
-      // First part (burner) placed at origin with no rotation
       placements.push({
         part,
         worldX: 0,
         worldY: 0,
         rotation: 0,
+        scale,
       });
       continue;
     }
@@ -52,17 +75,19 @@ export function calculatePlacements(recipe, getPartFn) {
     const prev = placements[placements.length - 1];
     if (!prev || !prev.part.outlet) continue;
 
-    // Calculate world position of previous part's outlet
-    const prevOutlet = rotatePoint(prev.part.outlet.x, prev.part.outlet.y, prev.rotation);
-    const worldOutletX = prev.worldX + prevOutlet.x;
-    const worldOutletY = prev.worldY + prevOutlet.y;
+    // Previous part's outlet in mm
+    const prevOutletMm = toMm(prev.part.outlet, prev.scale);
+    const prevOutletRotated = rotatePoint(prevOutletMm.x, prevOutletMm.y, prev.rotation);
+    const worldOutletX = prev.worldX + prevOutletRotated.x;
+    const worldOutletY = prev.worldY + prevOutletRotated.y;
 
     // Calculate rotation for this part
     const prevWorldOutletAngle = (prev.part.outlet.angle + prev.rotation) % 360;
     const rotation = ((prevWorldOutletAngle + 180 - part.inlet.angle) % 360 + 360) % 360;
 
-    // Calculate world position: place part so its inlet aligns with prev outlet
-    const inletRotated = rotatePoint(part.inlet.x, part.inlet.y, rotation);
+    // This part's inlet in mm
+    const inletMm = toMm(part.inlet, scale);
+    const inletRotated = rotatePoint(inletMm.x, inletMm.y, rotation);
     const worldX = worldOutletX - inletRotated.x;
     const worldY = worldOutletY - inletRotated.y;
 
@@ -71,6 +96,7 @@ export function calculatePlacements(recipe, getPartFn) {
       worldX,
       worldY,
       rotation,
+      scale,
     });
   }
 
@@ -78,19 +104,19 @@ export function calculatePlacements(recipe, getPartFn) {
 }
 
 /**
- * Compute the bounding box of all placed parts in world coordinates.
+ * Compute the bounding box of all placed parts in world (mm) coordinates.
  */
 export function computeBoundingBox(placements) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
-  for (const { part, worldX, worldY, rotation } of placements) {
+  for (const { part, worldX, worldY, rotation, scale } of placements) {
     const vb = part.dimensions.viewBox;
-    // Transform all four corners of the part's viewBox
+    // Transform all four corners of the part's viewBox (converted to mm)
     const corners = [
-      { x: vb.x, y: vb.y },
-      { x: vb.x + vb.width, y: vb.y },
-      { x: vb.x, y: vb.y + vb.height },
-      { x: vb.x + vb.width, y: vb.y + vb.height },
+      { x: vb.x * scale, y: vb.y * scale },
+      { x: (vb.x + vb.width) * scale, y: vb.y * scale },
+      { x: vb.x * scale, y: (vb.y + vb.height) * scale },
+      { x: (vb.x + vb.width) * scale, y: (vb.y + vb.height) * scale },
     ];
 
     for (const corner of corners) {
@@ -104,7 +130,6 @@ export function computeBoundingBox(placements) {
     }
   }
 
-  // Add 5% padding
   const w = maxX - minX;
   const h = maxY - minY;
   const padX = w * 0.05;
@@ -122,9 +147,7 @@ export function computeBoundingBox(placements) {
  * Strip the outer <svg> wrapper from SVG content, returning just the inner elements.
  */
 function stripSvgWrapper(svgContent) {
-  // Remove XML declaration
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
-  // Extract inner content between <svg> and </svg>
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
   if (match) return match[1];
   return content;
@@ -133,6 +156,9 @@ function stripSvgWrapper(svgContent) {
 /**
  * Compose all parts into a single SVG string.
  * Returns { svgContent, dimensions } matching the heater model format.
+ *
+ * Each part is placed in mm world coordinates with a scale() transform
+ * to convert its native viewBox units to mm.
  */
 export function composeHeaterSvg(recipe, getPartFn) {
   const placements = calculatePlacements(recipe, getPartFn);
@@ -141,18 +167,18 @@ export function composeHeaterSvg(recipe, getPartFn) {
   const bbox = computeBoundingBox(placements);
 
   // Build SVG groups for each part
-  const groups = placements.map(({ part, worldX, worldY, rotation }, idx) => {
+  // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
+  const groups = placements.map(({ part, worldX, worldY, rotation, scale }, idx) => {
     const innerSvg = stripSvgWrapper(part.svgContent);
-    // Rotation is around the part's origin (0,0) after translation
-    const transform = `translate(${worldX}, ${worldY}) rotate(${rotation})`;
+    // Transform order: translate -> rotate -> scale (applied right to left)
+    // The scale converts the part's native viewBox coordinates to mm
+    const transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
     return `<g transform="${transform}" data-part="${part.partId}" data-index="${idx}">${innerSvg}</g>`;
   });
 
-  // Compute physical dimensions in mm based on aspect ratio
-  // Use a reference scale: the 10ft tube is 121.5mm wide for 1000000 viewBox units
-  const mmPerUnit = 121.5 / 1000000; // approximate
-  const widthMm = bbox.width * mmPerUnit;
-  const heightMm = bbox.height * mmPerUnit;
+  // bbox is already in mm, so width/height are in mm directly
+  const widthMm = bbox.width;
+  const heightMm = bbox.height;
 
   const svgContent = `<?xml version='1.0' encoding='utf-8'?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${widthMm.toFixed(1)}mm" height="${heightMm.toFixed(1)}mm" viewBox="${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}">
@@ -181,7 +207,8 @@ export function getLastOutlet(recipe, getPartFn) {
   const last = placements[placements.length - 1];
   if (!last.part.outlet) return null;
 
-  const outletRotated = rotatePoint(last.part.outlet.x, last.part.outlet.y, last.rotation);
+  const outletMm = toMm(last.part.outlet, last.scale);
+  const outletRotated = rotatePoint(outletMm.x, outletMm.y, last.rotation);
   return {
     x: last.worldX + outletRotated.x,
     y: last.worldY + outletRotated.y,
