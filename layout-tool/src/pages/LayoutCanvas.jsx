@@ -4,6 +4,7 @@ import Sidebar from '../components/sidebar/Sidebar';
 import Toolbar from '../components/toolbar/Toolbar';
 import StatusBar from '../components/toolbar/StatusBar';
 import DrawingCanvas from '../components/canvas/DrawingCanvas';
+import HeaterBuilderModal from '../components/modals/HeaterBuilderModal';
 import { exportPDF } from '../utils/export';
 import { supabase } from '../lib/supabase';
 import useLayoutStore from '../store/useLayoutStore';
@@ -19,9 +20,12 @@ export default function LayoutCanvas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const [showBuilder, setShowBuilder] = useState(false);
 
   const loadLayout = useLayoutStore((s) => s.loadLayout);
   const clearAll = useLayoutStore((s) => s.clearAll);
+  const addCustomHeater = useLayoutStore((s) => s.addCustomHeater);
+  const setSelectedModel = useLayoutStore((s) => s.setSelectedModel);
 
   // Load layout from database on mount
   useEffect(() => {
@@ -61,6 +65,7 @@ export default function LayoutCanvas() {
             doors: layoutData.doors || [],
             heaters: layoutData.heaters || [],
             dimensions: layoutData.dimensions || [],
+            customHeaters: layoutData.customHeaters || [],
           });
         }
       } catch (err) {
@@ -150,7 +155,7 @@ export default function LayoutCanvas() {
         overflow: 'hidden',
       }}
     >
-      <Sidebar onExportPDF={handleExportPDF} width={sidebarWidth} onWidthChange={setSidebarWidth} />
+      <Sidebar onExportPDF={handleExportPDF} width={sidebarWidth} onWidthChange={setSidebarWidth} onOpenBuilder={() => setShowBuilder(true)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F9FC' }}>
         <Toolbar onBack={handleBack} saveStatus={saveStatus} />
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
@@ -158,6 +163,17 @@ export default function LayoutCanvas() {
         </div>
         <StatusBar hoverPos={hoverPos} />
       </div>
+
+      {showBuilder && (
+        <HeaterBuilderModal
+          onClose={() => setShowBuilder(false)}
+          onSave={(model) => {
+            addCustomHeater(model);
+            setSelectedModel(model.id);
+            setShowBuilder(false);
+          }}
+        />
+      )}
     </div>
   );
 }

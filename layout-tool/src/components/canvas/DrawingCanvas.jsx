@@ -163,7 +163,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Rectangle dimension locks
   const rectangleLocks = useRef({ width: null, height: null });
 
-  const selectedModel = getHeaterModel(selectedModelId) || HEATER_MODELS[0];
+  const customHeaters = useLayoutStore((s) => s.customHeaters);
+  const selectedModel = getHeaterModel(selectedModelId)
+    || customHeaters.find((ch) => ch.id === selectedModelId)
+    || HEATER_MODELS[0];
 
   // Get heater display width from SVG dimensions (uses actual drawn size, not tube length)
   const getHeaterDisplayWidth = useCallback((model) => {

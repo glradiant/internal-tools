@@ -20,6 +20,7 @@ export default function useAutosave(layoutId) {
   const doors = useLayoutStore((s) => s.doors);
   const heaters = useLayoutStore((s) => s.heaters);
   const dimensions = useLayoutStore((s) => s.dimensions);
+  const customHeaters = useLayoutStore((s) => s.customHeaters);
 
   // Create the debounced save function
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function useAutosave(layoutId) {
       doors,
       heaters,
       dimensions,
+      customHeaters,
     };
 
     setSaveStatus('saving');
@@ -95,6 +97,7 @@ export default function useAutosave(layoutId) {
     doors,
     heaters,
     dimensions,
+    customHeaters,
   ]);
 
   // Flush function for navigation
