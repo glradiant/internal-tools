@@ -347,7 +347,7 @@ function getColorRemap(partType, isFirstTube) {
  * to match the catalog heater color conventions.
  * @param {boolean} isFirstTube - true if this is the first tube section in the assembly
  */
-export function stripAndNamespace(svgContent, partIndex, partType, isFirstTube = false) {
+export function stripAndNamespace(svgContent, partIndex, partType, isFirstTube = false, heaterPrefix = '') {
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
   let inner = match ? match[1] : content;
@@ -358,8 +358,8 @@ export function stripAndNamespace(svgContent, partIndex, partType, isFirstTube =
     inner = inner.replace(new RegExp(from.replace('#', '#'), 'gi'), to);
   }
 
-  // Namespace CSS class names to avoid collisions between parts
-  const prefix = `p${partIndex}_`;
+  // Namespace CSS class names to avoid collisions between parts AND between heaters
+  const prefix = `${heaterPrefix}p${partIndex}_`;
   inner = inner.replace(/\.C(\d+)\s*\{/g, `.${prefix}C$1 {`);
   inner = inner.replace(/class="C(\d+)"/g, `class="${prefix}C$1"`);
 
@@ -381,12 +381,14 @@ export function composeHeaterSvg(recipe, getPartFn) {
 
   // Build SVG groups for each part
   // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
+  // Generate a unique prefix per heater to avoid CSS class collisions when multiple custom heaters are on canvas
+  const heaterPrefix = `h${Math.random().toString(36).slice(2, 7)}_`;
   let tubeCount = 0;
   const groups = placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
     const isFirstTube = part.type === 'tube' && tubeCount === 0;
     if (part.type === 'tube') tubeCount++;
 
-    const innerSvg = stripAndNamespace(part.svgContent, idx, part.type, isFirstTube);
+    const innerSvg = stripAndNamespace(part.svgContent, idx, part.type, isFirstTube, heaterPrefix);
     const vb = part.dimensions.viewBox;
     const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
 
