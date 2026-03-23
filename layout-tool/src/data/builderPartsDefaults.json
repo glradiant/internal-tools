@@ -4,7 +4,7 @@
     "label": "LS3 Burner Box",
     "lengthFt": 0,
     "inlet": null,
-    "outlet": { "x": 786085, "y": 383313, "angle": 0 }
+    "outlet": { "x": 984206, "y": 336383, "angle": 0 }
   },
   "5ft_Tube.svg": {
     "type": "tube",
