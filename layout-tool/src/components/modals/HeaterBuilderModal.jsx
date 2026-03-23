@@ -240,19 +240,11 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                     const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type, isFirstTube));
                     const vb = part.dimensions.viewBox;
                     const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
-                    if (flipped) {
-                      return (
-                        <g key={idx} transform={outerTransform}>
-                          <g transform={`translate(0,${vb.y * 2 + vb.height}) scale(1,-1)`} dangerouslySetInnerHTML={{ __html: inner }} />
-                        </g>
-                      );
-                    }
+                    const flipTransform = flipped ? `translate(0,${vb.y * 2 + vb.height}) scale(1,-1)` : '';
                     return (
-                      <g
-                        key={idx}
-                        transform={outerTransform}
-                        dangerouslySetInnerHTML={{ __html: inner }}
-                      />
+                      <g key={`${idx}-${flipped ? 'f' : 'n'}`} transform={outerTransform}>
+                        <g transform={flipTransform} dangerouslySetInnerHTML={{ __html: inner }} />
+                      </g>
                     );
                   });
                   })()}
