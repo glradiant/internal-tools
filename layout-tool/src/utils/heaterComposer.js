@@ -428,14 +428,41 @@ ${groups.join('\n')}
       }
     }
     if (foundTube) {
-      const pad = bbox.height * 0.03;
-      labelAnchor = {
-        x: (runMinX + runMaxX) / 2,
-        y: runMaxY + pad, // just below the first run
-      };
-      // If label would be too close to bottom edge, put it above instead
-      if (labelAnchor.y > bbox.y + bbox.height * 0.85) {
-        labelAnchor.y = runMinY - pad;
+      // Use a fixed padding in mm (roughly 2mm in world coords)
+      const pad = 2.0;
+      const labelHeight = 3.0; // approximate label height in mm
+      const belowY = runMaxY + pad + labelHeight;
+
+      // Check if there's room below: is anything else in the assembly occupying that space?
+      // Compare against the bounding boxes of all parts NOT in the first run
+      let roomBelow = true;
+      let pastFirstRun = false;
+      let checkedTube = false;
+      for (const p of placements) {
+        if (p.part.type === 'tube' && !checkedTube) {
+          checkedTube = true;
+          continue;
+        }
+        if (p.part.type === 'tube' && !pastFirstRun) continue;
+        pastFirstRun = true;
+        const aabb = computePartAABB(p);
+        // If any non-first-run part overlaps the label's X range and is below the run
+        if (aabb.minX < runMaxX && aabb.maxX > runMinX && aabb.minY < belowY + labelHeight) {
+          roomBelow = false;
+          break;
+        }
+      }
+
+      if (roomBelow) {
+        labelAnchor = {
+          x: (runMinX + runMaxX) / 2,
+          y: runMaxY + pad + labelHeight, // below the first run
+        };
+      } else {
+        labelAnchor = {
+          x: (runMinX + runMaxX) / 2,
+          y: runMinY - pad - labelHeight, // above the first run
+        };
       }
     }
   }
