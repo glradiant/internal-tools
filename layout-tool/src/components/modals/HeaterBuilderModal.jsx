@@ -322,7 +322,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
           </div>
 
           {/* Parts Palette */}
-          <div style={{ width: 280, padding: 20, overflowY: 'auto', minHeight: 0 }}>
+          <div style={{ width: 280, padding: 20, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
             <div
               style={{
                 fontSize: 8,
@@ -413,7 +413,7 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
             </div>
 
             {/* Action buttons */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexShrink: 0 }}>
               <button
                 onClick={removeLast}
                 disabled={recipe.length <= 1}
@@ -457,11 +457,12 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                 letterSpacing: 2,
                 color: 'rgba(255,255,255,0.35)',
                 marginBottom: 6,
+                flexShrink: 0,
               }}
             >
               CURRENT PARTS
             </div>
-            <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {recipe.map((r, i) => {
                 const part = getBuilderPart(r.partId);
                 const isTurn = part?.type === 'turn90' || part?.type === 'turn180';
