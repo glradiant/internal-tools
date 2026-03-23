@@ -200,12 +200,7 @@ function getColorRemap(partType, isFirstTube) {
       '#ffffff': '#ff0000', // white → red (first tube body)
     };
   }
-  // Subsequent tubes: keep white (HeaterGlyph will invert to navy)
-  if (partType === 'turn90' || partType === 'turn180') {
-    return {
-      '#ff00ff': '#ff0000', // magenta → red (structure)
-    };
-  }
+  // Turns and subsequent tubes: no color remap, keep original colors
   return {};
 }
 
