@@ -183,44 +183,46 @@ export function computeBoundingBox(placements) {
  * Catalog uses: yellow=centerline, red=first tube, white=second tube, purple=burner detail, green=burner outline
  * Builder parts use different CAD layer colors that need remapping.
  */
-const COLOR_REMAP = {
-  burner: {
-    '#999999': '#bf7fff', // grey structure → purple (reflector detail)
-    '#00ff00': '#00ff00', // green → green (burner outline, keep)
-    '#00ffff': '#bf7fff', // cyan → purple (burner detail)
-    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
-  },
-  tube: {
-    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
-    '#ffffff': '#ff0000', // white → red (tube body)
-  },
-  turn90: {
-    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
-    '#ff00ff': '#ff0000', // magenta → red (structure)
-  },
-  turn180: {
-    '#ffff00': '#ffff00', // yellow → yellow (centerline, keep)
-    '#ff00ff': '#ff0000', // magenta → red (structure)
-  },
-};
+/**
+ * Color remapping per part type to match catalog heater conventions.
+ * Catalog: yellow=centerline, red=first tube, white=subsequent tubes,
+ * purple=burner/reflector detail, green=burner outline.
+ */
+function getColorRemap(partType, isFirstTube) {
+  if (partType === 'burner') {
+    return {
+      '#999999': '#bf7fff', // grey → purple (reflector detail)
+      '#00ffff': '#bf7fff', // cyan → purple (burner detail)
+    };
+  }
+  if (partType === 'tube' && isFirstTube) {
+    return {
+      '#ffffff': '#ff0000', // white → red (first tube body)
+    };
+  }
+  // Subsequent tubes: keep white (HeaterGlyph will invert to navy)
+  if (partType === 'turn90' || partType === 'turn180') {
+    return {
+      '#ff00ff': '#ff0000', // magenta → red (structure)
+    };
+  }
+  return {};
+}
 
 /**
  * Strip the outer <svg> wrapper, namespace CSS classes, and remap colors
  * to match the catalog heater color conventions.
+ * @param {boolean} isFirstTube - true if this is the first tube section in the assembly
  */
-export function stripAndNamespace(svgContent, partIndex, partType) {
+export function stripAndNamespace(svgContent, partIndex, partType, isFirstTube = false) {
   let content = svgContent.replace(/<\?xml[^?]*\?>\s*/, '');
   const match = content.match(/<svg[^>]*>([\s\S]*)<\/svg>/i);
   let inner = match ? match[1] : content;
 
-  // Remap colors in style blocks to match catalog convention
-  const remap = COLOR_REMAP[partType];
-  if (remap) {
-    for (const [from, to] of Object.entries(remap)) {
-      if (from !== to) {
-        inner = inner.replace(new RegExp(from.replace('#', '#'), 'gi'), to);
-      }
-    }
+  // Remap colors to match catalog convention
+  const remap = getColorRemap(partType, isFirstTube);
+  for (const [from, to] of Object.entries(remap)) {
+    inner = inner.replace(new RegExp(from.replace('#', '#'), 'gi'), to);
   }
 
   // Namespace CSS class names to avoid collisions between parts
@@ -246,17 +248,21 @@ export function composeHeaterSvg(recipe, getPartFn) {
 
   // Build SVG groups for each part
   // Each part needs: translate to world position, rotate, then scale from viewBox units to mm
+  let tubeCount = 0;
   const groups = placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
-    const innerSvg = stripAndNamespace(part.svgContent, idx, part.type);
+    const isFirstTube = part.type === 'tube' && tubeCount === 0;
+    if (part.type === 'tube') tubeCount++;
+
+    const innerSvg = stripAndNamespace(part.svgContent, idx, part.type, isFirstTube);
     const vb = part.dimensions.viewBox;
-    // Transform order: translate -> rotate -> scale -> (flip if needed)
-    // Flip mirrors Y around the viewBox vertical center
-    let transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+    const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+
+    // For flipped parts, wrap content in an inner group that mirrors Y
     if (flipped) {
-      const centerY = vb.y + vb.height / 2;
-      transform += ` translate(0, ${2 * centerY}) scale(1, -1)`;
+      const h = vb.height;
+      return `<g transform="${outerTransform}" data-part="${part.partId}" data-index="${idx}"><g transform="translate(0,${vb.y * 2 + h}) scale(1,-1)">${innerSvg}</g></g>`;
     }
-    return `<g transform="${transform}" data-part="${part.partId}" data-index="${idx}">${innerSvg}</g>`;
+    return `<g transform="${outerTransform}" data-part="${part.partId}" data-index="${idx}">${innerSvg}</g>`;
   });
 
   // bbox is already in mm, so width/height are in mm directly

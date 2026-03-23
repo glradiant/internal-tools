@@ -232,22 +232,30 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
                   style={{ width: '100%', height: '100%', padding: 16 }}
                   preserveAspectRatio="xMidYMid meet"
                 >
-                  {placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
-                    const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type));
+                  {(() => {
+                    let tubeCount = 0;
+                    return placements.map(({ part, worldX, worldY, rotation, scale, flipped }, idx) => {
+                    const isFirstTube = part.type === 'tube' && tubeCount === 0;
+                    if (part.type === 'tube') tubeCount++;
+                    const inner = invertForPreview(stripAndNamespace(part.svgContent, idx, part.type, isFirstTube));
                     const vb = part.dimensions.viewBox;
-                    let transform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
+                    const outerTransform = `translate(${worldX}, ${worldY}) rotate(${rotation}) scale(${scale})`;
                     if (flipped) {
-                      const centerY = vb.y + vb.height / 2;
-                      transform += ` translate(0, ${2 * centerY}) scale(1, -1)`;
+                      return (
+                        <g key={idx} transform={outerTransform}>
+                          <g transform={`translate(0,${vb.y * 2 + vb.height}) scale(1,-1)`} dangerouslySetInnerHTML={{ __html: inner }} />
+                        </g>
+                      );
                     }
                     return (
                       <g
                         key={idx}
-                        transform={transform}
+                        transform={outerTransform}
                         dangerouslySetInnerHTML={{ __html: inner }}
                       />
                     );
-                  })}
+                  });
+                  })()}
                 </svg>
               ) : (
                 <div style={{ color: '#999', fontSize: 12 }}>
