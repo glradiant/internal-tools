@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { BUILDER_PARTS, getBuilderPart } from '../../utils/builderPartsCatalog';
-import { calculatePlacements, computeBoundingBox, composeHeaterSvg, stripAndNamespace, detectWarnings } from '../../utils/heaterComposer';
+import { calculatePlacements, computeBoundingBox, composeHeaterSvg, stripAndNamespace, detectWarnings, resolveWarningMessages } from '../../utils/heaterComposer';
 
 // Color inversion for preview on white background (after catalog color remap)
 function invertForPreview(svgInner) {
@@ -58,12 +58,13 @@ export default function HeaterBuilderModal({ onClose, onSave }) {
     [placements]
   );
 
-  // Warnings (overlap, length, U-turn)
-  const warnings = useMemo(
-    () => detectWarnings(recipe, placements, getBuilderPart),
+  // Warnings (overlap, length, U-turn) — messages are cached so they don't change on every render
+  const warningCacheRef = useRef(new Map());
+  const warnings = useMemo(() => {
+    const raw = detectWarnings(recipe, placements, getBuilderPart);
+    return resolveWarningMessages(raw, warningCacheRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [recipe, revision, placements]
-  );
+  }, [recipe, revision, placements]);
 
   // Total tube length
   const totalLengthFt = useMemo(

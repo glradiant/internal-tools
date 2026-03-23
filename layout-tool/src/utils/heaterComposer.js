@@ -205,46 +205,49 @@ function aabbsOverlap(a, b, tolerance = 0.5) {
   return a2.minX < b2.maxX && a2.maxX > b2.minX && a2.minY < b2.maxY && a2.maxY > b2.minY;
 }
 
+const OVERLAP_MESSAGES = [
+  "Uhh, are you sure about that? Your parts are running into each other.",
+  "Houston, we have a problem. Those parts are crashing into each other.",
+  "Dude, what are you doing? You've got parts stacked on top of each other.",
+  "Hey, your heater is trying to eat itself. Parts are overlapping.",
+  "That doesn't look right... you've got parts going through each other.",
+  "I don't think that's gonna work. Some of those parts are colliding.",
+];
+
+const LENGTH_MESSAGES = [
+  (ft) => `That's... a LOT of tube. ${ft} feet, are you heating an airport?`,
+  (ft) => `Sir, this is a heater, not the Alaska Pipeline. ${ft} feet is wild.`,
+  (ft) => `${ft} feet of tube?! Are you trying to heat the entire building from one end to the other?`,
+  (ft) => `Bro, ${ft} feet... at this point you might need two heaters instead.`,
+  (ft) => `${ft} feet of tube. That's longer than a blue whale. Just saying.`,
+  (ft) => `${ft} feet?! I hope you've got a really long building for all that.`,
+];
+
+const UTURN_MESSAGES = [
+  "Those two 90s make a U-turn. You could just use a 180 (RUP) instead.",
+  "Pro tip: two 90s in a U = one 180. Just use a RUP, my dude.",
+  "Two 90° turns doing a U-turn? There's literally a 180° part for that.",
+  "That U-turn with two 90s is giving me anxiety. A RUP exists, you know.",
+];
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 /**
  * Detect overlapping parts and configuration warnings.
- * Returns an array of { type, message, indices } warning objects.
+ * Returns an array of { type, key, messageFn/message } warning objects.
+ * Each warning has a stable `key` so the UI can cache messages per key.
  */
 export function detectWarnings(recipe, placements, getPartFn) {
   const warnings = [];
-
-  const funnyOverlapMessages = [
-    "Uhh, are you sure about that? Your parts are running into each other.",
-    "Houston, we have a problem. Those parts are crashing into each other.",
-    "Dude, what are you doing? You've got parts stacked on top of each other.",
-    "Hey, your heater is trying to eat itself. Parts are overlapping.",
-    "That doesn't look right... you've got parts going through each other.",
-    "I don't think that's gonna work. Some of those parts are colliding.",
-  ];
-
-  const funnyLengthMessages = (ft) => [
-    `That's... a LOT of tube. ${ft} feet, are you heating an airport?`,
-    `Sir, this is a heater, not the Alaska Pipeline. ${ft} feet is wild.`,
-    `${ft} feet of tube?! Are you trying to heat the entire building from one end to the other?`,
-    `Bro, ${ft} feet... at this point you might need two heaters instead.`,
-    `${ft} feet of tube. That's longer than a blue whale. Just saying.`,
-    `${ft} feet?! I hope you've got a really long building for all that.`,
-  ];
-
-  const funnyUTurnMessages = [
-    "Those two 90s make a U-turn. You could just use a 180 (RUP) instead.",
-    "Pro tip: two 90s in a U = one 180. Just use a RUP, my dude.",
-    "Two 90° turns doing a U-turn? There's literally a 180° part for that.",
-    "That U-turn with two 90s is giving me anxiety. A RUP exists, you know.",
-  ];
 
   // Check for overlapping parts (skip adjacent pairs, they touch at connections)
   const aabbs = placements.map(p => computePartAABB(p));
   for (let i = 0; i < aabbs.length; i++) {
     for (let j = i + 2; j < aabbs.length; j++) {
       if (aabbsOverlap(aabbs[i], aabbs[j])) {
-        const msg = funnyOverlapMessages[Math.floor(Math.random() * funnyOverlapMessages.length)];
-        warnings.push({ type: 'overlap', message: msg, indices: [i, j] });
-        // Only show one overlap warning
+        warnings.push({ type: 'overlap', key: 'overlap', messages: OVERLAP_MESSAGES, indices: [i, j] });
         break;
       }
     }
@@ -254,9 +257,12 @@ export function detectWarnings(recipe, placements, getPartFn) {
   // Check for tube length >= 85'
   const totalLengthFt = recipe.reduce((sum, r) => sum + (getPartFn(r.partId)?.lengthFt || 0), 0);
   if (totalLengthFt >= 85) {
-    const msgs = funnyLengthMessages(totalLengthFt);
-    const msg = msgs[Math.floor(Math.random() * msgs.length)];
-    warnings.push({ type: 'length', message: msg });
+    warnings.push({
+      type: 'length',
+      key: 'length',
+      messages: LENGTH_MESSAGES,
+      lengthFt: totalLengthFt,
+    });
   }
 
   // Check for consecutive 90° turns forming a U-turn (both same flip state = U, different = S)
@@ -264,18 +270,53 @@ export function detectWarnings(recipe, placements, getPartFn) {
     const currPart = getPartFn(recipe[i].partId);
     const prevPart = getPartFn(recipe[i - 1].partId);
     if (currPart?.type === 'turn90' && prevPart?.type === 'turn90') {
-      // Same flip = U-turn shape, different flip = S-turn shape
       const currFlipped = !!recipe[i].flipped;
       const prevFlipped = !!recipe[i - 1].flipped;
       if (currFlipped === prevFlipped) {
-        // U-turn: warn user
-        const msg = funnyUTurnMessages[Math.floor(Math.random() * funnyUTurnMessages.length)];
-        warnings.push({ type: 'u-turn', message: msg, indices: [i - 1, i] });
+        warnings.push({ type: 'u-turn', key: `u-turn-${i}`, messages: UTURN_MESSAGES, indices: [i - 1, i] });
       }
     }
   }
 
   return warnings;
+}
+
+/**
+ * Resolve warnings into stable display messages.
+ * Uses a cache (Map) to keep the same message for a given warning key
+ * until that warning disappears, then picks a new one if it comes back.
+ */
+export function resolveWarningMessages(warnings, cache) {
+  const activeKeys = new Set(warnings.map(w => w.key));
+
+  // Remove cached messages for warnings that are no longer active
+  for (const key of cache.keys()) {
+    if (!activeKeys.has(key)) cache.delete(key);
+  }
+
+  return warnings.map(w => {
+    if (!cache.has(w.key)) {
+      // Pick a new random message for this warning
+      const pick = pickRandom(w.messages);
+      cache.set(w.key, typeof pick === 'function' ? pick : pick);
+    }
+    let msg = cache.get(w.key);
+    // For length warnings, update the footage in the cached template
+    if (w.type === 'length' && typeof msg === 'function') {
+      // Cache stores the template function, render with current footage
+      return { type: w.type, message: msg(w.lengthFt) };
+    }
+    if (w.type === 'length') {
+      // Re-pick if footage changed (message has old number baked in)
+      // Check if the cached string still has the right number
+      if (!msg.includes(String(w.lengthFt))) {
+        const pick = pickRandom(w.messages);
+        cache.set(w.key, pick);
+        msg = typeof pick === 'function' ? pick(w.lengthFt) : pick;
+      }
+    }
+    return { type: w.type, message: typeof msg === 'function' ? msg(w.lengthFt) : msg };
+  });
 }
 
 /**
