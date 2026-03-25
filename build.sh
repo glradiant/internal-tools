@@ -31,6 +31,9 @@ cp signature-builder/index.html dist/signatures/index.html
 
 # Write Netlify redirects for React client-side routing
 cat > dist/_redirects << 'EOF'
+# Domain redirect — .us to .com
+https://internal.glradiant.us/* https://internal.glradiant.com/:splat 301
+
 # Layout tool — send all /layout/* paths to the React app
 /layout/*  /layout/index.html  200
 
