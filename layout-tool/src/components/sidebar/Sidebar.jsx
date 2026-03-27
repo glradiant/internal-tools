@@ -82,12 +82,12 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
     >
       {/* Logo / Header */}
       <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 28, marginBottom: 8 }} />
-        <div style={{ fontSize: 13, color: 'white', fontWeight: 600 }}>
-          Heater Layout Tool
+        <img src="/cad-for-dummies.png" alt="CAD for Dummies" style={{ height: 36, marginBottom: 6, borderRadius: 4 }} />
+        <div style={{ fontSize: 13, color: 'white', fontWeight: 800 }}>
+          CAD for Dummies
         </div>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>
-          v1.0
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', marginTop: 2, fontStyle: 'italic' }}>
+          dummy-proof heater layouts
         </div>
       </div>
 

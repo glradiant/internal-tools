@@ -142,31 +142,45 @@ export default function LoginPage() {
         height: '100vh',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#0F1E30',
+        background: '#FFD200',
         fontFamily: "'DM Sans', system-ui, sans-serif",
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
+      {/* Top black stripe like the For Dummies books */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 14, background: '#111' }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 32, maxWidth: 760, width: '100%', padding: '0 32px' }}>
+        {/* Mascot */}
+        <div style={{ flexShrink: 0 }}>
+          <img
+            src="/cad-for-dummies.png"
+            alt="CAD for Dummies"
+            style={{ width: 220, filter: 'drop-shadow(4px 6px 12px rgba(0,0,0,0.25))' }}
+          />
+        </div>
+
+        {/* Login card */}
+        <div style={{ flex: 1 }}>
+          {/* Title block */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, color: '#111', marginBottom: 4, textTransform: 'uppercase' }}>Great Lakes Radiant</div>
+            <div style={{ fontSize: 32, fontWeight: 800, color: '#111', lineHeight: 1.1, marginBottom: 6 }}>CAD for Dummies</div>
+            <div style={{ fontSize: 13, color: '#333', fontStyle: 'italic' }}>Heater layout design, dummy-proof.</div>
+          </div>
+
       <div
         style={{
           background: 'white',
           borderRadius: 12,
-          padding: 40,
-          width: 360,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+          padding: 32,
+          boxShadow: '0 4px 0 #111, 0 8px 24px rgba(0,0,0,0.2)',
+          border: '2px solid #111',
         }}
       >
-        {/* Logo / Title */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 48, marginBottom: 12, display: 'block', marginLeft: 'auto', marginRight: 'auto' }} />
-          <div
-            style={{
-              fontSize: 14,
-              color: '#1B3557',
-              fontWeight: 500,
-            }}
-          >
-            Heater Layout Tool
-          </div>
+        {/* Logo */}
+        <div style={{ marginBottom: 24 }}>
+          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 36 }} />
         </div>
 
         {/* Sign In Form */}
@@ -507,6 +521,8 @@ export default function LoginPage() {
             </div>
           </form>
         )}
+      </div>
+        </div>
       </div>
     </div>
   );

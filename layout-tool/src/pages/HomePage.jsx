@@ -260,10 +260,11 @@ export default function HomePage() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <img src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png" alt="Great Lakes Radiant" style={{ height: 32 }} />
-          <div style={{ width: 3, height: 24, background: '#f37021', borderRadius: 2 }} />
-          <div style={{ fontSize: 14, color: 'white', fontWeight: 600 }}>
-            Heater Layout Tool
+          <img src="/cad-for-dummies.png" alt="CAD for Dummies" style={{ height: 40, borderRadius: 4 }} />
+          <div style={{ width: 3, height: 24, background: '#FFD200', borderRadius: 2 }} />
+          <div>
+            <div style={{ fontSize: 15, color: 'white', fontWeight: 800, lineHeight: 1.1 }}>CAD for Dummies</div>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 1 }}>by Great Lakes Radiant</div>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
