@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
-export default function ResetPasswordPage({ onDone }) {
+export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -42,9 +42,7 @@ export default function ResetPasswordPage({ onDone }) {
       setError(updateError.message);
     } else {
       setMessage('Password updated successfully! Redirecting...');
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
+      setTimeout(() => { window.location.href = '/'; }, 2000);
     }
 
     setLoading(false);
@@ -52,11 +50,11 @@ export default function ResetPasswordPage({ onDone }) {
 
   const inputStyle = {
     width: '100%',
-    padding: '10px 12px',
-    background: 'rgba(255,255,255,0.1)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    borderRadius: 4,
-    color: 'white',
+    padding: '12px 14px',
+    background: '#f5f7fa',
+    border: '1px solid #e0e4ea',
+    borderRadius: 6,
+    color: '#1B3557',
     fontSize: 14,
     fontFamily: 'inherit',
     outline: 'none',
@@ -65,10 +63,11 @@ export default function ResetPasswordPage({ onDone }) {
 
   const labelStyle = {
     display: 'block',
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.5)',
+    fontSize: 11,
+    color: '#8AAABF',
     marginBottom: 6,
     letterSpacing: 1,
+    fontWeight: 500,
   };
 
   return (
@@ -81,25 +80,25 @@ export default function ResetPasswordPage({ onDone }) {
       fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
       <div style={{
-        background: '#1B3557',
-        borderRadius: 8,
+        background: 'white',
+        borderRadius: 12,
         padding: 40,
-        width: 340,
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        width: 360,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <img
             src="https://www.glradiant.com/wp-content/uploads/2026/01/GLR-Logo-Transparent-scaled.png"
             alt="Great Lakes Radiant"
-            style={{ height: 36, marginBottom: 12 }}
+            style={{ height: 48, marginBottom: 12, display: 'block', marginLeft: 'auto', marginRight: 'auto' }}
           />
-          <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+          <div style={{ fontSize: 14, color: '#1B3557', fontWeight: 500 }}>
             Reset Password
           </div>
         </div>
 
         {!ready && !error && (
-          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>
+          <div style={{ textAlign: 'center', color: '#8AAABF', fontSize: 13 }}>
             Verifying reset link...
           </div>
         )}
@@ -109,11 +108,11 @@ export default function ResetPasswordPage({ onDone }) {
             <div style={{
               marginBottom: 24,
               padding: '10px 12px',
-              background: 'rgba(255,107,53,0.2)',
-              border: '1px solid rgba(255,107,53,0.4)',
-              borderRadius: 4,
+              background: 'rgba(255,107,53,0.08)',
+              border: '1px solid rgba(255,107,53,0.3)',
+              borderRadius: 6,
               color: '#f37021',
-              fontSize: 12,
+              fontSize: 13,
             }}>
               {error}
             </div>
@@ -121,12 +120,12 @@ export default function ResetPasswordPage({ onDone }) {
               onClick={() => window.location.href = '/'}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '13px 16px',
                 background: '#f37021',
                 border: 'none',
-                borderRadius: 4,
+                borderRadius: 6,
                 color: 'white',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 600,
                 letterSpacing: 1,
                 cursor: 'pointer',
@@ -168,11 +167,11 @@ export default function ResetPasswordPage({ onDone }) {
               <div style={{
                 marginBottom: 16,
                 padding: '10px 12px',
-                background: 'rgba(255,107,53,0.2)',
-                border: '1px solid rgba(255,107,53,0.4)',
-                borderRadius: 4,
+                background: 'rgba(255,107,53,0.08)',
+                border: '1px solid rgba(255,107,53,0.3)',
+                borderRadius: 6,
                 color: '#f37021',
-                fontSize: 12,
+                fontSize: 13,
               }}>
                 {error}
               </div>
@@ -182,11 +181,11 @@ export default function ResetPasswordPage({ onDone }) {
               <div style={{
                 marginBottom: 16,
                 padding: '10px 12px',
-                background: 'rgba(138,170,191,0.2)',
+                background: 'rgba(138,170,191,0.1)',
                 border: '1px solid rgba(138,170,191,0.4)',
-                borderRadius: 4,
-                color: '#8AAABF',
-                fontSize: 12,
+                borderRadius: 6,
+                color: '#1B3557',
+                fontSize: 13,
               }}>
                 {message}
               </div>
@@ -197,12 +196,12 @@ export default function ResetPasswordPage({ onDone }) {
               disabled={loading}
               style={{
                 width: '100%',
-                padding: '12px 16px',
+                padding: '13px 16px',
                 background: '#f37021',
                 border: 'none',
-                borderRadius: 4,
+                borderRadius: 6,
                 color: 'white',
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 600,
                 letterSpacing: 1,
                 cursor: loading ? 'wait' : 'pointer',
