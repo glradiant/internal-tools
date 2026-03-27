@@ -2,6 +2,13 @@
   command = "npm install && npm run build"
   publish = "dist"
 
+# Let static assets through explicitly
+[[redirects]]
+  from   = "/assets/*"
+  to     = "/assets/:splat"
+  status = 200
+
+# SPA fallback — all other paths serve index.html
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
