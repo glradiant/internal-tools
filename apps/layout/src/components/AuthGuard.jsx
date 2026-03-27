@@ -15,7 +15,8 @@ export default function AuthGuard({ children }) {
       // Strip tokens from URL before doing anything
       window.history.replaceState({}, '', window.location.pathname);
       supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .then(({ data: { session } }) => {
+        .then(({ data: { session }, error }) => {
+          if (error) console.error('setSession error:', error);
           setSession(session);
           setLoading(false);
         });
