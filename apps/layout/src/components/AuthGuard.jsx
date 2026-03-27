@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import LoginPage from '../pages/LoginPage';
 
 export default function AuthGuard({ children }) {
   const [session, setSession] = useState(null);
@@ -16,10 +17,6 @@ export default function AuthGuard({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
-        if (!session) {
-          // Redirect to root login if session ends
-          window.location.href = '/';
-        }
       }
     );
 
@@ -54,9 +51,7 @@ export default function AuthGuard({ children }) {
   }
 
   if (!session) {
-    // Redirect to root login
-    window.location.href = '/';
-    return null;
+    return <LoginPage />;
   }
 
   return children;
