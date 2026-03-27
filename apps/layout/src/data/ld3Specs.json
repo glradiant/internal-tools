@@ -1,0 +1,121 @@
+{
+  "series": "LD3",
+  "fuelType": "gas",
+  "description": "LD3 Low Intensity Gas Tube Heaters",
+  "gasType": "Natural or Propane",
+  "gasRequirements": {
+    "natural": {
+      "manifoldPressure": 3.5,
+      "minInletPressure": 5.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    },
+    "propane": {
+      "manifoldPressure": 10.0,
+      "minInletPressure": 11.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    },
+    "pressureEquivalents": "1 Inch W.C. equals .058 oz/sq. in. equals 2.49 mbar"
+  },
+  "notes": {
+    "uBendAccessory": "Models marked with * require LV3-5EA-SUB optional accessory package when installing in a 'U' configuration (P/N: DB-TF1B/TF1B).",
+    "mountingHeight": "Recommended mounting heights are provided as a guideline. Actual conditions may dictate variations from this data. Optional protective guard (P/N: PG) is required when mounting below 8 feet.",
+    "residentialCertification": "Certified models may be installed in attached residential garages/workshops.",
+    "materials": {
+      "Alum": "Black coated aluminized treated steel",
+      "Titan": "Black coated titanium stabilized aluminized steel"
+    }
+  },
+  "models": {
+    "15": {
+      "straightLengthFtIn": "16'-10\"",
+      "uTubeLengthFtIn": null,
+      "40": {
+        "kbtuHigh": 40,
+        "kbtuLow": 28,
+        "weightStandard": 85,
+        "mountingHeightMin": 8,
+        "mountingHeightMax": 13,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "residentialCertified": true
+      },
+      "50": {
+        "kbtuHigh": 50,
+        "kbtuLow": 35,
+        "weightStandard": 85,
+        "mountingHeightMin": 10,
+        "mountingHeightMax": 15,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "residentialCertified": false
+      }
+    },
+    "20": {
+      "straightLengthFtIn": "21'-10\"",
+      "uTubeLengthFtIn": "13'-0\"",
+      "40": {
+        "kbtuHigh": 40,
+        "kbtuLow": 28,
+        "weightStandard": 100,
+        "mountingHeightMin": 8,
+        "mountingHeightMax": 13,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "residentialCertified": true
+      },
+      "50": {
+        "kbtuHigh": 50,
+        "kbtuLow": 35,
+        "weightStandard": 100,
+        "mountingHeightMin": 9,
+        "mountingHeightMax": 15,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "residentialCertified": false
+      }
+    },
+    "30": {
+      "straightLengthFtIn": "31'-7\"",
+      "uTubeLengthFtIn": "17'-8\"",
+      "uTubeRequiresAccessory": true,
+      "50": {
+        "kbtuHigh": 50,
+        "kbtuLow": 35,
+        "weightStandard": 120,
+        "mountingHeightMin": 9,
+        "mountingHeightMax": 14,
+        "combustionChamber": "Titan",
+        "radiantEmitter": "Alum",
+        "residentialCertified": true
+      }
+    }
+  },
+  "clearances": {
+    "note": "Clearances to combustibles in inches. Heaters mounted on an angle between 0° and 45° must maintain clearances posted for 0° or 45°; whichever is greater. Use high BTU output when determining clearances. Minimum end clearance is 12 inches.",
+    "40": {
+      "description": "LD3 (15, 20) - 40 [N, P]",
+      "tubeLengths": [15, 20],
+      "kbtuRatings": [40],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 15, "sideBehind": 15, "top": 6, "below": 45 },
+        "45deg": { "mountingAngle": 45, "sideFront": 58, "sideBehind": 8, "top": 10, "below": 45 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 42, "sideBehind": 8, "top": 6, "below": 45 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 20, "sideBehind": 20, "top": 6, "below": 45 }
+      }
+    },
+    "50": {
+      "description": "LD3 (15, 20, 30) - 50 [N, P]",
+      "tubeLengths": [15, 20, 30],
+      "kbtuRatings": [50],
+      "configurations": {
+        "0deg": { "mountingAngle": 0, "sideFront": 11, "sideBehind": 11, "top": 6, "below": 48 },
+        "45deg": { "mountingAngle": 45, "sideFront": 39, "sideBehind": 8, "top": 10, "below": 48 },
+        "1SideShield": { "mountingAngle": 0, "sideFront": 29, "sideBehind": 8, "top": 6, "below": 48 },
+        "2SideShields": { "mountingAngle": 0, "sideFront": 16, "sideBehind": 16, "top": 6, "below": 48 },
+        "20ftFromBurner": { "mountingAngle": 0, "sideFront": 7, "sideBehind": 7, "top": 6, "below": 30 }
+      }
+    }
+  }
+}
