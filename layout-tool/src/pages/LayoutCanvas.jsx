@@ -80,7 +80,7 @@ export default function LayoutCanvas() {
   }, [id, loadLayout]);
 
   // Set up autosave
-  const { saveStatus, flush } = useAutosave(id);
+  const { saveStatus, flush } = useAutosave(id, svgRef);
 
   const handleExportPDF = useCallback(async () => {
     const svg = svgRef.current;

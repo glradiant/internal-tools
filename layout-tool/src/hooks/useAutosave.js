@@ -2,10 +2,13 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import debounce from 'lodash.debounce';
 import { supabase } from '../lib/supabase';
 import useLayoutStore from '../store/useLayoutStore';
+import { captureThumbnail } from '../utils/captureThumbnail';
+import { uploadThumbnail, saveThumbnailUrl } from '../utils/thumbnailStorage';
 
-export default function useAutosave(layoutId) {
+export default function useAutosave(layoutId, svgRef) {
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saved' | 'saving' | 'error'
   const debouncedSaveRef = useRef(null);
+  const debouncedThumbRef = useRef(null);
 
   // Get state from store
   const projectName = useLayoutStore((s) => s.projectName);
@@ -49,6 +52,8 @@ export default function useAutosave(layoutId) {
           setSaveStatus('error');
         } else {
           setSaveStatus('saved');
+          // Trigger a debounced thumbnail update after a successful save
+          debouncedThumbRef.current?.({ walls: layoutData.walls, heaters: layoutData.heaters });
         }
       } catch (err) {
         console.error('Autosave error:', err);
@@ -56,8 +61,23 @@ export default function useAutosave(layoutId) {
       }
     }, 1500);
 
+    // Thumbnail capture runs 5s after the last change — less aggressive than data save
+    debouncedThumbRef.current = debounce(async ({ walls, heaters }) => {
+      const svgEl = svgRef?.current;
+      if (!svgEl) return;
+      try {
+        const blob = await captureThumbnail(svgEl, { walls, heaters });
+        if (!blob) return;
+        const url = await uploadThumbnail(layoutId, blob);
+        if (url) await saveThumbnailUrl(layoutId, url);
+      } catch (err) {
+        console.error('Thumbnail capture error:', err);
+      }
+    }, 5000);
+
     return () => {
       debouncedSaveRef.current?.cancel();
+      debouncedThumbRef.current?.cancel();
     };
   }, [layoutId]);
 

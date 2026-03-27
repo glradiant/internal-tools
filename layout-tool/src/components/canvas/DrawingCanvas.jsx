@@ -1083,8 +1083,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         {showGrid && <GridLayer viewX={viewOrigin.x} viewY={viewOrigin.y} viewW={viewW} viewH={viewH} />}
 
         {/* Origin crosshair — subtle reference at (0,0) */}
-        <line x1={-10} y1={0} x2={10} y2={0} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
-        <line x1={0} y1={-10} x2={0} y2={10} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
+        <g data-thumbnail-exclude="true">
+          <line x1={-10} y1={0} x2={10} y2={0} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
+          <line x1={0} y1={-10} x2={0} y2={10} stroke="#CBD5E1" strokeWidth={0.5 / zoom} />
+        </g>
 
         {/* Completed walls */}
         {walls.map((wall) => {
