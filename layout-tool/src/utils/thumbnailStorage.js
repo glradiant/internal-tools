@@ -5,6 +5,12 @@ const BUCKET = 'layout-thumbnails';
 export async function uploadThumbnail(layoutId, pngBlob) {
   const path = `${layoutId}/thumbnail.png`;
 
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) {
+    console.warn('Thumbnail upload skipped: no auth session');
+    return null;
+  }
+
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, pngBlob, { contentType: 'image/png', upsert: true });
