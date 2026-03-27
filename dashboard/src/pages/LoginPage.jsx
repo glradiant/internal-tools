@@ -18,6 +18,12 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
+    if (!email.endsWith('@glradiant.com')) {
+      setError('Only @glradiant.com email addresses can sign in.');
+      setLoading(false);
+      return;
+    }
+
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
