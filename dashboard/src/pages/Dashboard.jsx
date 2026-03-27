@@ -111,7 +111,7 @@ export default function Dashboard({ session }) {
             Welcome to GLR Internal Tools
           </h2>
           <p style={{ fontSize: 16, color: '#666', maxWidth: 500, margin: '0 auto', lineHeight: 1.6 }}>
-            A collection of utilities built to help the Great Lakes Radiant team work more efficiently.
+            A collection of utilities built to help you work more efficiently.
           </p>
         </div>
 
