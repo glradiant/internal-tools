@@ -2,12 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 
 export default function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isRecovery, setIsRecovery] = useState(false);
 
   useEffect(() => {
+    // Check if this is a password recovery link (Supabase puts type=recovery in the hash)
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      setIsRecovery(true);
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -37,6 +45,8 @@ export default function App() {
       </div>
     );
   }
+
+  if (isRecovery) return <ResetPasswordPage />;
 
   return session ? <Dashboard session={session} /> : <LoginPage />;
 }

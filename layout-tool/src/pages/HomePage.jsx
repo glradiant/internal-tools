@@ -116,6 +116,7 @@ export default function HomePage() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
+    window.location.href = '/';
   }
 
   async function handleDelete(id) {
