@@ -7,34 +7,35 @@ export default function AuthGuard({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Always set up auth state listener so sign-out works
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get('access_token');
     const refreshToken = params.get('refresh_token');
 
     if (accessToken && refreshToken) {
-      // Strip tokens from URL before doing anything
+      // Strip tokens from URL then set session — onAuthStateChange will pick it up
       window.history.replaceState({}, '', window.location.pathname);
       supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .then(({ data: { session }, error }) => {
-          if (error) console.error('setSession error:', error);
-          setSession(session);
-          setLoading(false);
+        .then(({ error }) => {
+          if (error) {
+            console.error('setSession error:', error);
+            setLoading(false);
+          }
         });
-      return;
-    }
-
-    // Check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+    } else {
+      // Check existing session
+      supabase.auth.getSession().then(({ data: { session } }) => {
         setSession(session);
-      }
-    );
+        setLoading(false);
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, []);
