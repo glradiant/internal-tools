@@ -1,0 +1,37 @@
+{
+  "LS3_Burner_Box.svg": {
+    "type": "burner",
+    "label": "LS3 Burner Box",
+    "lengthFt": 0,
+    "inlet": null,
+    "outlet": { "x": 984206, "y": 336383, "angle": 0 }
+  },
+  "5ft_Tube.svg": {
+    "type": "tube",
+    "label": "5' Tube",
+    "lengthFt": 5,
+    "inlet":  { "x": 69744, "y": 100239, "angle": 180 },
+    "outlet": { "x": 919471, "y": 100242, "angle": 0 }
+  },
+  "10ft_Tube.svg": {
+    "type": "tube",
+    "label": "10' Tube",
+    "lengthFt": 10,
+    "inlet":  { "x": -746, "y": 54756, "angle": 180 },
+    "outlet": { "x": 988440, "y": 54719, "angle": 0 }
+  },
+  "REP_90.svg": {
+    "type": "turn90",
+    "label": "REP (90°)",
+    "lengthFt": 0,
+    "inlet":  { "x": 712548, "y": 60339, "angle": 270 },
+    "outlet": { "x": 337438, "y": 608168, "angle": 180 }
+  },
+  "RUP_180.svg": {
+    "type": "turn180",
+    "label": "RUP (180°)",
+    "lengthFt": 0,
+    "inlet":  { "x": 773245, "y": 266535, "angle": 270 },
+    "outlet": { "x": 226395, "y": 266894, "angle": 270 }
+  }
+}
