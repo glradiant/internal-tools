@@ -176,7 +176,12 @@ export default function Dashboard({ session }) {
 
           {/* Heater Layout Tool */}
           <a
-            href="/layout"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              const { access_token, refresh_token } = session;
+              window.open(`https://layout.glradiant.com/?access_token=${access_token}&refresh_token=${refresh_token}`, '_blank');
+            }}
             style={{
               background: '#fff',
               borderRadius: 12,

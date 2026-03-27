@@ -7,6 +7,21 @@ export default function AuthGuard({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+
+    if (accessToken && refreshToken) {
+      // Strip tokens from URL before doing anything
+      window.history.replaceState({}, '', window.location.pathname);
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ data: { session } }) => {
+          setSession(session);
+          setLoading(false);
+        });
+      return;
+    }
+
     // Check current session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
