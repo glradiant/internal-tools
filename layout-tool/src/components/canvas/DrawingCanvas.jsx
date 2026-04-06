@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHand
 import useLayoutStore from '../../store/useLayoutStore';
 import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel, HEATER_SCALE } from '../../utils/constants';
 import { findNearestWallSegment, closestOnSegment } from '../../utils/geometry';
-import { computeExtents, getHeaterDisplayWidth } from '../../utils/export';
+import { computeExtents } from '../../utils/extents';
 import GridLayer from './GridLayer';
 import NorthArrow from './NorthArrow';
 // ScaleBar is now rendered inline as a HUD element
