@@ -222,26 +222,17 @@ function processUnitHeater(match, svgContent, path, dimensions, nestedTree, flat
     return;
   }
 
-  // Build nested tree: Series -> Models
+  // Build flat tree: Series -> Models (no group subfolders)
   if (!nestedTree[seriesName]) {
-    nestedTree[seriesName] = { id: seriesName, label: seriesName, children: {} };
+    nestedTree[seriesName] = { id: seriesName, label: seriesName, models: [] };
   }
 
-  const categoryId = `${seriesName}__${groupId}`;
-  const categoryLabel = `${seriesName} ${group.models.map(m => `${m}k`).join('/')} BTU`;
-
-  if (!nestedTree[seriesName].children[categoryLabel]) {
-    nestedTree[seriesName].children[categoryLabel] = {
-      id: categoryId,
-      label: categoryLabel,
-      models: []
-    };
-  }
+  const categoryId = seriesName;
 
   if (!flatCategories[categoryId]) {
     flatCategories[categoryId] = {
       id: categoryId,
-      label: categoryLabel,
+      label: seriesName,
       models: []
     };
   }
@@ -290,7 +281,7 @@ function processUnitHeater(match, svgContent, path, dimensions, nestedTree, flat
       depthIn: group.dimensions.depthIn,
     };
 
-    nestedTree[seriesName].children[categoryLabel].models.push(model);
+    nestedTree[seriesName].models.push(model);
     flatCategories[categoryId].models.push(model);
   }
 }
