@@ -78,32 +78,6 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Expose SVG element and recenter method to parent
-  const recenter = useCallback(() => {
-    const extents = computeExtents(walls, heaters, dimensions);
-    if (!extents) {
-      setZoom(INITIAL_ZOOM);
-      setViewOrigin({ x: 0, y: 0 });
-      return;
-    }
-    const padding = 1.15; // 15% padding around content
-    const fitZoomW = containerSize.w / (extents.w * padding);
-    const fitZoomH = containerSize.h / (extents.h * padding);
-    const fitZoom = Math.min(fitZoomW, fitZoomH);
-    const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, fitZoom));
-    const viewW = containerSize.w / clampedZoom;
-    const viewH = containerSize.h / clampedZoom;
-    const cx = extents.x + extents.w / 2;
-    const cy = extents.y + extents.h / 2;
-    setZoom(clampedZoom);
-    setViewOrigin({ x: cx - viewW / 2, y: cy - viewH / 2 });
-  }, [walls, heaters, dimensions, containerSize]);
-
-  useImperativeHandle(ref, () => ({
-    get svgElement() { return svgRef.current; },
-    recenter,
-  }), [recenter]);
-
   // Store state
   const walls = useLayoutStore((s) => s.walls);
   const doors = useLayoutStore((s) => s.doors);
@@ -182,6 +156,34 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const doorHeightRef = useRef(null);
   // Rectangle dimension locks
   const rectangleLocks = useRef({ width: null, height: null });
+
+  // Expose SVG element and recenter method to parent via ref
+  // Uses getState() to avoid TDZ issues with minifier reordering const declarations
+  const containerSizeRef = useRef(containerSize);
+  useImperativeHandle(ref, () => ({
+    get svgElement() { return svgRef.current; },
+    recenter() {
+      const state = useLayoutStore.getState();
+      const extents = computeExtents(state.walls, state.heaters, state.dimensions);
+      if (!extents) {
+        setZoom(INITIAL_ZOOM);
+        setViewOrigin({ x: 0, y: 0 });
+        return;
+      }
+      const padding = 1.15;
+      const cs = containerSizeRef.current;
+      const fitZoomW = cs.w / (extents.w * padding);
+      const fitZoomH = cs.h / (extents.h * padding);
+      const fitZoom = Math.min(fitZoomW, fitZoomH);
+      const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, fitZoom));
+      const viewW = cs.w / clampedZoom;
+      const viewH = cs.h / clampedZoom;
+      const cx = extents.x + extents.w / 2;
+      const cy = extents.y + extents.h / 2;
+      setZoom(clampedZoom);
+      setViewOrigin({ x: cx - viewW / 2, y: cy - viewH / 2 });
+    },
+  }), []);
 
   const customHeaters = useLayoutStore((s) => s.customHeaters);
   const selectedModel = getHeaterModel(selectedModelId)
@@ -750,7 +752,6 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Keep refs in sync so wheel handler reads current values
   const zoomRef = useRef(zoom);
   const viewOriginRef = useRef(viewOrigin);
-  const containerSizeRef = useRef(containerSize);
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
   useEffect(() => { viewOriginRef.current = viewOrigin; }, [viewOrigin]);
   useEffect(() => { containerSizeRef.current = containerSize; }, [containerSize]);
@@ -956,7 +957,18 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       }
       if (e.key === 'Home') {
         e.preventDefault();
-        recenter();
+        const state = useLayoutStore.getState();
+        const extents = computeExtents(state.walls, state.heaters, state.dimensions);
+        if (!extents) {
+          setZoom(INITIAL_ZOOM);
+          setViewOrigin({ x: 0, y: 0 });
+        } else {
+          const pad = 1.15;
+          const cs = containerSizeRef.current;
+          const fz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(cs.w / (extents.w * pad), cs.h / (extents.h * pad))));
+          setZoom(fz);
+          setViewOrigin({ x: extents.x + extents.w / 2 - cs.w / fz / 2, y: extents.y + extents.h / 2 - cs.h / fz / 2 });
+        }
       }
       if (e.key === 'Delete' && selectedIds.length > 0) {
         selectedIds.forEach((id) => {
@@ -983,7 +995,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste, rectangleStart, addDoor, toggleOrthoMode, recenter]);
+  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste, rectangleStart, addDoor, toggleOrthoMode]);
 
   // Clear state when switching tools
   useEffect(() => {
