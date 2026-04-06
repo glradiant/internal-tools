@@ -5,18 +5,26 @@
 import elxSpecs from '../data/elxSpecs.json';
 import hl3Specs from '../data/hl3Specs.json';
 import ld3Specs from '../data/ld3Specs.json';
+import faSpecs from '../data/faSpecs.json';
 
 // Map series names to their specs
 const seriesSpecs = {
   ELX: elxSpecs,
   HL3: hl3Specs,
   LD3: ld3Specs,
+  FA: faSpecs,
 };
 
 // Helper to determine if a series is electric
 const isSeriesElectric = (seriesName) => {
   const specs = seriesSpecs[seriesName];
   return specs?.fuelType === 'electric';
+};
+
+// Helper to determine if a series is a unit heater
+const isSeriesUnitHeater = (seriesName) => {
+  const specs = seriesSpecs[seriesName];
+  return specs?.heaterType === 'unit';
 };
 
 // Try multiple path patterns to handle different project structures
@@ -67,6 +75,13 @@ function buildHeaterCatalog() {
     const elxMatch = fileNameWithoutExt.match(/^ELX-(\d+)-(\d)$/);
     if (elxMatch) {
       processElxHeater(elxMatch, svgContent, path, dimensions, nestedTree, flatCategories);
+      continue;
+    }
+
+    // Check if this is a unit heater (FA series) - naming: FA-1492.svg (group ID)
+    const unitMatch = fileNameWithoutExt.match(/^([A-Z]+)-(\d+)$/i);
+    if (unitMatch && isSeriesUnitHeater(unitMatch[1].toUpperCase())) {
+      processUnitHeater(unitMatch, svgContent, path, dimensions, nestedTree, flatCategories);
       continue;
     }
 
@@ -183,6 +198,100 @@ function processElxHeater(match, svgContent, path, dimensions, nestedTree, flatC
         flatCategories[categoryId].models.push(model);
       }
     }
+  }
+}
+
+/**
+ * Process unit heater (FA series) - generates models from specs for each BTU rating in a group
+ * SVG naming: FA-{groupId}.svg (e.g. FA-1492.svg)
+ * Multiple BTU models share the same SVG/drawing within a group
+ */
+function processUnitHeater(match, svgContent, path, dimensions, nestedTree, flatCategories) {
+  const seriesName = match[1].toUpperCase(); // "FA"
+  const groupId = match[2]; // "1492", "2162", etc.
+
+  const specs = seriesSpecs[seriesName];
+  if (!specs || !specs.groups || !specs.models) {
+    console.warn(`No specs found for unit heater series: ${seriesName}`);
+    return;
+  }
+
+  const group = specs.groups[groupId];
+  if (!group) {
+    console.warn(`No group ${groupId} found for ${seriesName}`);
+    return;
+  }
+
+  // Build nested tree: Series -> Models
+  if (!nestedTree[seriesName]) {
+    nestedTree[seriesName] = { id: seriesName, label: seriesName, children: {} };
+  }
+
+  const categoryId = `${seriesName}__${groupId}`;
+  const categoryLabel = `${seriesName} ${group.models.map(m => `${m}k`).join('/')} BTU`;
+
+  if (!nestedTree[seriesName].children[categoryLabel]) {
+    nestedTree[seriesName].children[categoryLabel] = {
+      id: categoryId,
+      label: categoryLabel,
+      models: []
+    };
+  }
+
+  if (!flatCategories[categoryId]) {
+    flatCategories[categoryId] = {
+      id: categoryId,
+      label: categoryLabel,
+      models: []
+    };
+  }
+
+  // Generate one model per BTU rating in this group
+  for (const btu of group.models) {
+    const modelSpecs = specs.models[String(btu)];
+    if (!modelSpecs) {
+      console.warn(`No specs for ${seriesName}-${btu}`);
+      continue;
+    }
+
+    const modelId = `${seriesName}__${btu}`;
+    const label = `${seriesName} ${btu}kBTU`;
+
+    const model = {
+      id: modelId,
+      label: label,
+      categoryId: categoryId,
+      svgContent: svgContent,
+      svgPath: path,
+      dimensions: dimensions,
+      // Unit heater specs
+      kbtu: btu,
+      kbtuInput: modelSpecs.kbtuInput,
+      kbtuOutput: modelSpecs.kbtuOutput,
+      isElectric: false,
+      isUnitHeater: true,
+      // Physical specs
+      weightLbs: modelSpecs.weightLbs,
+      mountingHeightMin: modelSpecs.mountingHeightMin,
+      mountingHeightMax: modelSpecs.mountingHeightMax,
+      heatThrowFt: modelSpecs.heatThrowFt,
+      airTempRiseF: modelSpecs.airTempRiseF,
+      // Electrical
+      fla: modelSpecs.fla,
+      motorType: modelSpecs.motorType,
+      motorHp: modelSpecs.motorHp,
+      fanDiameterIn: modelSpecs.fanDiameterIn,
+      // Connections
+      gasConnection: modelSpecs.gasConnection,
+      ventConnection: modelSpecs.ventConnection,
+      // Dimensions from group
+      widthIn: group.dimensions.widthIn,
+      heightIn: group.dimensions.heightIn,
+      depthIn: group.dimensions.depthIn,
+    };
+
+    nestedTree[seriesName].children[categoryLabel].models.push(model);
+    flatCategories[categoryId].models.push(model);
   }
 }
 

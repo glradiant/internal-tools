@@ -1,0 +1,297 @@
+{
+  "series": "FA",
+  "fuelType": "gas",
+  "heaterType": "unit",
+  "description": "FA Series Separated Combustion Gas-Fired Unit Heater",
+  "gasType": "Natural or Propane",
+  "gasRequirements": {
+    "natural": {
+      "manifoldPressure": 3.5,
+      "minInletPressure": 5.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    },
+    "propane": {
+      "manifoldPressure": 10.0,
+      "minInletPressure": 11.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    }
+  },
+  "electricalRequirements": {
+    "voltage": "120 VAC",
+    "frequency": "60 Hz",
+    "thermostat": "24 VAC",
+    "phase": "Single"
+  },
+  "groups": {
+    "1492": {
+      "models": [100, 125],
+      "dimensions": {
+        "widthIn": 40.0,
+        "heightIn": 21.0,
+        "depthIn": 20.0,
+        "dimC": 9.375,
+        "dimD": 19.125,
+        "dimE": 6.12,
+        "dimF": 8.6,
+        "dimG": 9.3,
+        "dimH": 13.1
+      }
+    },
+    "2162": {
+      "models": [150, 175, 200],
+      "dimensions": {
+        "widthIn": 40.0,
+        "heightIn": 27.0,
+        "depthIn": 20.0,
+        "dimC": 12.5,
+        "dimD": 19.125,
+        "dimE": 6.12,
+        "dimF": 8.6,
+        "dimG": 9.3,
+        "dimH": 13.1
+      }
+    },
+    "1631": {
+      "models": [225, 250],
+      "dimensions": {
+        "widthIn": 40.0,
+        "heightIn": 30.0,
+        "depthIn": 20.0,
+        "dimC": 13.875,
+        "dimD": 19.125,
+        "dimE": 6.12,
+        "dimF": 8.6,
+        "dimG": 9.3,
+        "dimH": 13.1
+      }
+    },
+    "1118": {
+      "models": [300],
+      "dimensions": {
+        "widthIn": 50.0,
+        "heightIn": 36.0,
+        "depthIn": 20.0,
+        "dimC": 17.5,
+        "dimD": 26.0,
+        "dimE": 5.8,
+        "dimF": 11.2,
+        "dimG": 12.0,
+        "dimH": 17.5
+      }
+    },
+    "871": {
+      "models": [400],
+      "dimensions": {
+        "widthIn": 54.0,
+        "heightIn": 44.0,
+        "depthIn": 20.0,
+        "dimC": 21.625,
+        "dimD": 29.6,
+        "dimE": 5.75,
+        "dimF": 11.2,
+        "dimG": 10.25,
+        "dimH": 19.25
+      }
+    }
+  },
+  "models": {
+    "100": {
+      "kbtuInput": 100,
+      "kbtuOutput": 80,
+      "weightLbs": 143,
+      "mountingHeightMin": 12,
+      "mountingHeightMax": 14,
+      "heatThrowFt": 43,
+      "airTempRiseF": 50,
+      "fla": 5.2,
+      "motorType": "PSC",
+      "motorHp": "1/8",
+      "fanDiameterIn": 18,
+      "gasConnection": "1/2\" NPT",
+      "ventConnection": "4\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "125": {
+      "kbtuInput": 125,
+      "kbtuOutput": 100,
+      "weightLbs": 143,
+      "mountingHeightMin": 14,
+      "mountingHeightMax": 16,
+      "heatThrowFt": 47,
+      "airTempRiseF": 50,
+      "fla": 5.0,
+      "motorType": "PSC",
+      "motorHp": "1/6",
+      "fanDiameterIn": 18,
+      "gasConnection": "1/2\" NPT",
+      "ventConnection": "4\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "150": {
+      "kbtuInput": 150,
+      "kbtuOutput": 120,
+      "weightLbs": 195,
+      "mountingHeightMin": 14,
+      "mountingHeightMax": 16,
+      "heatThrowFt": 50,
+      "airTempRiseF": 50,
+      "fla": 10.7,
+      "motorType": "PSC",
+      "motorHp": "1/3",
+      "fanDiameterIn": 22,
+      "gasConnection": "1/2\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "175": {
+      "kbtuInput": 175,
+      "kbtuOutput": 140,
+      "weightLbs": 195,
+      "mountingHeightMin": 15,
+      "mountingHeightMax": 17,
+      "heatThrowFt": 52,
+      "airTempRiseF": 50,
+      "fla": 10.7,
+      "motorType": "PSC",
+      "motorHp": "1/3",
+      "fanDiameterIn": 22,
+      "gasConnection": "1/2\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "200": {
+      "kbtuInput": 200,
+      "kbtuOutput": 160,
+      "weightLbs": 195,
+      "mountingHeightMin": 15,
+      "mountingHeightMax": 17,
+      "heatThrowFt": 55,
+      "airTempRiseF": 50,
+      "fla": 10.7,
+      "motorType": "PSC",
+      "motorHp": "1/3",
+      "fanDiameterIn": 22,
+      "gasConnection": "1/2\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "225": {
+      "kbtuInput": 225,
+      "kbtuOutput": 180,
+      "weightLbs": 212,
+      "mountingHeightMin": 16,
+      "mountingHeightMax": 18,
+      "heatThrowFt": 59,
+      "airTempRiseF": 50,
+      "fla": 10.7,
+      "motorType": "PSC",
+      "motorHp": "1/3",
+      "fanDiameterIn": 22,
+      "gasConnection": "3/4\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "250": {
+      "kbtuInput": 250,
+      "kbtuOutput": 200,
+      "weightLbs": 212,
+      "mountingHeightMin": 16,
+      "mountingHeightMax": 18,
+      "heatThrowFt": 63,
+      "airTempRiseF": 50,
+      "fla": 10.7,
+      "motorType": "PSC",
+      "motorHp": "1/3",
+      "fanDiameterIn": 22,
+      "gasConnection": "3/4\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "300": {
+      "kbtuInput": 300,
+      "kbtuOutput": 246,
+      "weightLbs": 296,
+      "mountingHeightMin": 18,
+      "mountingHeightMax": 20,
+      "heatThrowFt": 67,
+      "airTempRiseF": 70,
+      "fla": 11.9,
+      "motorType": "PSC",
+      "motorHp": "3/4",
+      "fanDiameterIn": 26,
+      "gasConnection": "3/4\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    },
+    "400": {
+      "kbtuInput": 400,
+      "kbtuOutput": 328,
+      "weightLbs": 351,
+      "mountingHeightMin": 20,
+      "mountingHeightMax": 22,
+      "heatThrowFt": 71,
+      "airTempRiseF": 70,
+      "fla": 14.3,
+      "motorType": "PSC",
+      "motorHp": "1",
+      "fanDiameterIn": 30,
+      "gasConnection": "3/4\" NPT",
+      "ventConnection": "6\" O.D.",
+      "ventLengthMinFt": 3,
+      "ventLengthMaxFt": 40
+    }
+  },
+  "clearances": {
+    "note": "All clearances to combustibles are in inches.",
+    "100-250": {
+      "description": "FA-100 to FA-250",
+      "models": [100, 125, 150, 175, 200, 225, 250],
+      "combustibles": {
+        "front": 60,
+        "topAndBottom": 1,
+        "accessSide": 18,
+        "nonAccessSide": 1,
+        "rear": 1,
+        "ventConnection": 6
+      },
+      "service": {
+        "front": 60,
+        "topAndBottom": 1,
+        "accessSide": 18,
+        "nonAccessSide": 1,
+        "rear": 18,
+        "ventConnection": 6
+      }
+    },
+    "300-400": {
+      "description": "FA-300 to FA-400",
+      "models": [300, 400],
+      "combustibles": {
+        "front": 60,
+        "topAndBottom": 4,
+        "accessSide": 18,
+        "nonAccessSide": 4,
+        "rear": 1,
+        "ventConnection": 6
+      },
+      "service": {
+        "front": 60,
+        "topAndBottom": 4,
+        "accessSide": 18,
+        "nonAccessSide": 4,
+        "rear": 18,
+        "ventConnection": 6
+      }
+    }
+  }
+}
