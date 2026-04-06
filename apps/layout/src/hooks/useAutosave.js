@@ -63,7 +63,7 @@ export default function useAutosave(layoutId, svgRef) {
 
     // Thumbnail capture runs 5s after the last change — less aggressive than data save
     debouncedThumbRef.current = debounce(async ({ walls, heaters }) => {
-      const svgEl = svgRef?.current;
+      const svgEl = svgRef?.current?.svgElement || svgRef?.current;
       if (!svgEl) return;
       try {
         const blob = await captureThumbnail(svgEl, { walls, heaters });

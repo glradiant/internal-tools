@@ -1,7 +1,8 @@
-import { useRef, useState, useCallback, useEffect, forwardRef } from 'react';
+import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
 import useLayoutStore from '../../store/useLayoutStore';
 import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel, HEATER_SCALE } from '../../utils/constants';
 import { findNearestWallSegment, closestOnSegment } from '../../utils/geometry';
+import { computeExtents, getHeaterDisplayWidth } from '../../utils/export';
 import GridLayer from './GridLayer';
 import NorthArrow from './NorthArrow';
 // ScaleBar is now rendered inline as a HUD element
@@ -77,12 +78,31 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const svgRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Callback ref to set both internal svgRef and forwarded ref
-  const setSvgRef = useCallback((node) => {
-    svgRef.current = node;
-    if (typeof ref === 'function') ref(node);
-    else if (ref) ref.current = node;
-  }, [ref]);
+  // Expose SVG element and recenter method to parent
+  const recenter = useCallback(() => {
+    const extents = computeExtents(walls, heaters, dimensions);
+    if (!extents) {
+      setZoom(INITIAL_ZOOM);
+      setViewOrigin({ x: 0, y: 0 });
+      return;
+    }
+    const padding = 1.15; // 15% padding around content
+    const fitZoomW = containerSize.w / (extents.w * padding);
+    const fitZoomH = containerSize.h / (extents.h * padding);
+    const fitZoom = Math.min(fitZoomW, fitZoomH);
+    const clampedZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, fitZoom));
+    const viewW = containerSize.w / clampedZoom;
+    const viewH = containerSize.h / clampedZoom;
+    const cx = extents.x + extents.w / 2;
+    const cy = extents.y + extents.h / 2;
+    setZoom(clampedZoom);
+    setViewOrigin({ x: cx - viewW / 2, y: cy - viewH / 2 });
+  }, [walls, heaters, dimensions, containerSize]);
+
+  useImperativeHandle(ref, () => ({
+    get svgElement() { return svgRef.current; },
+    recenter,
+  }), [recenter]);
 
   // Store state
   const walls = useLayoutStore((s) => s.walls);
@@ -934,6 +954,10 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           setActiveTool('select');
         }
       }
+      if (e.key === 'Home') {
+        e.preventDefault();
+        recenter();
+      }
       if (e.key === 'Delete' && selectedIds.length > 0) {
         selectedIds.forEach((id) => {
           if (walls.find((w) => w.id === id)) {
@@ -959,7 +983,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste, rectangleStart, addDoor, toggleOrthoMode]);
+  }, [currentPath, selectedIds, walls, doors, heaters, dimensions, removeWall, removeDoor, removeHeater, removeDimension, doorPlacement, wallOffsetMode, clearWallOffsetMode, activeTool, setActiveTool, undo, redo, copySelected, startPaste, pasteMode, cancelPaste, rectangleStart, addDoor, toggleOrthoMode, recenter]);
 
   // Clear state when switching tools
   useEffect(() => {
@@ -1039,7 +1063,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       }}
     >
       <svg
-        ref={setSvgRef}
+        ref={svgRef}
         width="100%"
         height="100%"
         viewBox={viewBox}

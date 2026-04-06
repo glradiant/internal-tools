@@ -2,7 +2,7 @@ import useLayoutStore from '../../store/useLayoutStore';
 
 const GRID_SCALE_OPTIONS = [0.5, 1, 2, 5, 10];
 
-export default function Toolbar({ onBack, saveStatus }) {
+export default function Toolbar({ onBack, saveStatus, onRecenter }) {
   const projectName = useLayoutStore((s) => s.projectName);
   const showDimensions = useLayoutStore((s) => s.showDimensions);
   const showGrid = useLayoutStore((s) => s.showGrid);
@@ -95,6 +95,13 @@ export default function Toolbar({ onBack, saveStatus }) {
           title="Redo (Ctrl+Y)"
         >
           &#x21AA;
+        </button>
+        <button
+          onClick={onRecenter}
+          style={buttonStyle(true)}
+          title="Recenter (Home)"
+        >
+          &#x2316;
         </button>
       </div>
       <span style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.3)' }}>

@@ -83,7 +83,7 @@ export default function LayoutCanvas() {
   const { saveStatus, flush } = useAutosave(id, svgRef);
 
   const handleExportPDF = useCallback(async () => {
-    const svg = svgRef.current;
+    const svg = svgRef.current?.svgElement;
     if (!svg) return;
     await exportPDF(svg);
   }, []);
@@ -157,7 +157,7 @@ export default function LayoutCanvas() {
     >
       <Sidebar onExportPDF={handleExportPDF} width={sidebarWidth} onWidthChange={setSidebarWidth} onOpenBuilder={() => setShowBuilder(true)} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F9FC' }}>
-        <Toolbar onBack={handleBack} saveStatus={saveStatus} />
+        <Toolbar onBack={handleBack} saveStatus={saveStatus} onRecenter={() => svgRef.current?.recenter()} />
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           <DrawingCanvas ref={svgRef} onHoverPos={setHoverPos} />
         </div>

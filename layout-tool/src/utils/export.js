@@ -4,7 +4,7 @@ import useLayoutStore from '../store/useLayoutStore';
 import { GRID, HEATER_SCALE, OFFICES, GLR_LOGO_BASE64 } from './constants';
 
 // Get heater display width from SVG dimensions (matches DrawingCanvas logic)
-function getHeaterDisplayWidth(model) {
+export function getHeaterDisplayWidth(model) {
   if (model?.dimensions?.width) {
     return model.dimensions.width * HEATER_SCALE;
   }
@@ -15,7 +15,7 @@ function getHeaterDisplayWidth(model) {
  * Compute the bounding box of all entities including dimension labels.
  * Returns { x, y, w, h } in SVG coordinates, or null if nothing to export.
  */
-function computeExtents(walls, heaters, dimensions, labelScale = 1) {
+export function computeExtents(walls, heaters, dimensions, labelScale = 1) {
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
   const expand = (x, y) => {
