@@ -1,0 +1,86 @@
+{
+  "series": "DSC",
+  "fuelType": "gas",
+  "heaterType": "unit",
+  "description": "DSC Series High Intensity Gas-Fired Infrared Patio Heater",
+  "gasType": "Natural or Propane",
+  "gasRequirements": {
+    "natural": {
+      "manifoldPressure": 6.0,
+      "minInletPressure": 7.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    },
+    "propane": {
+      "manifoldPressure": 10.0,
+      "minInletPressure": 11.0,
+      "maxInletPressure": 14.0,
+      "unit": "Inches W.C."
+    }
+  },
+  "electricalRequirements": {
+    "voltage": "24 VAC",
+    "frequency": "60 Hz",
+    "phase": "Single",
+    "note": "24VAC with NEC Class 2 transformer (field supplied)"
+  },
+  "groups": {
+    "464": {
+      "models": [31, 34],
+      "dimensions": {
+        "lengthIn": 48.4,
+        "widthIn": 9.0,
+        "heightIn": 10.9
+      }
+    }
+  },
+  "models": {
+    "31": {
+      "kbtuInput": 31,
+      "kbtuOutput": null,
+      "kbtuLow": 28,
+      "weightLbs": 59,
+      "mountingHeightMin": 8,
+      "mountingHeightMax": 12,
+      "areaHeated": "8' x 8'",
+      "gasConnection": "1/2\" NPT",
+      "gasType": "Natural or Propane"
+    },
+    "34": {
+      "kbtuInput": 34,
+      "kbtuOutput": null,
+      "kbtuLow": 28,
+      "weightLbs": 59,
+      "mountingHeightMin": 8.5,
+      "mountingHeightMax": 13,
+      "areaHeated": "9' x 9'",
+      "gasConnection": "1/2\" NPT",
+      "gasType": "Natural"
+    }
+  },
+  "clearances": {
+    "note": "All clearances to combustibles are in inches. Heaters mounted on an angle between 1 to 30 degrees must maintain clearances posted for 0 or 30 degrees, whichever is greater.",
+    "31-34": {
+      "description": "DSC 31,000-34,000 BTU",
+      "models": [31, 34],
+      "0deg": {
+        "mountingAngle": 0,
+        "sides": 18,
+        "back": null,
+        "top": 13,
+        "below": 48,
+        "ends": 12,
+        "front": null
+      },
+      "30deg": {
+        "mountingAngle": 30,
+        "sides": null,
+        "back": 18,
+        "top": 18,
+        "below": 40,
+        "ends": 12,
+        "front": 36
+      }
+    }
+  }
+}

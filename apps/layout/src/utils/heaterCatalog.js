@@ -6,6 +6,7 @@ import elxSpecs from '../data/elxSpecs.json';
 import hl3Specs from '../data/hl3Specs.json';
 import ld3Specs from '../data/ld3Specs.json';
 import faSpecs from '../data/faSpecs.json';
+import dscSpecs from '../data/dscSpecs.json';
 
 // Map series names to their specs
 const seriesSpecs = {
@@ -13,6 +14,7 @@ const seriesSpecs = {
   HL3: hl3Specs,
   LD3: ld3Specs,
   FA: faSpecs,
+  DSC: dscSpecs,
 };
 
 // Helper to determine if a series is electric
