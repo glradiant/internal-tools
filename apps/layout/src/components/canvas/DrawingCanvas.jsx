@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useGesture } from '@use-gesture/react';
 import useLayoutStore from '../../store/useLayoutStore';
 import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel, HEATER_SCALE } from '../../utils/constants';
 import { findNearestWallSegment, closestOnSegment } from '../../utils/geometry';
@@ -803,6 +804,44 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
+
+  // Pinch-to-zoom and two-finger pan gesture (touch devices)
+  useGesture(
+    {
+      onPinch: ({ origin: [ox, oy], offset: [scale], memo }) => {
+        const container = containerRef.current;
+        if (!container) return memo;
+        const rect = container.getBoundingClientRect();
+        const screenX = ox - rect.left;
+        const screenY = oy - rect.top;
+
+        if (!memo) {
+          // First pinch event: capture the initial state
+          memo = {
+            initialZoom: zoomRef.current,
+            svgX: viewOriginRef.current.x + screenX / zoomRef.current,
+            svgY: viewOriginRef.current.y + screenY / zoomRef.current,
+          };
+        }
+
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, memo.initialZoom * scale));
+
+        // Keep the SVG point under the pinch midpoint fixed
+        setViewOrigin({
+          x: memo.svgX - screenX / newZoom,
+          y: memo.svgY - screenY / newZoom,
+        });
+        setZoom(newZoom);
+
+        return memo;
+      },
+    },
+    {
+      target: containerRef,
+      pinch: { scaleBounds: { min: MIN_ZOOM, max: MAX_ZOOM }, rubberband: true },
+      eventOptions: { passive: false },
+    }
+  );
 
   // Global pointerup listener for pan and drag
   useEffect(() => {
