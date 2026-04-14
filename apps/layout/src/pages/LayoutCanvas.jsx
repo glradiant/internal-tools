@@ -99,6 +99,11 @@ export default function LayoutCanvas() {
     navigate('/');
   }, [flush, navigate]);
 
+  // Auto-close sidebar when tool is selected on touch devices
+  const handleToolSelected = useCallback(() => {
+    if (isTouch) setSidebarOpen(false);
+  }, [isTouch]);
+
   if (loading) {
     return (
       <div
@@ -150,16 +155,10 @@ export default function LayoutCanvas() {
     );
   }
 
-  // Auto-close sidebar when tool is selected on touch devices
-  const handleToolSelected = useCallback(() => {
-    if (isTouch) setSidebarOpen(false);
-  }, [isTouch]);
-
   return (
     <div
       style={{
         display: 'flex',
-        height: '100vh',
         height: '100dvh',
         fontFamily: "'DM Sans', system-ui, sans-serif",
         background: '#0F1E30',
