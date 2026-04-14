@@ -44,13 +44,13 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const handlePointerMove = (e) => {
       if (!isResizing.current || !onWidthChange) return;
       const newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, e.clientX));
       onWidthChange(newWidth);
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       if (isResizing.current) {
         isResizing.current = false;
         document.body.style.cursor = '';
@@ -58,11 +58,11 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
     };
   }, [onWidthChange]);
 
@@ -108,7 +108,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
 
       {/* Resize handle */}
       <div
-        onMouseDown={handleResizeStart}
+        onPointerDown={handleResizeStart}
         style={{
           position: 'absolute',
           top: 0,

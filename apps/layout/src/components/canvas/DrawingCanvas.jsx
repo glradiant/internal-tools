@@ -140,6 +140,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, entities: [] });
 
+  // Track active pointers for multi-touch gesture detection
+  const activePointersRef = useRef(new Map());
+
   // Pan/zoom state — viewBox model
   // The viewBox origin (top-left corner of visible area in SVG coords)
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
@@ -334,8 +337,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     return cursor;
   }, [orthoMode]);
 
-  // Mouse move handler
-  const handleMouseMove = useCallback((e) => {
+  // Pointer move handler (works for both mouse and touch)
+  const handlePointerMove = useCallback((e) => {
     // Handle panning
     if (isPanning) {
       const dx = (e.clientX - panStart.current.x) / zoom;
@@ -696,8 +699,17 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste, rectangleStart, manDoorFlipH, manDoorFlipV, dimensionStart, findNearestSnapPoint, addDimension, wallOffsetMode, heaters, updateHeaterPosition, clearWallOffsetMode, toggleSelection, clearSelection, heaterFlipH, heaterFlipV]);
 
-  // Mouse down — pan or drag
-  const handleMouseDown = useCallback((e) => {
+  // Pointer down — pan or drag (works for both mouse and touch)
+  const handlePointerDown = useCallback((e) => {
+    // Track active pointers for multi-touch
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // If a second pointer arrives, cancel any active tool action and let pinch gesture handle it
+    if (activePointersRef.current.size > 1) {
+      setIsDragging(false);
+      return;
+    }
+
     // Middle mouse button or space+left click = pan
     if (e.button === 1 || (e.button === 0 && spaceHeld)) {
       e.preventDefault();
@@ -737,8 +749,12 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory]);
 
-  // Mouse up — pan or drag end
-  const handleMouseUp = useCallback(() => {
+  // Pointer up — pan or drag end (works for both mouse and touch)
+  const handlePointerUp = useCallback((e) => {
+    // Clean up pointer tracking
+    if (e?.pointerId !== undefined) {
+      activePointersRef.current.delete(e.pointerId);
+    }
     if (isPanning) {
       setIsPanning(false);
     }
@@ -788,10 +804,11 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Global mouseup listener for pan and drag
+  // Global pointerup listener for pan and drag
   useEffect(() => {
     if (!isPanning && !isDragging) return;
-    const handleGlobalMouseUp = () => {
+    const handleGlobalPointerUp = (e) => {
+      activePointersRef.current.delete(e.pointerId);
       if (isDragging) {
         justDragged.current = true;
       }
@@ -799,14 +816,14 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setIsDragging(false);
       dragStart.current = { x: 0, y: 0, entities: [] };
     };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
   }, [isPanning, isDragging]);
 
-  // Global mousemove for panning/dragging when mouse leaves SVG
+  // Global pointermove for panning/dragging when pointer leaves SVG
   useEffect(() => {
     if (!isPanning && !isDragging) return;
-    const handleGlobalMouseMove = (e) => {
+    const handleGlobalPointerMove = (e) => {
       const curZoom = zoomRef.current;
       const curOrigin = viewOriginRef.current;
 
@@ -856,8 +873,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     };
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('pointermove', handleGlobalPointerMove);
+    return () => window.removeEventListener('pointermove', handleGlobalPointerMove);
   }, [isPanning, isDragging, showGrid, gridDivisionFt]);
 
   // Space key for pan mode
@@ -1072,6 +1089,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
+        touchAction: 'none',
       }}
     >
       <svg
@@ -1080,14 +1098,17 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         height="100%"
         viewBox={viewBox}
         onClick={handleClick}
-        onMouseMove={handleMouseMove}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={() => {
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={() => {
           if ((activeTool !== 'draw' || currentPath.length === 0) && !doorPlacement) {
             setHoverPos(null);
           }
           setHoverWall(null);
+        }}
+        onPointerCancel={(e) => {
+          activePointersRef.current.delete(e.pointerId);
         }}
         style={{ cursor, display: 'block', background: 'white' }}
       >
