@@ -1,5 +1,4 @@
 import { useRef, useState, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { useGesture } from '@use-gesture/react';
 import useLayoutStore from '../../store/useLayoutStore';
 import { snap, GRID, COLORS, HEATER_MODELS, getHeaterModel, HEATER_SCALE } from '../../utils/constants';
 import { findNearestWallSegment, closestOnSegment } from '../../utils/geometry';
@@ -174,42 +173,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const viewOriginRef = useRef(viewOrigin);
   const containerSizeRef = useRef(containerSize);
 
-  // Pinch-to-zoom and two-finger pan gesture (touch devices)
-  // Must be called unconditionally at top level to maintain stable hook order
-  useGesture(
-    {
-      onPinch: ({ origin: [ox, oy], offset: [scale], memo }) => {
-        const container = containerRef.current;
-        if (!container) return memo;
-        const rect = container.getBoundingClientRect();
-        const screenX = ox - rect.left;
-        const screenY = oy - rect.top;
-
-        if (!memo) {
-          memo = {
-            initialZoom: zoomRef.current,
-            svgX: viewOriginRef.current.x + screenX / zoomRef.current,
-            svgY: viewOriginRef.current.y + screenY / zoomRef.current,
-          };
-        }
-
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, memo.initialZoom * scale));
-
-        setViewOrigin({
-          x: memo.svgX - screenX / newZoom,
-          y: memo.svgY - screenY / newZoom,
-        });
-        setZoom(newZoom);
-
-        return memo;
-      },
-    },
-    {
-      target: containerRef,
-      pinch: { scaleBounds: { min: MIN_ZOOM, max: MAX_ZOOM }, rubberband: true },
-      eventOptions: { passive: false },
-    }
-  );
+  // Pinch state for manual two-finger zoom/pan
+  const pinchRef = useRef(null); // { initialDist, initialZoom, initialMidX, initialMidY, svgMidX, svgMidY }
 
   // Expose SVG element and recenter method to parent via ref
   // Uses getState() to avoid TDZ issues with minifier reordering const declarations
@@ -396,6 +361,54 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       if (Math.hypot(dx, dy) > 10) {
         clearTimeout(longPressTimerRef.current);
         longPressStartRef.current = null;
+      }
+    }
+
+    // Handle two-finger pinch-to-zoom/pan
+    if (e.pointerType === 'touch') {
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointersRef.current.size === 2) {
+        const pointers = Array.from(activePointersRef.current.values());
+        const midX = (pointers[0].x + pointers[1].x) / 2;
+        const midY = (pointers[0].y + pointers[1].y) / 2;
+        const dist = Math.hypot(pointers[1].x - pointers[0].x, pointers[1].y - pointers[0].y);
+
+        if (!pinchRef.current) {
+          // Start pinch — capture initial state
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const screenX = midX - rect.left;
+            const screenY = midY - rect.top;
+            const curZoom = zoomRef.current;
+            const curOrigin = viewOriginRef.current;
+            pinchRef.current = {
+              initialDist: dist,
+              initialZoom: curZoom,
+              initialMidX: midX,
+              initialMidY: midY,
+              svgMidX: curOrigin.x + screenX / curZoom,
+              svgMidY: curOrigin.y + screenY / curZoom,
+            };
+          }
+        } else {
+          // Continue pinch — compute zoom + pan
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const screenX = midX - rect.left;
+            const screenY = midY - rect.top;
+            const scale = dist / pinchRef.current.initialDist;
+            const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchRef.current.initialZoom * scale));
+
+            setViewOrigin({
+              x: pinchRef.current.svgMidX - screenX / newZoom,
+              y: pinchRef.current.svgMidY - screenY / newZoom,
+            });
+            setZoom(newZoom);
+          }
+        }
+        return;
       }
     }
 
@@ -842,9 +855,12 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     clearTimeout(longPressTimerRef.current);
     longPressStartRef.current = null;
 
-    // Clean up pointer tracking
+    // Clean up pointer tracking and pinch state
     if (e?.pointerId !== undefined) {
       activePointersRef.current.delete(e.pointerId);
+    }
+    if (activePointersRef.current.size < 2) {
+      pinchRef.current = null;
     }
     if (isPanning) {
       setIsPanning(false);
@@ -898,6 +914,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     if (!isPanning && !isDragging) return;
     const handleGlobalPointerUp = (e) => {
       activePointersRef.current.delete(e.pointerId);
+      if (activePointersRef.current.size < 2) {
+        pinchRef.current = null;
+      }
       if (isDragging) {
         justDragged.current = true;
       }
