@@ -13,6 +13,7 @@ import ManualDimension from './ManualDimension';
 import WallInputOverlay from '../modals/WallInputOverlay';
 import DoorInputOverlay from '../modals/DoorInputOverlay';
 import RectangleInputOverlay from '../modals/RectangleInputOverlay';
+import TouchContextMenu from './TouchContextMenu';
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6;
@@ -96,6 +97,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
   const orthoMode = useLayoutStore((s) => s.orthoMode);
   const toggleOrthoMode = useLayoutStore((s) => s.toggleOrthoMode);
+  const panMode = useLayoutStore((s) => s.panMode);
   const addWall = useLayoutStore((s) => s.addWall);
   const addDoor = useLayoutStore((s) => s.addDoor);
   const addHeater = useLayoutStore((s) => s.addHeater);
@@ -140,6 +142,18 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ x: 0, y: 0, entities: [] });
 
+  // Track active pointers for multi-touch gesture detection
+  const activePointersRef = useRef(new Map());
+
+  // Long-press context menu state (touch devices)
+  const longPressTimerRef = useRef(null);
+  const longPressStartRef = useRef(null);
+  const longPressFiredRef = useRef(false);
+  const [contextMenu, setContextMenu] = useState(null); // { screenX, screenY, entityId, entityType }
+
+  // Touch-drag placement state: tracks press-drag-release for placing heaters/rectangles/walls
+  const touchPlacingRef = useRef(null); // { tool, startPos } when actively dragging to place
+
   // Pan/zoom state — viewBox model
   // The viewBox origin (top-left corner of visible area in SVG coords)
   const [zoom, setZoom] = useState(INITIAL_ZOOM);
@@ -157,9 +171,17 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Rectangle dimension locks
   const rectangleLocks = useRef({ width: null, height: null });
 
+  // Refs for zoom/viewOrigin so gesture and wheel handlers read current values
+  // (declared early to avoid TDZ issues with minifier reordering)
+  const zoomRef = useRef(zoom);
+  const viewOriginRef = useRef(viewOrigin);
+  const containerSizeRef = useRef(containerSize);
+
+  // Pinch state for manual two-finger zoom/pan
+  const pinchRef = useRef(null); // { initialDist, initialZoom, initialMidX, initialMidY, svgMidX, svgMidY }
+
   // Expose SVG element and recenter method to parent via ref
   // Uses getState() to avoid TDZ issues with minifier reordering const declarations
-  const containerSizeRef = useRef(containerSize);
   useImperativeHandle(ref, () => ({
     get svgElement() { return svgRef.current; },
     recenter() {
@@ -334,8 +356,66 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     return cursor;
   }, [orthoMode]);
 
-  // Mouse move handler
-  const handleMouseMove = useCallback((e) => {
+  // Pointer move handler (works for both mouse and touch)
+  const handlePointerMove = useCallback((e) => {
+    // Cancel long-press if finger moved too far
+    if (longPressStartRef.current) {
+      const dx = e.clientX - longPressStartRef.current.x;
+      const dy = e.clientY - longPressStartRef.current.y;
+      if (Math.hypot(dx, dy) > 10) {
+        clearTimeout(longPressTimerRef.current);
+        longPressStartRef.current = null;
+      }
+    }
+
+    // Handle two-finger pinch-to-zoom/pan
+    if (e.pointerType === 'touch') {
+      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activePointersRef.current.size === 2) {
+        const pointers = Array.from(activePointersRef.current.values());
+        const midX = (pointers[0].x + pointers[1].x) / 2;
+        const midY = (pointers[0].y + pointers[1].y) / 2;
+        const dist = Math.hypot(pointers[1].x - pointers[0].x, pointers[1].y - pointers[0].y);
+
+        if (!pinchRef.current) {
+          // Start pinch — capture initial state
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const screenX = midX - rect.left;
+            const screenY = midY - rect.top;
+            const curZoom = zoomRef.current;
+            const curOrigin = viewOriginRef.current;
+            pinchRef.current = {
+              initialDist: dist,
+              initialZoom: curZoom,
+              initialMidX: midX,
+              initialMidY: midY,
+              svgMidX: curOrigin.x + screenX / curZoom,
+              svgMidY: curOrigin.y + screenY / curZoom,
+            };
+          }
+        } else {
+          // Continue pinch — compute zoom + pan
+          const container = containerRef.current;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            const screenX = midX - rect.left;
+            const screenY = midY - rect.top;
+            const scale = dist / pinchRef.current.initialDist;
+            const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchRef.current.initialZoom * scale));
+
+            setViewOrigin({
+              x: pinchRef.current.svgMidX - screenX / newZoom,
+              y: pinchRef.current.svgMidY - screenY / newZoom,
+            });
+            setZoom(newZoom);
+          }
+        }
+        return;
+      }
+    }
+
     // Handle panning
     if (isPanning) {
       const dx = (e.clientX - panStart.current.x) / zoom;
@@ -696,10 +776,62 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [activeTool, currentPath, hoverPos, heaterAngle, selectedModel, addWall, addDoor, addHeater, setSelected, setActiveTool, getCoords, doorPlacement, walls, isPanning, pasteMode, confirmPaste, rectangleStart, manDoorFlipH, manDoorFlipV, dimensionStart, findNearestSnapPoint, addDimension, wallOffsetMode, heaters, updateHeaterPosition, clearWallOffsetMode, toggleSelection, clearSelection, heaterFlipH, heaterFlipV]);
 
-  // Mouse down — pan or drag
-  const handleMouseDown = useCallback((e) => {
-    // Middle mouse button or space+left click = pan
-    if (e.button === 1 || (e.button === 0 && spaceHeld)) {
+  // Pointer down — pan or drag (works for both mouse and touch)
+  const handlePointerDown = useCallback((e) => {
+    // Close context menu on any pointer down
+    if (contextMenu) {
+      setContextMenu(null);
+      return;
+    }
+
+    // Track active pointers for multi-touch
+    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // If a second pointer arrives, cancel any active tool action and let pinch gesture handle it
+    if (activePointersRef.current.size > 1) {
+      clearTimeout(longPressTimerRef.current);
+      setIsDragging(false);
+      return;
+    }
+
+    // Touch-specific handling
+    if (e.pointerType === 'touch') {
+      longPressStartRef.current = { x: e.clientX, y: e.clientY, target: e.target };
+      longPressFiredRef.current = false;
+
+      // In select mode: long-press for context menu
+      if (activeTool === 'select') {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = setTimeout(() => {
+          if (!longPressStartRef.current) return;
+          longPressFiredRef.current = true;
+          const entityEl = e.target.closest('[data-entity-id]');
+          setContextMenu({
+            screenX: longPressStartRef.current.x,
+            screenY: longPressStartRef.current.y,
+            entityId: entityEl?.dataset.entityId || null,
+            entityType: entityEl?.dataset.entityType || null,
+          });
+        }, 600);
+      }
+
+      // In tool modes: start placement immediately on press
+      if (activeTool === 'heater' || activeTool === 'rectangle' || activeTool === 'draw') {
+        const pos = getCoords(e);
+        setHoverPos(pos);
+        touchPlacingRef.current = { tool: activeTool, startPos: pos };
+
+        if (activeTool === 'rectangle' || activeTool === 'draw') {
+          // Both tools use rectangle preview during touch drag
+          setRectangleStart({ x: pos.x, y: pos.y });
+          rectangleLocks.current = { width: null, height: null };
+        }
+        return; // don't fall through to pan/drag logic
+      }
+    }
+
+    // Middle mouse button, space+left click, or pan mode (touch) = pan
+    if (e.button === 1 || (e.button === 0 && spaceHeld) || (e.button === 0 && panMode)) {
       e.preventDefault();
       setIsPanning(true);
       panStart.current = { x: e.clientX, y: e.clientY, originX: viewOrigin.x, originY: viewOrigin.y };
@@ -735,10 +867,64 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     }
-  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory]);
+  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode, contextMenu, rectangleStart, currentPath, addWall, setActiveTool]);
 
-  // Mouse up — pan or drag end
-  const handleMouseUp = useCallback(() => {
+  // Pointer up — pan or drag end (works for both mouse and touch)
+  const handlePointerUp = useCallback((e) => {
+    // Cancel long-press timer
+    clearTimeout(longPressTimerRef.current);
+
+    // For touch: finalize press-drag-release placement
+    if (e.pointerType === 'touch' && touchPlacingRef.current) {
+      const pos = getCoords(e);
+      const placing = touchPlacingRef.current;
+      touchPlacingRef.current = null;
+      justDragged.current = true; // prevent synthetic click
+
+      if (placing.tool === 'heater') {
+        addHeater(pos.x, pos.y, heaterAngle, { ...selectedModel }, heaterFlipH, heaterFlipV);
+      } else if (placing.tool === 'rectangle') {
+        const p1 = placing.startPos;
+        const p3 = pos;
+        if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+          const p2 = { x: p3.x, y: p1.y };
+          const p4 = { x: p1.x, y: p3.y };
+          addWall([p1, p2, p3, p4]);
+        }
+        setRectangleStart(null);
+        rectangleLocks.current = { width: null, height: null };
+      } else if (placing.tool === 'draw') {
+        const p1 = placing.startPos;
+        const p3 = pos;
+        if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+          const p2 = { x: p3.x, y: p1.y };
+          const p4 = { x: p1.x, y: p3.y };
+          addWall([p1, p2, p3, p4]);
+        }
+        setRectangleStart(null);
+      }
+      setHoverPos(null);
+    }
+
+    // For touch select mode: handle tap to select or long-press context menu
+    if (e.pointerType === 'touch' && longPressStartRef.current && !longPressFiredRef.current && activeTool === 'select') {
+      const start = longPressStartRef.current;
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) < 10) {
+        justDragged.current = false;
+        handleClick(e);
+        justDragged.current = true;
+      }
+    }
+    longPressStartRef.current = null;
+    longPressFiredRef.current = false;
+
+    // Clean up pointer tracking and pinch state
+    if (e?.pointerId !== undefined) {
+      activePointersRef.current.delete(e.pointerId);
+    }
+    if (activePointersRef.current.size < 2) {
+      pinchRef.current = null;
+    }
     if (isPanning) {
       setIsPanning(false);
     }
@@ -747,11 +933,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setIsDragging(false);
       dragStart.current = { x: 0, y: 0, entities: [] };
     }
-  }, [isPanning, isDragging]);
+  }, [isPanning, isDragging, handleClick, getCoords, addHeater, heaterAngle, selectedModel, heaterFlipH, heaterFlipV, addWall, activeTool]);
 
-  // Keep refs in sync so wheel handler reads current values
-  const zoomRef = useRef(zoom);
-  const viewOriginRef = useRef(viewOrigin);
+  // Keep refs in sync so wheel/gesture handlers read current values
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
   useEffect(() => { viewOriginRef.current = viewOrigin; }, [viewOrigin]);
   useEffect(() => { containerSizeRef.current = containerSize; }, [containerSize]);
@@ -788,10 +972,14 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
-  // Global mouseup listener for pan and drag
+  // Global pointerup listener for pan and drag
   useEffect(() => {
     if (!isPanning && !isDragging) return;
-    const handleGlobalMouseUp = () => {
+    const handleGlobalPointerUp = (e) => {
+      activePointersRef.current.delete(e.pointerId);
+      if (activePointersRef.current.size < 2) {
+        pinchRef.current = null;
+      }
       if (isDragging) {
         justDragged.current = true;
       }
@@ -799,14 +987,14 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setIsDragging(false);
       dragStart.current = { x: 0, y: 0, entities: [] };
     };
-    window.addEventListener('mouseup', handleGlobalMouseUp);
-    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('pointerup', handleGlobalPointerUp);
+    return () => window.removeEventListener('pointerup', handleGlobalPointerUp);
   }, [isPanning, isDragging]);
 
-  // Global mousemove for panning/dragging when mouse leaves SVG
+  // Global pointermove for panning/dragging when pointer leaves SVG
   useEffect(() => {
     if (!isPanning && !isDragging) return;
-    const handleGlobalMouseMove = (e) => {
+    const handleGlobalPointerMove = (e) => {
       const curZoom = zoomRef.current;
       const curOrigin = viewOriginRef.current;
 
@@ -856,8 +1044,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     };
-    window.addEventListener('mousemove', handleGlobalMouseMove);
-    return () => window.removeEventListener('mousemove', handleGlobalMouseMove);
+    window.addEventListener('pointermove', handleGlobalPointerMove);
+    return () => window.removeEventListener('pointermove', handleGlobalPointerMove);
   }, [isPanning, isDragging, showGrid, gridDivisionFt]);
 
   // Space key for pan mode
@@ -1020,7 +1208,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Cursor style
   const cursor = isPanning ? 'grabbing'
     : isDragging ? 'move'
-    : spaceHeld ? 'grab'
+    : (spaceHeld || panMode) ? 'grab'
     : pasteMode ? 'crosshair'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
@@ -1072,6 +1260,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         width: '100%',
         height: '100%',
         overflow: 'hidden',
+        touchAction: 'none',
       }}
     >
       <svg
@@ -1080,14 +1269,17 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         height="100%"
         viewBox={viewBox}
         onClick={handleClick}
-        onMouseMove={handleMouseMove}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={() => {
+        onPointerMove={handlePointerMove}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerLeave={() => {
           if ((activeTool !== 'draw' || currentPath.length === 0) && !doorPlacement) {
             setHoverPos(null);
           }
           setHoverWall(null);
+        }}
+        onPointerCancel={(e) => {
+          activePointersRef.current.delete(e.pointerId);
         }}
         style={{ cursor, display: 'block', background: 'white' }}
       >
@@ -1387,8 +1579,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           </g>
         )}
 
-        {/* Rectangle preview */}
-        {activeTool === 'rectangle' && rectangleStart && hoverPos && (
+        {/* Rectangle preview (also used for draw tool on touch) */}
+        {(activeTool === 'rectangle' || (activeTool === 'draw' && touchPlacingRef.current)) && rectangleStart && hoverPos && (
           <g data-no-print="true">
             <rect
               x={Math.min(rectangleStart.x, hoverPos.x)}
@@ -1749,6 +1941,69 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       >
         {zoomPercent}%
       </div>
+
+      {/* Touch context menu (long-press) */}
+      {contextMenu && (() => {
+        const container = containerRef.current;
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        const menuX = Math.min(contextMenu.screenX - rect.left, rect.width - 180);
+        const menuY = Math.min(contextMenu.screenY - rect.top, rect.height - 200);
+
+        const items = [];
+
+        if (contextMenu.entityId) {
+          // Entity-specific actions
+          if (!selectedIds.includes(contextMenu.entityId)) {
+            items.push({ label: 'Select', icon: '☐', action: () => setSelected(contextMenu.entityId) });
+          }
+          items.push({ label: 'Copy', icon: '⧉', action: () => { setSelected(contextMenu.entityId); copySelected(); } });
+          items.push({
+            label: 'Delete',
+            icon: '✕',
+            destructive: true,
+            action: () => {
+              const id = contextMenu.entityId;
+              if (walls.find(w => w.id === id)) removeWall(id);
+              else if (doors.find(d => d.id === id)) removeDoor(id);
+              else if (heaters.find(h => h.id === id)) removeHeater(id);
+              else if (dimensions.find(d => d.id === id)) removeDimension(id);
+            },
+          });
+        } else {
+          // Empty canvas actions
+          items.push({
+            label: 'Paste',
+            icon: '⎘',
+            disabled: !useLayoutStore.getState().clipboard,
+            action: () => startPaste(),
+          });
+          items.push({ separator: true });
+          items.push({ label: 'Recenter', icon: '⌖', action: () => {
+            const state = useLayoutStore.getState();
+            const extents = computeExtents(state.walls, state.heaters, state.dimensions);
+            if (!extents) {
+              setZoom(INITIAL_ZOOM);
+              setViewOrigin({ x: 0, y: 0 });
+            } else {
+              const pad = 1.15;
+              const cs = containerSizeRef.current;
+              const fz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(cs.w / (extents.w * pad), cs.h / (extents.h * pad))));
+              setZoom(fz);
+              setViewOrigin({ x: extents.x + extents.w / 2 - cs.w / fz / 2, y: extents.y + extents.h / 2 - cs.h / fz / 2 });
+            }
+          }});
+        }
+
+        return (
+          <TouchContextMenu
+            x={menuX}
+            y={menuY}
+            items={items}
+            onClose={() => setContextMenu(null)}
+          />
+        );
+      })()}
     </div>
   );
 });

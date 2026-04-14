@@ -1,7 +1,7 @@
 import useLayoutStore from '../../store/useLayoutStore';
 import { TOOLS } from '../../utils/constants';
 
-export default function ToolPanel() {
+export default function ToolPanel({ onToolSelected }) {
   const activeTool = useLayoutStore((s) => s.activeTool);
   const setActiveTool = useLayoutStore((s) => s.setActiveTool);
   const orthoMode = useLayoutStore((s) => s.orthoMode);
@@ -17,7 +17,7 @@ export default function ToolPanel() {
         return (
           <button
             key={t.id}
-            onClick={() => setActiveTool(t.id)}
+            onClick={() => { setActiveTool(t.id); onToolSelected?.(); }}
             style={{
               width: '100%',
               marginBottom: 4,

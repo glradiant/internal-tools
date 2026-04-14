@@ -87,6 +87,7 @@ const useLayoutStore = create((set, get) => ({
   manDoorFlipH: false, // flip H for next man door placement
   manDoorFlipV: false, // flip V for next man door placement
   orthoMode: false, // 90-degree angle lock for drawing
+  panMode: false, // One-finger pan mode for touch devices
 
   // Push current state to past stack (call before making changes)
   pushHistory: () => set((s) => {
@@ -358,6 +359,7 @@ const useLayoutStore = create((set, get) => ({
   toggleManDoorFlipH: () => set((s) => ({ manDoorFlipH: !s.manDoorFlipH })),
   toggleManDoorFlipV: () => set((s) => ({ manDoorFlipV: !s.manDoorFlipV })),
   toggleOrthoMode: () => set((s) => ({ orthoMode: !s.orthoMode })),
+  togglePanMode: () => set((s) => ({ panMode: !s.panMode })),
   toggleDimensions: () => set((s) => ({ showDimensions: !s.showDimensions })),
   toggleGrid: () => set((s) => ({ showGrid: !s.showGrid })),
   setGridDivisionFt: (ft) => set({ gridDivisionFt: ft }),
