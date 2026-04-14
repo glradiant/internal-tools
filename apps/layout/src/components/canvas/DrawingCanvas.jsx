@@ -14,6 +14,7 @@ import ManualDimension from './ManualDimension';
 import WallInputOverlay from '../modals/WallInputOverlay';
 import DoorInputOverlay from '../modals/DoorInputOverlay';
 import RectangleInputOverlay from '../modals/RectangleInputOverlay';
+import TouchContextMenu from './TouchContextMenu';
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 6;
@@ -144,6 +145,11 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   // Track active pointers for multi-touch gesture detection
   const activePointersRef = useRef(new Map());
+
+  // Long-press context menu state (touch devices)
+  const longPressTimerRef = useRef(null);
+  const longPressStartRef = useRef(null);
+  const [contextMenu, setContextMenu] = useState(null); // { screenX, screenY, entityId, entityType }
 
   // Pan/zoom state — viewBox model
   // The viewBox origin (top-left corner of visible area in SVG coords)
@@ -341,6 +347,16 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   // Pointer move handler (works for both mouse and touch)
   const handlePointerMove = useCallback((e) => {
+    // Cancel long-press if finger moved too far
+    if (longPressStartRef.current) {
+      const dx = e.clientX - longPressStartRef.current.x;
+      const dy = e.clientY - longPressStartRef.current.y;
+      if (Math.hypot(dx, dy) > 10) {
+        clearTimeout(longPressTimerRef.current);
+        longPressStartRef.current = null;
+      }
+    }
+
     // Handle panning
     if (isPanning) {
       const dx = (e.clientX - panStart.current.x) / zoom;
@@ -703,13 +719,40 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
   // Pointer down — pan or drag (works for both mouse and touch)
   const handlePointerDown = useCallback((e) => {
+    // Close context menu on any pointer down
+    if (contextMenu) {
+      setContextMenu(null);
+      return;
+    }
+
     // Track active pointers for multi-touch
     activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     // If a second pointer arrives, cancel any active tool action and let pinch gesture handle it
     if (activePointersRef.current.size > 1) {
+      clearTimeout(longPressTimerRef.current);
       setIsDragging(false);
       return;
+    }
+
+    // Start long-press timer for touch (pointerType === 'touch')
+    if (e.pointerType === 'touch') {
+      longPressStartRef.current = { x: e.clientX, y: e.clientY };
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = setTimeout(() => {
+        // Find entity under the long-press point
+        const entityEl = e.target.closest('[data-entity-id]');
+        const entityId = entityEl?.dataset.entityId || null;
+        const entityType = entityEl?.dataset.entityType || null;
+        setContextMenu({
+          screenX: longPressStartRef.current.x,
+          screenY: longPressStartRef.current.y,
+          entityId,
+          entityType,
+        });
+        // Prevent the pointerup from triggering a click
+        justDragged.current = true;
+      }, 500);
     }
 
     // Middle mouse button, space+left click, or pan mode (touch) = pan
@@ -749,10 +792,14 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     }
-  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode]);
+  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode, contextMenu]);
 
   // Pointer up — pan or drag end (works for both mouse and touch)
   const handlePointerUp = useCallback((e) => {
+    // Cancel long-press timer
+    clearTimeout(longPressTimerRef.current);
+    longPressStartRef.current = null;
+
     // Clean up pointer tracking
     if (e?.pointerId !== undefined) {
       activePointersRef.current.delete(e.pointerId);
@@ -1810,6 +1857,69 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       >
         {zoomPercent}%
       </div>
+
+      {/* Touch context menu (long-press) */}
+      {contextMenu && (() => {
+        const container = containerRef.current;
+        if (!container) return null;
+        const rect = container.getBoundingClientRect();
+        const menuX = Math.min(contextMenu.screenX - rect.left, rect.width - 180);
+        const menuY = Math.min(contextMenu.screenY - rect.top, rect.height - 200);
+
+        const items = [];
+
+        if (contextMenu.entityId) {
+          // Entity-specific actions
+          if (!selectedIds.includes(contextMenu.entityId)) {
+            items.push({ label: 'Select', icon: '☐', action: () => setSelected(contextMenu.entityId) });
+          }
+          items.push({ label: 'Copy', icon: '⧉', action: () => { setSelected(contextMenu.entityId); copySelected(); } });
+          items.push({
+            label: 'Delete',
+            icon: '✕',
+            destructive: true,
+            action: () => {
+              const id = contextMenu.entityId;
+              if (walls.find(w => w.id === id)) removeWall(id);
+              else if (doors.find(d => d.id === id)) removeDoor(id);
+              else if (heaters.find(h => h.id === id)) removeHeater(id);
+              else if (dimensions.find(d => d.id === id)) removeDimension(id);
+            },
+          });
+        } else {
+          // Empty canvas actions
+          items.push({
+            label: 'Paste',
+            icon: '⎘',
+            disabled: !useLayoutStore.getState().clipboard,
+            action: () => startPaste(),
+          });
+          items.push({ separator: true });
+          items.push({ label: 'Recenter', icon: '⌖', action: () => {
+            const state = useLayoutStore.getState();
+            const extents = computeExtents(state.walls, state.heaters, state.dimensions);
+            if (!extents) {
+              setZoom(INITIAL_ZOOM);
+              setViewOrigin({ x: 0, y: 0 });
+            } else {
+              const pad = 1.15;
+              const cs = containerSizeRef.current;
+              const fz = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(cs.w / (extents.w * pad), cs.h / (extents.h * pad))));
+              setZoom(fz);
+              setViewOrigin({ x: extents.x + extents.w / 2 - cs.w / fz / 2, y: extents.y + extents.h / 2 - cs.h / fz / 2 });
+            }
+          }});
+        }
+
+        return (
+          <TouchContextMenu
+            x={menuX}
+            y={menuY}
+            items={items}
+            onClose={() => setContextMenu(null)}
+          />
+        );
+      })()}
     </div>
   );
 });
