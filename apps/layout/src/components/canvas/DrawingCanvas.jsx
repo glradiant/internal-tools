@@ -168,9 +168,51 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Rectangle dimension locks
   const rectangleLocks = useRef({ width: null, height: null });
 
+  // Refs for zoom/viewOrigin so gesture and wheel handlers read current values
+  // (declared early to avoid TDZ issues with minifier reordering)
+  const zoomRef = useRef(zoom);
+  const viewOriginRef = useRef(viewOrigin);
+  const containerSizeRef = useRef(containerSize);
+
+  // Pinch-to-zoom and two-finger pan gesture (touch devices)
+  // Must be called unconditionally at top level to maintain stable hook order
+  useGesture(
+    {
+      onPinch: ({ origin: [ox, oy], offset: [scale], memo }) => {
+        const container = containerRef.current;
+        if (!container) return memo;
+        const rect = container.getBoundingClientRect();
+        const screenX = ox - rect.left;
+        const screenY = oy - rect.top;
+
+        if (!memo) {
+          memo = {
+            initialZoom: zoomRef.current,
+            svgX: viewOriginRef.current.x + screenX / zoomRef.current,
+            svgY: viewOriginRef.current.y + screenY / zoomRef.current,
+          };
+        }
+
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, memo.initialZoom * scale));
+
+        setViewOrigin({
+          x: memo.svgX - screenX / newZoom,
+          y: memo.svgY - screenY / newZoom,
+        });
+        setZoom(newZoom);
+
+        return memo;
+      },
+    },
+    {
+      target: containerRef,
+      pinch: { scaleBounds: { min: MIN_ZOOM, max: MAX_ZOOM }, rubberband: true },
+      eventOptions: { passive: false },
+    }
+  );
+
   // Expose SVG element and recenter method to parent via ref
   // Uses getState() to avoid TDZ issues with minifier reordering const declarations
-  const containerSizeRef = useRef(containerSize);
   useImperativeHandle(ref, () => ({
     get svgElement() { return svgRef.current; },
     recenter() {
@@ -814,9 +856,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     }
   }, [isPanning, isDragging]);
 
-  // Keep refs in sync so wheel handler reads current values
-  const zoomRef = useRef(zoom);
-  const viewOriginRef = useRef(viewOrigin);
+  // Keep refs in sync so wheel/gesture handlers read current values
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
   useEffect(() => { viewOriginRef.current = viewOrigin; }, [viewOrigin]);
   useEffect(() => { containerSizeRef.current = containerSize; }, [containerSize]);
@@ -852,44 +892,6 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
-
-  // Pinch-to-zoom and two-finger pan gesture (touch devices)
-  useGesture(
-    {
-      onPinch: ({ origin: [ox, oy], offset: [scale], memo }) => {
-        const container = containerRef.current;
-        if (!container) return memo;
-        const rect = container.getBoundingClientRect();
-        const screenX = ox - rect.left;
-        const screenY = oy - rect.top;
-
-        if (!memo) {
-          // First pinch event: capture the initial state
-          memo = {
-            initialZoom: zoomRef.current,
-            svgX: viewOriginRef.current.x + screenX / zoomRef.current,
-            svgY: viewOriginRef.current.y + screenY / zoomRef.current,
-          };
-        }
-
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, memo.initialZoom * scale));
-
-        // Keep the SVG point under the pinch midpoint fixed
-        setViewOrigin({
-          x: memo.svgX - screenX / newZoom,
-          y: memo.svgY - screenY / newZoom,
-        });
-        setZoom(newZoom);
-
-        return memo;
-      },
-    },
-    {
-      target: containerRef,
-      pinch: { scaleBounds: { min: MIN_ZOOM, max: MAX_ZOOM }, rubberband: true },
-      eventOptions: { passive: false },
-    }
-  );
 
   // Global pointerup listener for pan and drag
   useEffect(() => {
