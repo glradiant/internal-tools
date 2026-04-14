@@ -864,9 +864,12 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       // Quick tap: short duration, minimal movement
       if (elapsed < 400 && Math.hypot(dx, dy) < 10) {
         longPressStartRef.current = null;
-        // Trigger the click handler with the pointer event
+        // Reset justDragged before calling handleClick so it doesn't skip.
+        // Without this, the flag stays true forever on touch since the
+        // synthetic click (which normally resets it) doesn't fire.
+        justDragged.current = false;
         handleClick(e);
-        // Prevent the synthetic click from also firing
+        // Prevent the synthetic click from double-firing if it does arrive
         justDragged.current = true;
       }
     }
