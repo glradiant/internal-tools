@@ -792,7 +792,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
 
     // Start long-press timer for touch (pointerType === 'touch')
     if (e.pointerType === 'touch') {
-      longPressStartRef.current = { x: e.clientX, y: e.clientY };
+      longPressStartRef.current = { x: e.clientX, y: e.clientY, target: e.target, time: Date.now() };
       clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = setTimeout(() => {
         // Find entity under the long-press point
@@ -805,9 +805,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           entityId,
           entityType,
         });
-        // Prevent the pointerup from triggering a click
-        justDragged.current = true;
-      }, 500);
+        // Prevent the pointerup from triggering placement
+        longPressStartRef.current = null;
+      }, 400);
     }
 
     // Middle mouse button, space+left click, or pan mode (touch) = pan
@@ -853,6 +853,23 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const handlePointerUp = useCallback((e) => {
     // Cancel long-press timer
     clearTimeout(longPressTimerRef.current);
+
+    // For touch: detect quick tap and trigger placement directly
+    // (click event is unreliable with touch-action: none)
+    if (e.pointerType === 'touch' && longPressStartRef.current) {
+      const start = longPressStartRef.current;
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const elapsed = Date.now() - start.time;
+      // Quick tap: short duration, minimal movement
+      if (elapsed < 400 && Math.hypot(dx, dy) < 10) {
+        longPressStartRef.current = null;
+        // Trigger the click handler with the pointer event
+        handleClick(e);
+        // Prevent the synthetic click from also firing
+        justDragged.current = true;
+      }
+    }
     longPressStartRef.current = null;
 
     // Clean up pointer tracking and pinch state
@@ -870,7 +887,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setIsDragging(false);
       dragStart.current = { x: 0, y: 0, entities: [] };
     }
-  }, [isPanning, isDragging]);
+  }, [isPanning, isDragging, handleClick]);
 
   // Keep refs in sync so wheel/gesture handlers read current values
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
