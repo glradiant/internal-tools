@@ -13,7 +13,7 @@ import SummaryPanel from './SummaryPanel';
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
 
-export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpenBuilder }) {
+export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpenBuilder, onToolSelected, isTouch }) {
   const activeTool = useLayoutStore((s) => s.activeTool);
   const selectedIds = useLayoutStore((s) => s.selectedIds);
   const heaters = useLayoutStore((s) => s.heaters);
@@ -94,7 +94,7 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
       {/* Scrollable middle section */}
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         <ProjectFields />
-        <ToolPanel />
+        <ToolPanel onToolSelected={onToolSelected} />
         {activeTool === 'heater' && <HeaterModelPicker onOpenBuilder={onOpenBuilder} />}
         {activeTool === 'man-door' && <ManDoorSettings />}
         {selectedHeaterCount === 1 && <PositionPanel />}
@@ -106,35 +106,36 @@ export default function Sidebar({ onExportPDF, width = 280, onWidthChange, onOpe
       {/* Fixed bottom section */}
       <SummaryPanel onExportPDF={onExportPDF} />
 
-      {/* Resize handle */}
-      <div
-        onPointerDown={handleResizeStart}
-        style={{
-          position: 'absolute',
-          top: 0,
-          right: -3,
-          width: 6,
-          height: '100%',
-          cursor: 'ew-resize',
-          background: 'transparent',
-          zIndex: 10,
-        }}
-        title="Drag to resize sidebar"
-      >
-        {/* Visual indicator line */}
+      {/* Resize handle (desktop only) */}
+      {!isTouch && (
         <div
+          onPointerDown={handleResizeStart}
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 2,
-            height: 40,
-            background: 'rgba(255,255,255,0.15)',
-            borderRadius: 1,
+            top: 0,
+            right: -3,
+            width: 6,
+            height: '100%',
+            cursor: 'ew-resize',
+            background: 'transparent',
+            zIndex: 10,
           }}
-        />
-      </div>
+          title="Drag to resize sidebar"
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 2,
+              height: 40,
+              background: 'rgba(255,255,255,0.15)',
+              borderRadius: 1,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

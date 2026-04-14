@@ -12,6 +12,9 @@ import useAutosave from '../hooks/useAutosave';
 
 const DEFAULT_SIDEBAR_WIDTH = 280;
 
+// Detect touch-primary device (iPad, phone) vs mouse-primary (desktop)
+const isTouchDevice = () => window.matchMedia('(pointer: coarse)').matches;
+
 export default function LayoutCanvas() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,6 +24,8 @@ export default function LayoutCanvas() {
   const [error, setError] = useState(null);
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(!isTouchDevice());
+  const [isTouch] = useState(isTouchDevice);
 
   const loadLayout = useLayoutStore((s) => s.loadLayout);
   const clearAll = useLayoutStore((s) => s.clearAll);
@@ -145,23 +150,69 @@ export default function LayoutCanvas() {
     );
   }
 
+  // Auto-close sidebar when tool is selected on touch devices
+  const handleToolSelected = useCallback(() => {
+    if (isTouch) setSidebarOpen(false);
+  }, [isTouch]);
+
   return (
     <div
       style={{
         display: 'flex',
         height: '100vh',
+        height: '100dvh',
         fontFamily: "'DM Sans', system-ui, sans-serif",
         background: '#0F1E30',
         overflow: 'hidden',
+        position: 'relative',
       }}
     >
-      <Sidebar onExportPDF={handleExportPDF} width={sidebarWidth} onWidthChange={setSidebarWidth} onOpenBuilder={() => setShowBuilder(true)} />
+      {/* Sidebar: overlay on touch, inline on desktop */}
+      {sidebarOpen && (
+        <>
+          {isTouch && (
+            <div
+              onClick={() => setSidebarOpen(false)}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'rgba(0,0,0,0.4)',
+                zIndex: 19,
+              }}
+            />
+          )}
+          <div style={isTouch ? {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            bottom: 0,
+            zIndex: 20,
+            width: DEFAULT_SIDEBAR_WIDTH,
+          } : undefined}>
+            <Sidebar
+              onExportPDF={handleExportPDF}
+              width={isTouch ? DEFAULT_SIDEBAR_WIDTH : sidebarWidth}
+              onWidthChange={isTouch ? undefined : setSidebarWidth}
+              onOpenBuilder={() => setShowBuilder(true)}
+              onToolSelected={handleToolSelected}
+              isTouch={isTouch}
+            />
+          </div>
+        </>
+      )}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#F7F9FC' }}>
-        <Toolbar onBack={handleBack} saveStatus={saveStatus} onRecenter={() => svgRef.current?.recenter()} />
+        <Toolbar
+          onBack={handleBack}
+          saveStatus={saveStatus}
+          onRecenter={() => svgRef.current?.recenter()}
+          isTouch={isTouch}
+          sidebarOpen={sidebarOpen}
+          onToggleSidebar={() => setSidebarOpen((v) => !v)}
+        />
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
           <DrawingCanvas ref={svgRef} onHoverPos={setHoverPos} />
         </div>
-        <StatusBar hoverPos={hoverPos} />
+        {!isTouch && <StatusBar hoverPos={hoverPos} />}
       </div>
 
       {showBuilder && (

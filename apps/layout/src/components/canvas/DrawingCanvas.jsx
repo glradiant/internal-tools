@@ -97,6 +97,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   const manDoorFlipV = useLayoutStore((s) => s.manDoorFlipV);
   const orthoMode = useLayoutStore((s) => s.orthoMode);
   const toggleOrthoMode = useLayoutStore((s) => s.toggleOrthoMode);
+  const panMode = useLayoutStore((s) => s.panMode);
   const addWall = useLayoutStore((s) => s.addWall);
   const addDoor = useLayoutStore((s) => s.addDoor);
   const addHeater = useLayoutStore((s) => s.addHeater);
@@ -711,8 +712,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       return;
     }
 
-    // Middle mouse button or space+left click = pan
-    if (e.button === 1 || (e.button === 0 && spaceHeld)) {
+    // Middle mouse button, space+left click, or pan mode (touch) = pan
+    if (e.button === 1 || (e.button === 0 && spaceHeld) || (e.button === 0 && panMode)) {
       e.preventDefault();
       setIsPanning(true);
       panStart.current = { x: e.clientX, y: e.clientY, originX: viewOrigin.x, originY: viewOrigin.y };
@@ -748,7 +749,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     }
-  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory]);
+  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode]);
 
   // Pointer up — pan or drag end (works for both mouse and touch)
   const handlePointerUp = useCallback((e) => {
@@ -1076,7 +1077,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Cursor style
   const cursor = isPanning ? 'grabbing'
     : isDragging ? 'move'
-    : spaceHeld ? 'grab'
+    : (spaceHeld || panMode) ? 'grab'
     : pasteMode ? 'crosshair'
     : wallOffsetMode ? 'crosshair'
     : activeTool === 'draw' ? 'crosshair'
