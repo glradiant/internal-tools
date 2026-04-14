@@ -148,7 +148,11 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
   // Long-press context menu state (touch devices)
   const longPressTimerRef = useRef(null);
   const longPressStartRef = useRef(null);
+  const longPressFiredRef = useRef(false);
   const [contextMenu, setContextMenu] = useState(null); // { screenX, screenY, entityId, entityType }
+
+  // Touch-drag placement state: tracks press-drag-release for placing heaters/rectangles/walls
+  const touchPlacingRef = useRef(null); // { tool, startPos } when actively dragging to place
 
   // Pan/zoom state — viewBox model
   // The viewBox origin (top-left corner of visible area in SVG coords)
@@ -790,24 +794,40 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       return;
     }
 
-    // Start long-press timer for touch (pointerType === 'touch')
+    // Touch-specific handling
     if (e.pointerType === 'touch') {
-      longPressStartRef.current = { x: e.clientX, y: e.clientY, target: e.target, time: Date.now() };
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = setTimeout(() => {
-        // Find entity under the long-press point
-        const entityEl = e.target.closest('[data-entity-id]');
-        const entityId = entityEl?.dataset.entityId || null;
-        const entityType = entityEl?.dataset.entityType || null;
-        setContextMenu({
-          screenX: longPressStartRef.current.x,
-          screenY: longPressStartRef.current.y,
-          entityId,
-          entityType,
-        });
-        // Prevent the pointerup from triggering placement
-        longPressStartRef.current = null;
-      }, 400);
+      longPressStartRef.current = { x: e.clientX, y: e.clientY, target: e.target };
+      longPressFiredRef.current = false;
+
+      // In select mode: long-press for context menu
+      if (activeTool === 'select') {
+        clearTimeout(longPressTimerRef.current);
+        longPressTimerRef.current = setTimeout(() => {
+          if (!longPressStartRef.current) return;
+          longPressFiredRef.current = true;
+          const entityEl = e.target.closest('[data-entity-id]');
+          setContextMenu({
+            screenX: longPressStartRef.current.x,
+            screenY: longPressStartRef.current.y,
+            entityId: entityEl?.dataset.entityId || null,
+            entityType: entityEl?.dataset.entityType || null,
+          });
+        }, 600);
+      }
+
+      // In tool modes: start placement immediately on press
+      if (activeTool === 'heater' || activeTool === 'rectangle' || activeTool === 'draw') {
+        const pos = getCoords(e);
+        setHoverPos(pos);
+        touchPlacingRef.current = { tool: activeTool, startPos: pos };
+
+        if (activeTool === 'rectangle' || activeTool === 'draw') {
+          // Both tools use rectangle preview during touch drag
+          setRectangleStart({ x: pos.x, y: pos.y });
+          rectangleLocks.current = { width: null, height: null };
+        }
+        return; // don't fall through to pan/drag logic
+      }
     }
 
     // Middle mouse button, space+left click, or pan mode (touch) = pan
@@ -847,33 +867,56 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
         }
       }
     }
-  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode, contextMenu]);
+  }, [viewOrigin, spaceHeld, activeTool, selectedIds, heaters, wallOffsetMode, getCoords, pushHistory, panMode, contextMenu, rectangleStart, currentPath, addWall, setActiveTool]);
 
   // Pointer up — pan or drag end (works for both mouse and touch)
   const handlePointerUp = useCallback((e) => {
     // Cancel long-press timer
     clearTimeout(longPressTimerRef.current);
 
-    // For touch: detect quick tap and trigger placement directly
-    // (click event is unreliable with touch-action: none)
-    if (e.pointerType === 'touch' && longPressStartRef.current) {
+    // For touch: finalize press-drag-release placement
+    if (e.pointerType === 'touch' && touchPlacingRef.current) {
+      const pos = getCoords(e);
+      const placing = touchPlacingRef.current;
+      touchPlacingRef.current = null;
+      justDragged.current = true; // prevent synthetic click
+
+      if (placing.tool === 'heater') {
+        addHeater(pos.x, pos.y, heaterAngle, { ...selectedModel }, heaterFlipH, heaterFlipV);
+      } else if (placing.tool === 'rectangle') {
+        const p1 = placing.startPos;
+        const p3 = pos;
+        if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+          const p2 = { x: p3.x, y: p1.y };
+          const p4 = { x: p1.x, y: p3.y };
+          addWall([p1, p2, p3, p4]);
+        }
+        setRectangleStart(null);
+        rectangleLocks.current = { width: null, height: null };
+      } else if (placing.tool === 'draw') {
+        const p1 = placing.startPos;
+        const p3 = pos;
+        if (Math.abs(p3.x - p1.x) >= GRID && Math.abs(p3.y - p1.y) >= GRID) {
+          const p2 = { x: p3.x, y: p1.y };
+          const p4 = { x: p1.x, y: p3.y };
+          addWall([p1, p2, p3, p4]);
+        }
+        setRectangleStart(null);
+      }
+      setHoverPos(null);
+    }
+
+    // For touch select mode: handle tap to select or long-press context menu
+    if (e.pointerType === 'touch' && longPressStartRef.current && !longPressFiredRef.current && activeTool === 'select') {
       const start = longPressStartRef.current;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      const elapsed = Date.now() - start.time;
-      // Quick tap: short duration, minimal movement
-      if (elapsed < 400 && Math.hypot(dx, dy) < 10) {
-        longPressStartRef.current = null;
-        // Reset justDragged before calling handleClick so it doesn't skip.
-        // Without this, the flag stays true forever on touch since the
-        // synthetic click (which normally resets it) doesn't fire.
+      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) < 10) {
         justDragged.current = false;
         handleClick(e);
-        // Prevent the synthetic click from double-firing if it does arrive
         justDragged.current = true;
       }
     }
     longPressStartRef.current = null;
+    longPressFiredRef.current = false;
 
     // Clean up pointer tracking and pinch state
     if (e?.pointerId !== undefined) {
@@ -890,7 +933,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
       setIsDragging(false);
       dragStart.current = { x: 0, y: 0, entities: [] };
     }
-  }, [isPanning, isDragging, handleClick]);
+  }, [isPanning, isDragging, handleClick, getCoords, addHeater, heaterAngle, selectedModel, heaterFlipH, heaterFlipV, addWall, activeTool]);
 
   // Keep refs in sync so wheel/gesture handlers read current values
   useEffect(() => { zoomRef.current = zoom; }, [zoom]);
@@ -1536,8 +1579,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ onHoverPos }, ref) {
           </g>
         )}
 
-        {/* Rectangle preview */}
-        {activeTool === 'rectangle' && rectangleStart && hoverPos && (
+        {/* Rectangle preview (also used for draw tool on touch) */}
+        {(activeTool === 'rectangle' || (activeTool === 'draw' && touchPlacingRef.current)) && rectangleStart && hoverPos && (
           <g data-no-print="true">
             <rect
               x={Math.min(rectangleStart.x, hoverPos.x)}
