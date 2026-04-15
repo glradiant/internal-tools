@@ -184,7 +184,7 @@ export default function ShipmentsPage({ session }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e4e7ec' }}>
-              <th style={thStyle}>SO #</th>
+              <th style={thStyle}>Order #</th>
               <th style={thStyle}>Tracking</th>
               <th style={thStyle}>Carrier / Service</th>
               <th style={thStyle}>Ship To</th>
@@ -215,9 +215,11 @@ export default function ShipmentsPage({ session }) {
                       target="_blank" rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
                       style={{ color: '#0D5C82', fontWeight: 600, textDecoration: 'none' }}
-                    >{s.netsuite_so_number || s.netsuite_so_id}</a>
+                    >{s.order_number || s.netsuite_so_number || s.netsuite_so_id}</a>
                   ) : (
-                    <span style={{ color: '#98a2b3' }}>{s.netsuite_so_number || '—'}</span>
+                    <span style={{ color: s.order_number ? '#1d2939' : '#98a2b3', fontWeight: s.order_number ? 500 : 400 }}>
+                      {s.order_number || s.netsuite_so_number || '—'}
+                    </span>
                   )}
                 </td>
                 <td style={tdStyle}>
@@ -315,7 +317,7 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Quoted Cost" value={selectedShipment.quoted_cost != null ? `$${Number(selectedShipment.quoted_cost).toFixed(2)}` : '—'} />
                 <DetailRow label="Actual Cost" value={selectedShipment.actual_cost != null ? `$${Number(selectedShipment.actual_cost).toFixed(2)}` : '—'} />
                 <DetailRow label="Bill-To ZIP" value={selectedShipment.bill_to_zip} />
-                <DetailRow label="SO #" value={selectedShipment.netsuite_so_number || selectedShipment.netsuite_so_id || '—'} />
+                <DetailRow label="Order #" value={selectedShipment.order_number || selectedShipment.netsuite_so_number || selectedShipment.netsuite_so_id || '—'} />
                 <DetailRow label="IF #" value={selectedShipment.netsuite_if_number || selectedShipment.netsuite_if_id || '—'} />
                 <DetailRow label="ShipStation ID" value={selectedShipment.shipstation_shipment_id} />
                 <DetailRow label="Purchased By" value={selectedShipment.purchased_by_email} />
