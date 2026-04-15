@@ -384,6 +384,7 @@ export default function ShipmentsPage({ session }) {
           <thead>
             <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e4e7ec' }}>
               <SortHeader label="Order #" sortKey="order_number" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Shipped" sortKey="purchased_at" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <th style={thStyle}>Tracking</th>
               <SortHeader label="Carrier / Service" sortKey="service" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Ship To" sortKey="ship_to_name" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -397,9 +398,9 @@ export default function ShipmentsPage({ session }) {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>Loading...</td></tr>
+              <tr><td colSpan={11} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>Loading...</td></tr>
             ) : paged.length === 0 ? (
-              <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>No shipments found</td></tr>
+              <tr><td colSpan={11} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>No shipments found</td></tr>
             ) : paged.map(s => (
               <tr
                 key={s.id}
@@ -418,6 +419,10 @@ export default function ShipmentsPage({ session }) {
                   ) : (
                     <span style={{ color: '#98a2b3' }}>—</span>
                   )}
+                </td>
+                {/* Shipped */}
+                <td style={tdStyle}>
+                  <span style={{ color: '#667085', fontSize: 12 }}>{formatShortDate(s.purchased_at) || '—'}</span>
                 </td>
                 {/* Tracking */}
                 <td style={tdStyle}>
