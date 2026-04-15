@@ -108,9 +108,8 @@ function LocationBadge({ location }) {
 
 function EtaCell({ shipment }) {
   const { status, actual_delivery, estimated_delivery } = shipment;
-  if (status === 'delivered') {
-    if (actual_delivery) return <span style={{ color: '#027a48', fontWeight: 500 }}>{formatShortDate(actual_delivery)}</span>;
-    return <span style={{ color: '#027a48', fontWeight: 500 }}>Delivered</span>;
+  if (status === 'delivered' && actual_delivery) {
+    return <span style={{ color: '#027a48', fontWeight: 500 }}>{formatShortDate(actual_delivery)}</span>;
   }
   if (estimated_delivery) return <span style={{ color: '#667085' }}>{formatShortDate(estimated_delivery)}</span>;
   return <span style={{ color: '#98a2b3' }}>—</span>;
@@ -146,13 +145,17 @@ export default function ShipmentsPage({ session }) {
 
   // Server-side filters (trigger API call)
   const [fromDate, setFromDate] = useState(() => {
-    const d = new Date(); d.setDate(d.getDate() - 30);
+    const d = new Date(); d.setDate(d.getDate() - 60);
     return d.toISOString().slice(0, 10);
   });
   const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [statusFilter, setStatusFilter] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [search, setSearch] = useState('');
+
+  // Pagination
+  const [pageSize, setPageSize] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Client-side filters
   const [carrierFilter, setCarrierFilter] = useState('');
@@ -242,6 +245,9 @@ export default function ShipmentsPage({ session }) {
     return result;
   }, [shipments, carrierFilter, search, sortCol, sortDir]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
   // ── Metrics ────────────────────────────────────────────────────────────
 
   const metrics = useMemo(() => {
@@ -287,6 +293,26 @@ export default function ShipmentsPage({ session }) {
     else { setSortCol(col); setSortDir('asc'); }
   };
 
+  const applyDatePreset = (preset) => {
+    const today = new Date();
+    const to = today.toISOString().slice(0, 10);
+    let from;
+    switch (preset) {
+      case '30': from = new Date(today); from.setDate(from.getDate() - 30); break;
+      case '60': from = new Date(today); from.setDate(from.getDate() - 60); break;
+      case '90': from = new Date(today); from.setDate(from.getDate() - 90); break;
+      case 'ytd': from = new Date(today.getFullYear(), 0, 1); break;
+      case 'year': from = new Date(today); from.setFullYear(from.getFullYear() - 1); break;
+      default: return;
+    }
+    setFromDate(from.toISOString().slice(0, 10));
+    setToDate(to);
+    setCurrentPage(1);
+  };
+
+  // Reset to page 1 when filters change
+  useEffect(() => { setCurrentPage(1); }, [statusFilter, locationFilter, carrierFilter, search]);
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
@@ -311,6 +337,15 @@ export default function ShipmentsPage({ session }) {
         <FilterField label="To">
           <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={inputStyle} />
         </FilterField>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'end', paddingBottom: 1 }}>
+          {[['30', '30d'], ['60', '60d'], ['90', '90d'], ['ytd', 'YTD'], ['year', '1yr']].map(([key, label]) => (
+            <button key={key} onClick={() => applyDatePreset(key)} style={{
+              padding: '5px 8px', fontSize: 11, fontWeight: 500, borderRadius: 4,
+              border: '1px solid #d0d5dd', background: '#fff', color: '#344054',
+              cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+            }}>{label}</button>
+          ))}
+        </div>
         <FilterField label="Status">
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={inputStyle}>
             <option value="">All</option>
@@ -353,8 +388,8 @@ export default function ShipmentsPage({ session }) {
               <SortHeader label="Carrier / Service" sortKey="service" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Ship To" sortKey="ship_to_name" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Location" sortKey="ship_from_location" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
-              <SortHeader label="Charged" sortKey="quoted_cost" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Cost" sortKey="actual_cost" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Charged" sortKey="quoted_cost" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="ETA / Delivered" sortKey="estimated_delivery" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <SortHeader label="Status" sortKey="status" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <th style={{ ...thStyle, width: 36 }}></th>
@@ -363,9 +398,9 @@ export default function ShipmentsPage({ session }) {
           <tbody>
             {loading ? (
               <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>Loading...</td></tr>
-            ) : filtered.length === 0 ? (
+            ) : paged.length === 0 ? (
               <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>No shipments found</td></tr>
-            ) : filtered.map(s => (
+            ) : paged.map(s => (
               <tr
                 key={s.id}
                 onClick={() => setSelectedShipment(s)}
@@ -388,7 +423,7 @@ export default function ShipmentsPage({ session }) {
                 <td style={tdStyle}>
                   <a href={getTrackingUrl(s.carrier, s.tracking_number)} target="_blank" rel="noopener noreferrer"
                     onClick={e => e.stopPropagation()}
-                    style={{ color: '#0D5C82', textDecoration: 'none', fontFamily: 'monospace', fontSize: 11 }}
+                    style={{ color: '#0D5C82', textDecoration: 'none', fontSize: 13 }}
                   >{s.tracking_number}</a>
                 </td>
                 {/* Carrier / Service */}
@@ -403,10 +438,10 @@ export default function ShipmentsPage({ session }) {
                 </td>
                 {/* Location */}
                 <td style={tdStyle}><LocationBadge location={s.ship_from_location} /></td>
-                {/* Charged */}
-                <td style={tdStyle}>{formatCurrency(s.quoted_cost)}</td>
                 {/* Cost */}
                 <td style={tdStyle}>{formatCurrency(s.actual_cost)}</td>
+                {/* Charged */}
+                <td style={tdStyle}>{formatCurrency(s.quoted_cost)}</td>
                 {/* ETA / Delivered */}
                 <td style={tdStyle}><EtaCell shipment={s} /></td>
                 {/* Status */}
@@ -433,8 +468,46 @@ export default function ShipmentsPage({ session }) {
           </tbody>
         </table>
       </div>
-      <div style={{ marginTop: 8, fontSize: 12, color: '#98a2b3' }}>
-        {filtered.length} shipment{filtered.length !== 1 ? 's' : ''}{filtered.length !== shipments.length ? ` (${shipments.length} total)` : ''}
+      {/* Pagination */}
+      <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: '#667085' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>
+            {filtered.length === 0 ? '0' : `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)}`} of {filtered.length} shipment{filtered.length !== 1 ? 's' : ''}
+          </span>
+          <span style={{ color: '#d0d5dd' }}>|</span>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            Per page:
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+              style={{ padding: '2px 6px', border: '1px solid #d0d5dd', borderRadius: 4, fontSize: 12, fontFamily: 'inherit' }}
+            >
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </label>
+        </div>
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1}
+              style={{ ...pageBtnStyle, opacity: currentPage === 1 ? 0.4 : 1 }}>‹ Prev</button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+              .reduce((acc, p, i, arr) => {
+                if (i > 0 && p - arr[i - 1] > 1) acc.push('...');
+                acc.push(p);
+                return acc;
+              }, [])
+              .map((p, i) =>
+                p === '...' ? <span key={`e${i}`} style={{ padding: '0 4px', color: '#98a2b3' }}>...</span> : (
+                  <button key={p} onClick={() => setCurrentPage(p)}
+                    style={{ ...pageBtnStyle, background: p === currentPage ? '#0D5C82' : '#fff', color: p === currentPage ? '#fff' : '#344054', borderColor: p === currentPage ? '#0D5C82' : '#d0d5dd' }}
+                  >{p}</button>
+                )
+              )}
+            <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}
+              style={{ ...pageBtnStyle, opacity: currentPage === totalPages ? 0.4 : 1 }}>Next ›</button>
+          </div>
+        )}
       </div>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
@@ -556,3 +629,4 @@ const inputStyle = { padding: '7px 10px', border: '1px solid #d0d5dd', borderRad
 const btnStyle = { padding: '8px 16px', borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', border: 'none', fontFamily: 'inherit', whiteSpace: 'nowrap' };
 const thStyle = { padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#475467', textTransform: 'uppercase', letterSpacing: 0.5 };
 const tdStyle = { padding: '10px 12px', verticalAlign: 'top' };
+const pageBtnStyle = { padding: '4px 10px', fontSize: 12, fontWeight: 500, borderRadius: 4, border: '1px solid #d0d5dd', background: '#fff', color: '#344054', cursor: 'pointer', fontFamily: 'inherit' };
