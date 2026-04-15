@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 
 const WORKER_URL = 'https://netsuite-integration.josh-0da.workers.dev';
 const NS_BASE = 'https://6914156.app.netsuite.com';
 
 const STATUS_COLORS = {
-  purchased:        { bg: '#f2f4f7', color: '#475467' },
-  in_transit:       { bg: '#eff8ff', color: '#175cd3' },
-  out_for_delivery: { bg: '#fff6ed', color: '#b93815' },
-  delivered:        { bg: '#ecfdf3', color: '#027a48' },
-  voided:           { bg: '#fef3f2', color: '#b42318' },
-  exception:        { bg: '#fef3f2', color: '#b42318' },
+  purchased:        { bg: '#f2f4f7', color: '#475467', dot: '#98a2b3' },
+  in_transit:       { bg: '#eff8ff', color: '#175cd3', dot: '#2e90fa' },
+  out_for_delivery: { bg: '#fff6ed', color: '#b93815', dot: '#f79009' },
+  delivered:        { bg: '#ecfdf3', color: '#027a48', dot: '#12b76a' },
+  voided:           { bg: '#fef3f2', color: '#b42318', dot: '#f04438' },
+  exception:        { bg: '#fef3f2', color: '#b42318', dot: '#f04438' },
 };
 
 const STATUS_LABELS = {
@@ -20,6 +20,26 @@ const STATUS_LABELS = {
   delivered: 'Delivered',
   voided: 'Voided',
   exception: 'Exception',
+};
+
+const SERVICE_NAMES = {
+  ups_ground: 'UPS Ground',
+  ups_ground_saver: 'UPS Ground Saver',
+  ups_3_day_select: 'UPS 3 Day Select',
+  ups_2nd_day_air: 'UPS 2nd Day Air',
+  ups_next_day_air: 'UPS Next Day Air',
+  ups_next_day_air_saver: 'UPS Next Day Air Saver',
+  fedex_ground: 'FedEx Ground',
+  fedex_home_delivery: 'FedEx Home Delivery',
+  fedex_2day: 'FedEx 2Day',
+  fedex_priority_overnight: 'FedEx Priority Overnight',
+  usps_first_class_mail: 'USPS First Class',
+  usps_priority_mail: 'USPS Priority Mail',
+  usps_priority_mail_express: 'USPS Priority Express',
+};
+
+const CARRIER_DISPLAY = {
+  ups: 'UPS', fedex: 'FedEx', fedex_walleted: 'FedEx', usps: 'USPS', stamps_com: 'USPS',
 };
 
 const TRACKING_URLS = {
@@ -35,23 +55,87 @@ function getTrackingUrl(carrier, tracking) {
   return builder ? builder(tracking) : `https://www.google.com/search?q=${tracking}`;
 }
 
+function formatServiceName(code) {
+  if (!code) return '';
+  if (SERVICE_NAMES[code]) return SERVICE_NAMES[code];
+  return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function formatCarrier(code) {
+  if (!code) return '';
+  return CARRIER_DISPLAY[code] || code.toUpperCase();
+}
+
+function formatShortDate(d) {
+  if (!d) return null;
+  const dt = new Date(d);
+  return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 function formatDate(d) {
   if (!d) return '—';
   const dt = new Date(d);
   return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function formatCurrency(v) {
+  if (v == null) return '—';
+  return `$${Number(v).toFixed(2)}`;
+}
+
 function StatusBadge({ status }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS.purchased;
   return (
     <span style={{
-      display: 'inline-block', padding: '2px 8px', borderRadius: 4, fontSize: 11,
-      fontWeight: 600, background: s.bg, color: s.color, textTransform: 'capitalize',
+      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '2px 8px', borderRadius: 4, fontSize: 11,
+      fontWeight: 600, background: s.bg, color: s.color,
     }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />
       {STATUS_LABELS[status] || status}
     </span>
   );
 }
+
+function LocationBadge({ location }) {
+  if (!location) return <span style={{ color: '#98a2b3' }}>—</span>;
+  return (
+    <span style={{
+      display: 'inline-block', padding: '2px 8px', borderRadius: 10, fontSize: 11,
+      fontWeight: 600, background: '#f2f4f7', color: '#344054',
+    }}>{location}</span>
+  );
+}
+
+function EtaCell({ shipment }) {
+  const { status, actual_delivery, estimated_delivery } = shipment;
+  if (status === 'delivered') {
+    if (actual_delivery) return <span style={{ color: '#027a48', fontWeight: 500 }}>{formatShortDate(actual_delivery)}</span>;
+    return <span style={{ color: '#027a48', fontWeight: 500 }}>Delivered</span>;
+  }
+  if (estimated_delivery) return <span style={{ color: '#667085' }}>{formatShortDate(estimated_delivery)}</span>;
+  return <span style={{ color: '#98a2b3' }}>—</span>;
+}
+
+function SortHeader({ label, sortKey, sortCol, sortDir, onSort, style }) {
+  const active = sortCol === sortKey;
+  return (
+    <th
+      style={{ ...thStyle, ...style, cursor: 'pointer', userSelect: 'none' }}
+      onClick={() => onSort(sortKey)}
+    >
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+        {label}
+        {active && (
+          <span style={{ fontSize: 9, lineHeight: 1, color: '#0D5C82' }}>
+            {sortDir === 'asc' ? '▲' : '▼'}
+          </span>
+        )}
+      </span>
+    </th>
+  );
+}
+
+// ── Main component ──────────────────────────────────────────────────────────
 
 export default function ShipmentsPage({ session }) {
   const [shipments, setShipments] = useState([]);
@@ -60,15 +144,22 @@ export default function ShipmentsPage({ session }) {
   const [refreshAllLoading, setRefreshAllLoading] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
 
-  // Filters
-  const [status, setStatus] = useState('');
-  const [location, setLocation] = useState('');
-  const [search, setSearch] = useState('');
+  // Server-side filters (trigger API call)
   const [fromDate, setFromDate] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - 30);
     return d.toISOString().slice(0, 10);
   });
   const [toDate, setToDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [statusFilter, setStatusFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [search, setSearch] = useState('');
+
+  // Client-side filters
+  const [carrierFilter, setCarrierFilter] = useState('');
+
+  // Sort
+  const [sortCol, setSortCol] = useState('purchased_at');
+  const [sortDir, setSortDir] = useState('desc');
 
   const getToken = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -81,99 +172,172 @@ export default function ShipmentsPage({ session }) {
     if (!token) { setLoading(false); return; }
 
     const params = new URLSearchParams();
-    if (status) params.set('status', status);
-    if (location) params.set('location', location);
-    if (search) params.set('search', search);
+    if (statusFilter) params.set('status', statusFilter);
+    if (locationFilter) params.set('location', locationFilter);
     if (fromDate) params.set('from_date', fromDate);
     if (toDate) params.set('to_date', toDate);
+    // Search is handled client-side for richer matching
+    params.set('limit', '500');
 
     try {
       const resp = await fetch(`${WORKER_URL}/shipments?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (resp.ok) {
-        setShipments(await resp.json());
-      } else {
-        console.error('Failed to fetch shipments:', resp.status);
-      }
-    } catch (e) {
-      console.error('Shipments fetch error:', e);
-    }
+      if (resp.ok) setShipments(await resp.json());
+      else console.error('Failed to fetch shipments:', resp.status);
+    } catch (e) { console.error('Shipments fetch error:', e); }
     setLoading(false);
-  }, [status, location, search, fromDate, toDate, getToken]);
+  }, [statusFilter, locationFilter, fromDate, toDate, getToken]);
 
   useEffect(() => { fetchShipments(); }, [fetchShipments]);
 
+  // ── Client-side filtering, searching, sorting ──────────────────────────
+
+  const filtered = useMemo(() => {
+    let result = shipments;
+
+    // Carrier filter
+    if (carrierFilter) {
+      result = result.filter(s => {
+        const c = (s.carrier || '').toLowerCase();
+        const target = carrierFilter.toLowerCase();
+        return c === target || c.startsWith(target + '_') || CARRIER_DISPLAY[c]?.toLowerCase() === target;
+      });
+    }
+
+    // Client-side search (richer than server-side)
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(s =>
+        (s.netsuite_so_number || '').toLowerCase().includes(q) ||
+        (s.order_number || '').toLowerCase().includes(q) ||
+        (s.tracking_number || '').toLowerCase().includes(q) ||
+        (s.ship_to_name || '').toLowerCase().includes(q) ||
+        (s.ship_to_company || '').toLowerCase().includes(q) ||
+        (s.ship_to_city || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      let av = a[sortCol], bv = b[sortCol];
+      // Numeric columns
+      if (['quoted_cost', 'actual_cost'].includes(sortCol)) {
+        av = av != null ? Number(av) : -Infinity;
+        bv = bv != null ? Number(bv) : -Infinity;
+      }
+      // Null handling
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      // String compare
+      if (typeof av === 'string') {
+        const cmp = av.localeCompare(bv, undefined, { sensitivity: 'base' });
+        return sortDir === 'asc' ? cmp : -cmp;
+      }
+      // Number/date compare
+      return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+    });
+
+    return result;
+  }, [shipments, carrierFilter, search, sortCol, sortDir]);
+
+  // ── Metrics ────────────────────────────────────────────────────────────
+
+  const metrics = useMemo(() => {
+    const total = filtered.length;
+    const inTransit = filtered.filter(s => s.status === 'in_transit' || s.status === 'out_for_delivery').length;
+    const totalCost = filtered.reduce((sum, s) => sum + (s.actual_cost != null ? Number(s.actual_cost) : (s.quoted_cost != null ? Number(s.quoted_cost) : 0)), 0);
+    const avgCost = total > 0 ? totalCost / total : 0;
+    return { total, inTransit, totalCost, avgCost };
+  }, [filtered]);
+
+  // ── Dynamic filter options ─────────────────────────────────────────────
+
+  const locations = useMemo(() => [...new Set(shipments.map(s => s.ship_from_location).filter(Boolean))].sort(), [shipments]);
+  const carriers = useMemo(() => [...new Set(shipments.map(s => formatCarrier(s.carrier)).filter(Boolean))].sort(), [shipments]);
+
+  // ── Actions ────────────────────────────────────────────────────────────
+
   const refreshOne = async (id) => {
-    setRefreshingIds((s) => new Set([...s, id]));
+    setRefreshingIds(s => new Set([...s, id]));
     const token = await getToken();
     try {
       const resp = await fetch(`${WORKER_URL}/shipments/${id}/refresh-status`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
       });
       if (resp.ok) {
         const updated = await resp.json();
-        setShipments((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
-        if (selectedShipment?.id === id) setSelectedShipment((prev) => ({ ...prev, ...updated }));
+        setShipments(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s));
+        if (selectedShipment?.id === id) setSelectedShipment(prev => ({ ...prev, ...updated }));
       }
     } catch (e) { console.error('Refresh error:', e); }
-    setRefreshingIds((s) => { const n = new Set(s); n.delete(id); return n; });
+    setRefreshingIds(s => { const n = new Set(s); n.delete(id); return n; });
   };
 
   const refreshAll = async () => {
     setRefreshAllLoading(true);
-    const active = shipments.filter((s) => s.status !== 'delivered' && s.status !== 'voided');
-    for (const s of active) {
-      await refreshOne(s.id);
-    }
+    const active = filtered.filter(s => s.status !== 'delivered' && s.status !== 'voided');
+    for (const s of active) await refreshOne(s.id);
     setRefreshAllLoading(false);
   };
 
-  const locations = [...new Set(shipments.map((s) => s.ship_from_location).filter(Boolean))].sort();
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  };
+
+  // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <div>
+      {/* Metric cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 20 }}>
+        <MetricCard label="Total Shipments" value={metrics.total} />
+        <MetricCard label="In Transit" value={metrics.inTransit} />
+        <MetricCard label="Total Cost" value={formatCurrency(metrics.totalCost)} />
+        <MetricCard label="Avg Cost" value={formatCurrency(metrics.avgCost)} />
+      </div>
+
       {/* Filters */}
       <div style={{
         display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 20,
         padding: 16, background: '#fff', borderRadius: 8,
         border: '1px solid #e4e7ec', alignItems: 'end',
       }}>
-        <div>
-          <label style={labelStyle}>From</label>
-          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>To</label>
-          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>Status</label>
-          <select value={status} onChange={(e) => setStatus(e.target.value)} style={inputStyle}>
+        <FilterField label="From">
+          <input type="date" value={fromDate} onChange={e => setFromDate(e.target.value)} style={inputStyle} />
+        </FilterField>
+        <FilterField label="To">
+          <input type="date" value={toDate} onChange={e => setToDate(e.target.value)} style={inputStyle} />
+        </FilterField>
+        <FilterField label="Status">
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={inputStyle}>
             <option value="">All</option>
             {Object.entries(STATUS_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </select>
-        </div>
-        <div>
-          <label style={labelStyle}>Location</label>
-          <select value={location} onChange={(e) => setLocation(e.target.value)} style={inputStyle}>
+        </FilterField>
+        <FilterField label="Location">
+          <select value={locationFilter} onChange={e => setLocationFilter(e.target.value)} style={inputStyle}>
             <option value="">All</option>
-            {locations.map((l) => <option key={l} value={l}>{l}</option>)}
+            {locations.map(l => <option key={l} value={l}>{l}</option>)}
           </select>
-        </div>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <label style={labelStyle}>Search</label>
+        </FilterField>
+        <FilterField label="Carrier">
+          <select value={carrierFilter} onChange={e => setCarrierFilter(e.target.value)} style={inputStyle}>
+            <option value="">All Carriers</option>
+            {carriers.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </FilterField>
+        <FilterField label="Search" flex>
           <input
-            type="text" placeholder="SO # or tracking #" value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchShipments()}
+            type="text" placeholder="Name, city, SO #, tracking #..." value={search}
+            onChange={e => setSearch(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && fetchShipments()}
             style={inputStyle}
           />
-        </div>
-        <button onClick={fetchShipments} style={{ ...btnStyle, background: '#0D5C82', color: '#fff' }}>
-          Search
-        </button>
+        </FilterField>
+        <button onClick={fetchShipments} style={{ ...btnStyle, background: '#0D5C82', color: '#fff' }}>Search</button>
         <button onClick={refreshAll} disabled={refreshAllLoading} style={{ ...btnStyle, background: '#fff', color: '#0D5C82', border: '1px solid #0D5C82' }}>
           {refreshAllLoading ? 'Refreshing...' : 'Refresh All'}
         </button>
@@ -184,67 +348,73 @@ export default function ShipmentsPage({ session }) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e4e7ec' }}>
-              <th style={thStyle}>Order #</th>
+              <SortHeader label="Order #" sortKey="order_number" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
               <th style={thStyle}>Tracking</th>
-              <th style={thStyle}>Carrier / Service</th>
-              <th style={thStyle}>Ship To</th>
-              <th style={thStyle}>Location</th>
-              <th style={thStyle}>Cost</th>
-              <th style={thStyle}>ETA</th>
-              <th style={thStyle}>Status</th>
-              <th style={{ ...thStyle, width: 40 }}></th>
+              <SortHeader label="Carrier / Service" sortKey="service" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Ship To" sortKey="ship_to_name" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Location" sortKey="ship_from_location" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Charged" sortKey="quoted_cost" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Cost" sortKey="actual_cost" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="ETA / Delivered" sortKey="estimated_delivery" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <SortHeader label="Status" sortKey="status" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+              <th style={{ ...thStyle, width: 36 }}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>Loading...</td></tr>
-            ) : shipments.length === 0 ? (
-              <tr><td colSpan={9} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>No shipments found</td></tr>
-            ) : shipments.map((s) => (
+              <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>Loading...</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={10} style={{ padding: 40, textAlign: 'center', color: '#98a2b3' }}>No shipments found</td></tr>
+            ) : filtered.map(s => (
               <tr
                 key={s.id}
                 onClick={() => setSelectedShipment(s)}
                 style={{ borderBottom: '1px solid #f2f4f7', cursor: 'pointer' }}
-                onMouseEnter={(e) => e.currentTarget.style.background = '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
+                {/* Order # */}
                 <td style={tdStyle}>
                   {s.netsuite_so_id ? (
-                    <a
-                      href={`${NS_BASE}/app/accounting/transactions/salesord.nl?id=${s.netsuite_so_id}`}
-                      target="_blank" rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                    <a href={`${NS_BASE}/app/accounting/transactions/salesord.nl?id=${s.netsuite_so_id}`}
+                      target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                       style={{ color: '#0D5C82', fontWeight: 600, textDecoration: 'none' }}
-                    >{s.order_number || s.netsuite_so_number || s.netsuite_so_id}</a>
+                    >{s.netsuite_so_number || s.order_number || s.netsuite_so_id}</a>
                   ) : (
-                    <span style={{ color: s.order_number ? '#1d2939' : '#98a2b3', fontWeight: s.order_number ? 500 : 400 }}>
-                      {s.order_number || s.netsuite_so_number || '—'}
-                    </span>
+                    <span style={{ color: '#98a2b3' }}>—</span>
                   )}
                 </td>
+                {/* Tracking */}
                 <td style={tdStyle}>
-                  <a
-                    href={getTrackingUrl(s.carrier, s.tracking_number)}
-                    target="_blank" rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                  <a href={getTrackingUrl(s.carrier, s.tracking_number)} target="_blank" rel="noopener noreferrer"
+                    onClick={e => e.stopPropagation()}
                     style={{ color: '#0D5C82', textDecoration: 'none', fontFamily: 'monospace', fontSize: 11 }}
                   >{s.tracking_number}</a>
                 </td>
+                {/* Carrier / Service */}
                 <td style={tdStyle}>
-                  <div style={{ fontWeight: 500 }}>{(s.carrier || '').toUpperCase()}</div>
-                  <div style={{ fontSize: 11, color: '#667085' }}>{s.service || ''}</div>
+                  <div style={{ fontWeight: 500 }}>{formatCarrier(s.carrier)}</div>
+                  <div style={{ fontSize: 11, color: '#667085' }}>{formatServiceName(s.service)}</div>
                 </td>
+                {/* Ship To */}
                 <td style={tdStyle}>
-                  <div>{s.ship_to_name}</div>
+                  <div style={{ fontWeight: 400 }}>{s.ship_to_name || '—'}</div>
                   <div style={{ fontSize: 11, color: '#667085' }}>{[s.ship_to_city, s.ship_to_state].filter(Boolean).join(', ')}</div>
                 </td>
-                <td style={tdStyle}>{s.ship_from_location || '—'}</td>
-                <td style={tdStyle}>{s.actual_cost != null ? `$${Number(s.actual_cost).toFixed(2)}` : s.quoted_cost != null ? `$${Number(s.quoted_cost).toFixed(2)}` : '—'}</td>
-                <td style={tdStyle}>{formatDate(s.estimated_delivery)}</td>
+                {/* Location */}
+                <td style={tdStyle}><LocationBadge location={s.ship_from_location} /></td>
+                {/* Charged */}
+                <td style={tdStyle}>{formatCurrency(s.quoted_cost)}</td>
+                {/* Cost */}
+                <td style={tdStyle}>{formatCurrency(s.actual_cost)}</td>
+                {/* ETA / Delivered */}
+                <td style={tdStyle}><EtaCell shipment={s} /></td>
+                {/* Status */}
                 <td style={tdStyle}><StatusBadge status={s.status} /></td>
+                {/* Refresh */}
                 <td style={tdStyle}>
                   <button
-                    onClick={(e) => { e.stopPropagation(); refreshOne(s.id); }}
+                    onClick={e => { e.stopPropagation(); refreshOne(s.id); }}
                     disabled={refreshingIds.has(s.id)}
                     title="Refresh tracking"
                     style={{
@@ -264,10 +434,9 @@ export default function ShipmentsPage({ session }) {
         </table>
       </div>
       <div style={{ marginTop: 8, fontSize: 12, color: '#98a2b3' }}>
-        {shipments.length} shipment{shipments.length !== 1 ? 's' : ''}
+        {filtered.length} shipment{filtered.length !== 1 ? 's' : ''}{filtered.length !== shipments.length ? ` (${shipments.length} total)` : ''}
       </div>
 
-      {/* Spin keyframe */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       {/* Detail Modal */}
@@ -278,7 +447,7 @@ export default function ShipmentsPage({ session }) {
         >
           <div
             style={{ background: '#fff', borderRadius: 12, width: 560, maxWidth: '95vw', maxHeight: '90vh', overflow: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #e4e7ec', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Shipment Detail</h3>
@@ -291,8 +460,8 @@ export default function ShipmentsPage({ session }) {
                     {selectedShipment.tracking_number}
                   </a>
                 } />
-                <DetailRow label="Carrier" value={(selectedShipment.carrier || '').toUpperCase()} />
-                <DetailRow label="Service" value={selectedShipment.service} />
+                <DetailRow label="Carrier" value={formatCarrier(selectedShipment.carrier)} />
+                <DetailRow label="Service" value={formatServiceName(selectedShipment.service)} />
                 <DetailRow label="Status" value={<StatusBadge status={selectedShipment.status} />} />
                 <DetailRow label="Status Detail" value={selectedShipment.status_detail} />
                 <DetailRow label="ETA" value={formatDate(selectedShipment.estimated_delivery)} />
@@ -314,8 +483,8 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Phone" value={selectedShipment.ship_to_phone} />
               </DetailSection>
               <DetailSection title="Cost & References">
-                <DetailRow label="Quoted Cost" value={selectedShipment.quoted_cost != null ? `$${Number(selectedShipment.quoted_cost).toFixed(2)}` : '—'} />
-                <DetailRow label="Actual Cost" value={selectedShipment.actual_cost != null ? `$${Number(selectedShipment.actual_cost).toFixed(2)}` : '—'} />
+                <DetailRow label="Charged" value={formatCurrency(selectedShipment.quoted_cost)} />
+                <DetailRow label="Actual Cost" value={formatCurrency(selectedShipment.actual_cost)} />
                 <DetailRow label="Bill-To ZIP" value={selectedShipment.bill_to_zip} />
                 <DetailRow label="Order #" value={selectedShipment.order_number || selectedShipment.netsuite_so_number || selectedShipment.netsuite_so_id || '—'} />
                 <DetailRow label="IF #" value={selectedShipment.netsuite_if_number || selectedShipment.netsuite_if_id || '—'} />
@@ -326,13 +495,8 @@ export default function ShipmentsPage({ session }) {
               </DetailSection>
               {selectedShipment.shipstation_label_url && (
                 <div style={{ marginTop: 16, textAlign: 'center' }}>
-                  <a
-                    href={selectedShipment.shipstation_label_url}
-                    target="_blank" rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff',
-                      borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                    }}
+                  <a href={selectedShipment.shipstation_label_url} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
                   >View / Reprint Label</a>
                 </div>
               )}
@@ -340,6 +504,29 @@ export default function ShipmentsPage({ session }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Sub-components ──────────────────────────────────────────────────────────
+
+function MetricCard({ label, value }) {
+  return (
+    <div style={{
+      background: '#fff', borderRadius: 8, border: '1px solid #e4e7ec',
+      padding: '16px 20px',
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, color: '#667085', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 24, fontWeight: 700, color: '#1d2939' }}>{value}</div>
+    </div>
+  );
+}
+
+function FilterField({ label, children, flex }) {
+  return (
+    <div style={flex ? { flex: 1, minWidth: 180 } : undefined}>
+      <div style={labelStyle}>{label}</div>
+      {children}
     </div>
   );
 }
@@ -361,6 +548,8 @@ function DetailRow({ label, value }) {
     </div>
   );
 }
+
+// ── Style constants ─────────────────────────────────────────────────────────
 
 const labelStyle = { display: 'block', fontSize: 11, fontWeight: 600, color: '#475467', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 };
 const inputStyle = { padding: '7px 10px', border: '1px solid #d0d5dd', borderRadius: 6, fontSize: 13, fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' };
