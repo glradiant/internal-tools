@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatName } from '../utils/formatName';
+import ShipmentsPage from './ShipmentsPage';
 
-export default function Dashboard({ session }) {
+export default function Dashboard({ session, activePage = 'home' }) {
   const [showSettings, setShowSettings] = useState(false);
   const [firstName, setFirstName] = useState(session.user.user_metadata?.first_name || '');
   const [lastName, setLastName] = useState(session.user.user_metadata?.last_name || '');
@@ -105,7 +106,17 @@ export default function Dashboard({ session }) {
       </div>
 
       {/* Main Content */}
-      <main style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 24px 64px' }}>
+      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : 1100, margin: '0 auto', padding: activePage === 'shipments' ? '24px 24px 64px' : '48px 24px 64px' }}>
+        {activePage === 'shipments' ? (
+          <>
+            <div style={{ marginBottom: 20 }}>
+              <a href="#/" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Tools</a>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Shipments</h2>
+            </div>
+            <ShipmentsPage session={session} />
+          </>
+        ) : (
+        <>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontSize: 28, fontWeight: 700, color: '#1a1a1a', marginBottom: 12 }}>
             Welcome to GLR Internal Tools
@@ -231,7 +242,62 @@ export default function Dashboard({ session }) {
               </span>
             </div>
           </a>
+
+          {/* Shipments Dashboard */}
+          <a
+            href="#/shipments"
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)',
+              overflow: 'hidden',
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'block',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.03)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05), 0 0 0 1px rgba(0,0,0,0.03)';
+            }}
+          >
+            <div style={{ height: 4, background: '#f37021' }} />
+            <div style={{ padding: '28px 28px 32px' }}>
+              <div style={{
+                width: 56,
+                height: 56,
+                background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)',
+                borderRadius: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 20,
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="#f37021">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                </svg>
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#1a1a1a', marginBottom: 8 }}>
+                Shipments
+              </h3>
+              <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
+                Track all parcel shipments with live carrier status updates, label management, and cost reporting by warehouse location.
+              </p>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+                Open Tool
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                </svg>
+              </span>
+            </div>
+          </a>
         </div>
+        </>
+        )}
       </main>
 
       {/* Footer */}
