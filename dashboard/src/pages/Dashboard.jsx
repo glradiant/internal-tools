@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatName } from '../utils/formatName';
 import ShipmentsPage from './ShipmentsPage';
+import CreateShipmentPage from './CreateShipmentPage';
 
 export default function Dashboard({ session, activePage = 'home' }) {
   const [showSettings, setShowSettings] = useState(false);
@@ -106,12 +107,37 @@ export default function Dashboard({ session, activePage = 'home' }) {
       </div>
 
       {/* Main Content */}
-      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : 1100, margin: '0 auto', padding: activePage === 'shipments' ? '24px 24px 64px' : '48px 24px 64px' }}>
-        {activePage === 'shipments' ? (
+      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : activePage === 'create-shipment' ? 720 : 1100, margin: '0 auto', padding: activePage === 'home' ? '48px 24px 64px' : '24px 24px 64px' }}>
+        {activePage === 'create-shipment' ? (
           <>
             <div style={{ marginBottom: 20 }}>
-              <a href="#/" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Tools</a>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Shipments</h2>
+              <a href="#/shipments" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Shipments</a>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Create Shipment</h2>
+              <p style={{ fontSize: 13, color: '#667085', margin: '4px 0 0' }}>Ship a package via ShipStation outside of NetSuite</p>
+            </div>
+            <CreateShipmentPage session={session} />
+          </>
+        ) : activePage === 'shipments' ? (
+          <>
+            <div style={{ marginBottom: 20, display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+              <div>
+                <a href="#/" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Tools</a>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Shipments</h2>
+              </div>
+              <a
+                href="#/create-shipment"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '9px 16px', background: '#f37021', border: 'none', borderRadius: 8,
+                  color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  marginTop: 16,
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Create Shipment
+              </a>
             </div>
             <ShipmentsPage session={session} />
           </>
