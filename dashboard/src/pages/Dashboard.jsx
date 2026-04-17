@@ -169,7 +169,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -181,7 +182,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -202,7 +203,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Create branded email signatures for Outlook and NetSuite with your contact info, complete with live preview and one-click copy.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -227,7 +228,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -239,7 +241,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -260,7 +262,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Design and visualize heater placement layouts for buildings. Draw walls, place heaters, and export professional layout drawings.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -280,7 +282,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -292,7 +295,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -313,7 +316,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Track all parcel shipments with live carrier status updates, label management, and cost reporting by warehouse location.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
