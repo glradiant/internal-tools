@@ -560,6 +560,11 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Address" value={[selectedShipment.ship_to_address1, [selectedShipment.ship_to_city, selectedShipment.ship_to_state, selectedShipment.ship_to_zip].filter(Boolean).join(', ')].filter(Boolean).join('\n')} />
                 <DetailRow label="Phone" value={selectedShipment.ship_to_phone} />
               </DetailSection>
+              {Array.isArray(selectedShipment.tracking_events) && selectedShipment.tracking_events.length > 0 && (
+                <DetailSection title="Tracking Timeline">
+                  <TrackingTimeline events={selectedShipment.tracking_events} />
+                </DetailSection>
+              )}
               <DetailSection title="Cost & References">
                 <DetailRow label="Charged" value={formatCurrency(selectedShipment.quoted_cost)} />
                 <DetailRow label="Actual Cost" value={formatCurrency(selectedShipment.actual_cost)} />
@@ -605,6 +610,63 @@ function FilterField({ label, children, flex }) {
     <div style={flex ? { flex: 1, minWidth: 180 } : undefined}>
       <div style={labelStyle}>{label}</div>
       {children}
+    </div>
+  );
+}
+
+/** Scan timeline — renders newest event at the top, color-coded by event type. */
+function TrackingTimeline({ events }) {
+  // Sort newest first by occurred_at timestamp
+  const sorted = [...events].sort((a, b) => {
+    const ta = new Date(a.occurred_at || a.carrier_occurred_at || 0).getTime();
+    const tb = new Date(b.occurred_at || b.carrier_occurred_at || 0).getTime();
+    return tb - ta;
+  });
+
+  const dotColor = (ev) => {
+    const code = (ev.status_code || '').toUpperCase();
+    if (code === 'DE' || code === 'SP') return '#12b76a'; // delivered green
+    if (code === 'EX') return '#f04438';                  // exception red
+    if (code === 'AT') return '#f79009';                  // attempt orange
+    return '#2e90fa';                                      // in_transit blue
+  };
+
+  const fmt = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true,
+    });
+  };
+
+  return (
+    <div style={{ position: 'relative', paddingLeft: 20 }}>
+      {/* Vertical connector line */}
+      <div style={{
+        position: 'absolute', left: 5, top: 6, bottom: 6,
+        width: 1, background: '#e4e7ec',
+      }} />
+      {sorted.map((ev, i) => (
+        <div key={i} style={{ position: 'relative', paddingBottom: 12 }}>
+          {/* Dot */}
+          <div style={{
+            position: 'absolute', left: -20, top: 4,
+            width: 11, height: 11, borderRadius: '50%',
+            background: dotColor(ev), border: '2px solid #fff',
+            boxShadow: '0 0 0 1px #e4e7ec',
+          }} />
+          {/* Content */}
+          <div style={{ fontSize: 13, color: '#1d2939', fontWeight: 500 }}>
+            {ev.description || ev.status_description || ev.carrier_status_description || '—'}
+          </div>
+          <div style={{ fontSize: 11, color: '#667085', marginTop: 2 }}>
+            {fmt(ev.occurred_at || ev.carrier_occurred_at)}
+            {(ev.city_locality || ev.state_province) && (
+              <> · {[ev.city_locality, ev.state_province].filter(Boolean).join(', ')}</>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

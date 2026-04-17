@@ -722,6 +722,13 @@ export default function CreateShipmentPage({ session }) {
               const serviceCode = rate.serviceCode || rate.service_code;
               const carrierCode = rate.carrierCode || rate.carrier_code;
               const deliveryDays = rate.deliveryDays ?? rate.delivery_days;
+              const etaIso = rate.estimatedDeliveryDate || rate.estimated_delivery_date;
+              const etaDate = etaIso
+                ? new Date(etaIso)
+                : (deliveryDays != null ? (() => { const d = new Date(); d.setDate(d.getDate() + deliveryDays); return d; })() : null);
+              const etaLabel = etaDate
+                ? etaDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+                : null;
               return (
                 <div
                   key={i}
@@ -762,6 +769,7 @@ export default function CreateShipmentPage({ session }) {
                       <div style={{ fontSize: 12, color: '#667085', marginTop: 2 }}>
                         {formatCarrier(carrierCode)}
                         {deliveryDays != null && ` · ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''}`}
+                        {etaLabel && ` · arrives ${etaLabel}`}
                       </div>
                     </div>
                   </div>
