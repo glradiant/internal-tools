@@ -339,11 +339,11 @@ export default function CreateShipmentPage({ session }) {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           gap: 20px;
-          align-items: stretch;
+          align-items: start;
         }
         .create-shipment-grid > div { min-height: 0; }
         @media (max-width: 900px) {
-          .create-shipment-grid { grid-template-columns: 1fr; align-items: start; }
+          .create-shipment-grid { grid-template-columns: 1fr; }
         }
       `}</style>
       {/* LEFT COLUMN — form */}
@@ -571,7 +571,7 @@ export default function CreateShipmentPage({ session }) {
       </div>
 
       {/* RIGHT COLUMN — rates + purchase */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: 20, height: 'calc(100vh - 110px)' }}>
       {/* Rates Error */}
       {ratesError && (
         <div style={{
