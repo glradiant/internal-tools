@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 const WORKER_URL = 'https://netsuite-integration.josh-0da.workers.dev';
@@ -140,6 +140,15 @@ export default function CreateShipmentPage({ session }) {
   const [purchasing, setPurchasing] = useState(false);
   const [purchaseResult, setPurchaseResult] = useState(null);
   const [purchaseError, setPurchaseError] = useState(null);
+
+  // Clear rates when any rate-affecting input changes (forces re-fetch)
+  const firstRender = useRef(true);
+  useEffect(() => {
+    if (firstRender.current) { firstRender.current = false; return; }
+    setRates(null);
+    setSelectedRate(null);
+    setPurchaseError(null);
+  }, [fromWarehouse, customFromZip, customFromState, toZip, toState, weight, length, width, height, residential]);
 
   async function getAuthHeaders() {
     const { data: { session: s } } = await supabase.auth.getSession();
@@ -555,29 +564,26 @@ export default function CreateShipmentPage({ session }) {
         </div>
       </div>
 
-      {/* Get Rates Button */}
-      {!rates && (
-        <button
-          onClick={handleGetRates}
-          disabled={!canGetRates || ratesLoading}
-          style={{
-            width: '100%',
-            padding: '14px 24px',
-            background: canGetRates && !ratesLoading ? '#f37021' : '#d0d5dd',
-            border: 'none',
-            borderRadius: 10,
-            color: '#fff',
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: canGetRates && !ratesLoading ? 'pointer' : 'not-allowed',
-            fontFamily: 'inherit',
-            marginBottom: 20,
-            opacity: ratesLoading ? 0.7 : 1,
-          }}
-        >
-          {ratesLoading ? 'Getting Rates...' : 'Get Shipping Rates'}
-        </button>
-      )}
+      {/* Get Rates Button — always shown; disabled after fetch until inputs change */}
+      <button
+        onClick={handleGetRates}
+        disabled={!canGetRates || ratesLoading || !!rates}
+        style={{
+          width: '100%',
+          padding: '14px 24px',
+          background: canGetRates && !ratesLoading && !rates ? '#f37021' : '#d0d5dd',
+          border: 'none',
+          borderRadius: 10,
+          color: '#fff',
+          fontSize: 15,
+          fontWeight: 700,
+          cursor: canGetRates && !ratesLoading && !rates ? 'pointer' : 'not-allowed',
+          fontFamily: 'inherit',
+          opacity: ratesLoading ? 0.7 : 1,
+        }}
+      >
+        {ratesLoading ? 'Getting Rates...' : rates ? 'Rates Loaded' : 'Get Shipping Rates'}
+      </button>
       </div>
 
       {/* RIGHT COLUMN — rates + purchase */}
@@ -664,7 +670,7 @@ export default function CreateShipmentPage({ session }) {
 
         return (
         <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, marginBottom: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div style={{ marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
               Select a Rate
               <span style={{ fontSize: 12, fontWeight: 400, color: '#667085', marginLeft: 8 }}>
@@ -672,15 +678,6 @@ export default function CreateShipmentPage({ session }) {
                 {displayRates.length !== byKey.size && ` of ${byKey.size}`}
               </span>
             </h3>
-            <button
-              onClick={() => { setRates(null); setSelectedRate(null); }}
-              style={{
-                padding: '6px 12px', background: '#f9fafb', border: '1px solid #e4e7ec',
-                borderRadius: 6, fontSize: 12, color: '#667085', cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              Edit Details
-            </button>
           </div>
 
           {/* Filter + Sort controls */}
@@ -829,16 +826,8 @@ export default function CreateShipmentPage({ session }) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           flex: 1, marginBottom: 0,
         }}>
-          <p style={{ fontSize: 14, margin: '0 0 12px' }}>No rates available for this route.</p>
-          <button
-            onClick={() => { setRates(null); setSelectedRate(null); }}
-            style={{
-              padding: '8px 16px', background: '#f37021', border: 'none', borderRadius: 8,
-              color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-            }}
-          >
-            Edit Details
-          </button>
+          <p style={{ fontSize: 14, margin: 0 }}>No rates available for this route.</p>
+          <p style={{ fontSize: 12, margin: '8px 0 0', color: '#98a2b3' }}>Adjust the address, weight, or dimensions and try again.</p>
         </div>
       )}
       </div>
