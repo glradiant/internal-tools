@@ -141,6 +141,11 @@ export default function ShipmentsPage({ session }) {
   const [loading, setLoading] = useState(true);
   const [refreshingIds, setRefreshingIds] = useState(new Set());
   const [selectedShipment, setSelectedShipment] = useState(null);
+  // Void flow: which shipment is showing the confirm dialog, plus its in-progress state
+  const [voidingShipment, setVoidingShipment] = useState(null);
+  const [voidConfirmText, setVoidConfirmText] = useState('');
+  const [voidLoading, setVoidLoading] = useState(false);
+  const [voidError, setVoidError] = useState(null);
 
   // Server-side filters (trigger API call)
   const [fromDate, setFromDate] = useState(() => {
@@ -278,6 +283,51 @@ export default function ShipmentsPage({ session }) {
       }
     } catch (e) { console.error('Refresh error:', e); }
     setRefreshingIds(s => { const n = new Set(s); n.delete(id); return n; });
+  };
+
+  /** Open the void confirmation dialog. */
+  const openVoidDialog = (shipment) => {
+    setVoidingShipment(shipment);
+    setVoidConfirmText('');
+    setVoidError(null);
+  };
+
+  /** Close the void dialog without doing anything. */
+  const closeVoidDialog = () => {
+    setVoidingShipment(null);
+    setVoidConfirmText('');
+    setVoidError(null);
+  };
+
+  /** Execute the void via Worker. */
+  const confirmVoid = async () => {
+    if (!voidingShipment) return;
+    setVoidLoading(true);
+    setVoidError(null);
+    const token = await getToken();
+    try {
+      const resp = await fetch(`${WORKER_URL}/shipments/${voidingShipment.id}/void`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm_tracking_number: voidingShipment.tracking_number }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        setVoidError(data.error || `HTTP ${resp.status}`);
+        setVoidLoading(false);
+        return;
+      }
+      // Update the row in the list and the open detail modal
+      const updated = data.shipment || { ...voidingShipment, status: 'voided' };
+      setShipments(prev => prev.map(s => s.id === voidingShipment.id ? { ...s, ...updated } : s));
+      if (selectedShipment?.id === voidingShipment.id) {
+        setSelectedShipment(prev => ({ ...prev, ...updated }));
+      }
+      closeVoidDialog();
+    } catch (e) {
+      setVoidError(e.message);
+    }
+    setVoidLoading(false);
   };
 
   const handleSort = (col) => {
@@ -565,13 +615,128 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Purchased At" value={selectedShipment.purchased_at ? new Date(selectedShipment.purchased_at).toLocaleString() : '—'} />
                 <DetailRow label="Last Checked" value={selectedShipment.last_status_check ? new Date(selectedShipment.last_status_check).toLocaleString() : '—'} />
               </DetailSection>
-              {selectedShipment.shipstation_label_url && (
-                <div style={{ marginTop: 16, textAlign: 'center' }}>
-                  <a href={selectedShipment.shipstation_label_url} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
-                  >View / Reprint Label</a>
+              {(selectedShipment.shipstation_label_url || selectedShipment.status === 'purchased') && (
+                <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  {selectedShipment.shipstation_label_url && (
+                    <a href={selectedShipment.shipstation_label_url} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
+                    >View / Reprint Label</a>
+                  )}
+                  {selectedShipment.status === 'purchased' && (
+                    <button
+                      onClick={() => openVoidDialog(selectedShipment)}
+                      style={{
+                        padding: '8px 20px', background: '#fff', color: '#b42318', border: '1px solid #fda29b',
+                        borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                      }}
+                    >Void Label</button>
+                  )}
                 </div>
               )}
+              {selectedShipment.status !== 'purchased' && selectedShipment.status !== 'voided' && (
+                <div style={{ marginTop: 12, textAlign: 'center', fontSize: 11, color: '#98a2b3' }}>
+                  Voiding is only available before the package reaches the carrier.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Void Confirmation Dialog */}
+      {voidingShipment && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}
+          onClick={voidLoading ? undefined : closeVoidDialog}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: 12, width: 480, maxWidth: '95vw', boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflow: 'hidden' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e4e7ec', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{
+                width: 28, height: 28, borderRadius: '50%', background: '#fef3f2',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b42318" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 9v4M12 17h.01" />
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                </svg>
+              </div>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1d2939' }}>Void Label</h3>
+            </div>
+
+            <div style={{ padding: '16px 20px', fontSize: 13, color: '#344054', lineHeight: 1.55 }}>
+              <p style={{ margin: '0 0 12px' }}>
+                Voiding requests a refund from the carrier. Once voided, the label cannot be reused.
+                The carrier may reject the void if the package has already been scanned.
+              </p>
+
+              <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                  <span style={{ color: '#667085' }}>Carrier</span>
+                  <span style={{ color: '#1d2939', fontWeight: 500 }}>{(voidingShipment.carrier || '').toUpperCase()} {voidingShipment.service ? `· ${voidingShipment.service}` : ''}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                  <span style={{ color: '#667085' }}>Tracking</span>
+                  <span style={{ color: '#1d2939', fontFamily: 'monospace' }}>{voidingShipment.tracking_number}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                  <span style={{ color: '#667085' }}>Cost</span>
+                  <span style={{ color: '#1d2939' }}>{voidingShipment.actual_cost != null ? `$${Number(voidingShipment.actual_cost).toFixed(2)}` : '—'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                  <span style={{ color: '#667085' }}>Ship To</span>
+                  <span style={{ color: '#1d2939' }}>{voidingShipment.ship_to_name || '—'}</span>
+                </div>
+              </div>
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475467', marginBottom: 6 }}>
+                Type the tracking number to confirm:
+              </label>
+              <input
+                type="text"
+                value={voidConfirmText}
+                onChange={e => setVoidConfirmText(e.target.value)}
+                placeholder={voidingShipment.tracking_number}
+                disabled={voidLoading}
+                autoFocus
+                style={{
+                  width: '100%', padding: '8px 10px', fontSize: 13, fontFamily: 'monospace',
+                  border: '1px solid #d0d5dd', borderRadius: 6, boxSizing: 'border-box',
+                  background: voidLoading ? '#f9fafb' : '#fff',
+                }}
+              />
+
+              {voidError && (
+                <div style={{
+                  marginTop: 12, padding: '8px 12px', background: '#fef3f2',
+                  border: '1px solid #fecdca', borderRadius: 6, fontSize: 12, color: '#b42318',
+                }}>{voidError}</div>
+              )}
+            </div>
+
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #e4e7ec', display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={closeVoidDialog}
+                disabled={voidLoading}
+                style={{
+                  padding: '8px 16px', background: '#fff', color: '#344054', border: '1px solid #d0d5dd',
+                  borderRadius: 6, fontSize: 13, fontWeight: 500, cursor: voidLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                }}
+              >Cancel</button>
+              <button
+                onClick={confirmVoid}
+                disabled={voidLoading || voidConfirmText !== voidingShipment.tracking_number}
+                style={{
+                  padding: '8px 16px',
+                  background: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? '#b42318' : '#fee4e2',
+                  color: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? '#fff' : '#f97066',
+                  border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600,
+                  cursor: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit',
+                }}
+              >{voidLoading ? 'Voiding...' : 'Void Label'}</button>
             </div>
           </div>
         </div>
