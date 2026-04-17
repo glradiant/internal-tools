@@ -339,10 +339,11 @@ export default function CreateShipmentPage({ session }) {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           gap: 20px;
-          align-items: start;
+          align-items: stretch;
         }
+        .create-shipment-grid > div { min-height: 0; }
         @media (max-width: 900px) {
-          .create-shipment-grid { grid-template-columns: 1fr; }
+          .create-shipment-grid { grid-template-columns: 1fr; align-items: start; }
         }
       `}</style>
       {/* LEFT COLUMN — form */}
@@ -570,7 +571,7 @@ export default function CreateShipmentPage({ session }) {
       </div>
 
       {/* RIGHT COLUMN — rates + purchase */}
-      <div style={{ position: 'sticky', top: 20 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Rates Error */}
       {ratesError && (
         <div style={{
@@ -585,7 +586,8 @@ export default function CreateShipmentPage({ session }) {
       {!rates && !ratesLoading && !ratesError && (
         <div style={{
           ...sectionStyle, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', padding: '60px 24px', textAlign: 'center', minHeight: 360,
+          justifyContent: 'center', padding: '60px 24px', textAlign: 'center',
+          flex: 1, minHeight: 360, marginBottom: 0,
         }}>
           <div style={{
             width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)',
@@ -606,7 +608,8 @@ export default function CreateShipmentPage({ session }) {
       {ratesLoading && (
         <div style={{
           ...sectionStyle, display: 'flex', flexDirection: 'column', alignItems: 'center',
-          justifyContent: 'center', padding: '60px 24px', textAlign: 'center', minHeight: 360,
+          justifyContent: 'center', padding: '60px 24px', textAlign: 'center',
+          flex: 1, minHeight: 360, marginBottom: 0,
         }}>
           <div style={{
             width: 36, height: 36, border: '3px solid #e4e7ec', borderTopColor: '#f37021',
@@ -627,28 +630,35 @@ export default function CreateShipmentPage({ session }) {
           if (c === 'usps' || c === 'stamps_com' || c.startsWith('usps')) return 'usps';
           return c;
         };
-        const displayRates = rates
+        // Dedupe: collapse rates with the same carrierCode + serviceCode, keep the cheapest
+        const dedupeKey = (r) => `${(r.carrierCode || r.carrier_code || '').toLowerCase()}|${(r.serviceCode || r.service_code || '').toLowerCase()}`;
+        const costOf = (r) => r.markedUpRate ?? r.shipping_amount?.amount ?? r.cost ?? Infinity;
+        const byKey = new Map();
+        for (const r of rates) {
+          const k = dedupeKey(r);
+          const existing = byKey.get(k);
+          if (!existing || costOf(r) < costOf(existing)) byKey.set(k, r);
+        }
+
+        const displayRates = [...byKey.values()]
           .filter(r => carrierFilter === 'all' || carrierGroup(r) === carrierFilter)
-          .slice()
           .sort((a, b) => {
             if (sortBy === 'transit') {
               const da = a.deliveryDays ?? a.delivery_days ?? 999;
               const db = b.deliveryDays ?? b.delivery_days ?? 999;
               if (da !== db) return da - db;
             }
-            const ca = a.markedUpRate ?? a.shipping_amount?.amount ?? a.cost ?? 0;
-            const cb = b.markedUpRate ?? b.shipping_amount?.amount ?? b.cost ?? 0;
-            return ca - cb;
+            return costOf(a) - costOf(b);
           });
 
         return (
-        <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 80px)', marginBottom: 0 }}>
+        <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
               Select a Rate
               <span style={{ fontSize: 12, fontWeight: 400, color: '#667085', marginLeft: 8 }}>
                 {displayRates.length} option{displayRates.length !== 1 ? 's' : ''}
-                {displayRates.length !== rates.length && ` of ${rates.length}`}
+                {displayRates.length !== byKey.size && ` of ${byKey.size}`}
               </span>
             </h3>
             <button
@@ -805,6 +815,8 @@ export default function CreateShipmentPage({ session }) {
       {rates && rates.length === 0 && (
         <div style={{
           ...sectionStyle, textAlign: 'center', padding: 40, color: '#667085',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          flex: 1, marginBottom: 0,
         }}>
           <p style={{ fontSize: 14, margin: '0 0 12px' }}>No rates available for this route.</p>
           <button
