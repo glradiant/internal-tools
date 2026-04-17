@@ -360,6 +360,16 @@ export default function ShipmentsPage({ session }) {
   // Reset to page 1 when filters change
   useEffect(() => { setCurrentPage(1); }, [statusFilter, locationFilter, carrierFilter, search]);
 
+  // Lock body scroll when any modal (detail or void confirmation) is open
+  useEffect(() => {
+    const open = !!selectedShipment || !!voidingShipment;
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [selectedShipment, voidingShipment]);
+
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
