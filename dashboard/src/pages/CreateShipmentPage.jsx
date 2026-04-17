@@ -190,8 +190,8 @@ export default function CreateShipmentPage({ session }) {
 
       const isCustomOrigin = fromWarehouse === 'other';
       const payload = {
-        carrierCode: selectedRate.carrier_code,
-        serviceCode: selectedRate.service_code,
+        carrierCode: selectedRate.carrierCode || selectedRate.carrier_code,
+        serviceCode: selectedRate.serviceCode || selectedRate.service_code,
         packages: [pkg],
         ...(isCustomOrigin
           ? { shipFrom: { name: customFromName, street1: customFromStreet, city: customFromCity, state: customFromState, zip: customFromZip, phone: customFromPhone || undefined } }
@@ -220,9 +220,9 @@ export default function CreateShipmentPage({ session }) {
 
       setPurchaseResult({
         ...data,
-        carrierCode: selectedRate.carrier_code,
-        serviceName: formatServiceName(selectedRate.service_code),
-        cost: selectedRate.shipping_amount?.amount ?? selectedRate.cost,
+        carrierCode: selectedRate.carrierCode || selectedRate.carrier_code,
+        serviceName: formatServiceName(selectedRate.serviceCode || selectedRate.service_code),
+        cost: selectedRate.markedUpRate ?? selectedRate.shipping_amount?.amount ?? selectedRate.cost,
       });
     } catch (e) {
       setPurchaseError(e.message);
@@ -580,7 +580,10 @@ export default function CreateShipmentPage({ session }) {
           <div style={{ display: 'grid', gap: 10 }}>
             {rates.map((rate, i) => {
               const isSelected = selectedRate === rate;
-              const cost = rate.shipping_amount?.amount ?? rate.cost;
+              const cost = rate.markedUpRate ?? rate.shipping_amount?.amount ?? rate.cost;
+              const serviceCode = rate.serviceCode || rate.service_code;
+              const carrierCode = rate.carrierCode || rate.carrier_code;
+              const deliveryDays = rate.deliveryDays ?? rate.delivery_days;
               return (
                 <div
                   key={i}
@@ -616,11 +619,11 @@ export default function CreateShipmentPage({ session }) {
                     </div>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 600, color: '#1a1a1a' }}>
-                        {formatServiceName(rate.service_code)}
+                        {formatServiceName(serviceCode)}
                       </div>
                       <div style={{ fontSize: 12, color: '#667085', marginTop: 2 }}>
-                        {formatCarrier(rate.carrier_code)}
-                        {rate.delivery_days != null && ` · ${rate.delivery_days} day${rate.delivery_days !== 1 ? 's' : ''}`}
+                        {formatCarrier(carrierCode)}
+                        {deliveryDays != null && ` · ${deliveryDays} day${deliveryDays !== 1 ? 's' : ''}`}
                       </div>
                     </div>
                   </div>
@@ -654,7 +657,7 @@ export default function CreateShipmentPage({ session }) {
             {purchasing
               ? 'Purchasing Label...'
               : selectedRate
-                ? `Purchase Label — $${Number(selectedRate.shipping_amount?.amount ?? selectedRate.cost).toFixed(2)}`
+                ? `Purchase Label — $${Number(selectedRate.markedUpRate ?? selectedRate.shipping_amount?.amount ?? selectedRate.cost).toFixed(2)}`
                 : 'Select a rate to continue'}
           </button>
 
