@@ -206,9 +206,11 @@ export default function CreateShipmentPage({ session }) {
       }
 
       const isCustomOrigin = fromWarehouse === 'other';
+      const chargedCost = selectedRate.markedUpRate ?? selectedRate.shipping_amount?.amount ?? selectedRate.cost;
       const payload = {
         carrierCode: selectedRate.carrierCode || selectedRate.carrier_code,
         serviceCode: selectedRate.serviceCode || selectedRate.service_code,
+        chargedCost,
         packages: [pkg],
         ...(isCustomOrigin
           ? { shipFrom: { name: customFromName, street1: customFromStreet, city: customFromCity, state: customFromState, zip: customFromZip, phone: customFromPhone || undefined } }
