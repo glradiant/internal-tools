@@ -140,7 +140,6 @@ export default function ShipmentsPage({ session }) {
   const [shipments, setShipments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshingIds, setRefreshingIds] = useState(new Set());
-  const [refreshAllLoading, setRefreshAllLoading] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState(null);
 
   // Server-side filters (trigger API call)
@@ -281,13 +280,6 @@ export default function ShipmentsPage({ session }) {
     setRefreshingIds(s => { const n = new Set(s); n.delete(id); return n; });
   };
 
-  const refreshAll = async () => {
-    setRefreshAllLoading(true);
-    const active = filtered.filter(s => s.status !== 'delivered' && s.status !== 'voided');
-    for (const s of active) await refreshOne(s.id);
-    setRefreshAllLoading(false);
-  };
-
   const handleSort = (col) => {
     if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortCol(col); setSortDir('asc'); }
@@ -373,9 +365,6 @@ export default function ShipmentsPage({ session }) {
           />
         </FilterField>
         <button onClick={fetchShipments} style={{ ...btnStyle, background: '#0D5C82', color: '#fff' }}>Search</button>
-        <button onClick={refreshAll} disabled={refreshAllLoading} style={{ ...btnStyle, background: '#fff', color: '#0D5C82', border: '1px solid #0D5C82' }}>
-          {refreshAllLoading ? 'Refreshing...' : 'Refresh All'}
-        </button>
       </div>
 
       {/* Table */}
