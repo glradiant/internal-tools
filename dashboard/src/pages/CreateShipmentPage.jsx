@@ -339,11 +339,21 @@ export default function CreateShipmentPage({ session }) {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
           gap: 20px;
-          align-items: start;
+          align-items: stretch;
         }
-        .create-shipment-grid > div { min-height: 0; }
+        .create-shipment-right {
+          position: relative;
+        }
+        .create-shipment-right-inner {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+        }
         @media (max-width: 900px) {
-          .create-shipment-grid { grid-template-columns: 1fr; }
+          .create-shipment-grid { grid-template-columns: 1fr; align-items: start; }
+          .create-shipment-right { position: static; min-height: 500px; }
+          .create-shipment-right-inner { position: static; }
         }
       `}</style>
       {/* LEFT COLUMN — form */}
@@ -571,7 +581,8 @@ export default function CreateShipmentPage({ session }) {
       </div>
 
       {/* RIGHT COLUMN — rates + purchase */}
-      <div style={{ display: 'flex', flexDirection: 'column', position: 'sticky', top: 20, height: 'calc(100vh - 110px)' }}>
+      <div className="create-shipment-right">
+      <div className="create-shipment-right-inner">
       {/* Rates Error */}
       {ratesError && (
         <div style={{
@@ -830,6 +841,7 @@ export default function CreateShipmentPage({ session }) {
           </button>
         </div>
       )}
+      </div>
       </div>
     </div>
   );
