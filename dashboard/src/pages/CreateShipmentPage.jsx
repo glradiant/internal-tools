@@ -642,7 +642,7 @@ export default function CreateShipmentPage({ session }) {
           });
 
         return (
-        <div style={sectionStyle}>
+        <div style={{ ...sectionStyle, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 80px)', marginBottom: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
               Select a Rate
@@ -696,7 +696,7 @@ export default function CreateShipmentPage({ session }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 10 }}>
+          <div style={{ display: 'grid', gap: 10, overflowY: 'auto', flex: 1, minHeight: 0, paddingRight: 4, marginRight: -4 }}>
             {displayRates.map((rate, i) => {
               const isSelected = selectedRate === rate;
               const chargedCost = rate.markedUpRate ?? rate.shipping_amount?.amount ?? rate.cost;
@@ -762,7 +762,7 @@ export default function CreateShipmentPage({ session }) {
             })}
           </div>
 
-          {/* Purchase Button */}
+          {/* Purchase Button — stays pinned at bottom of card */}
           <button
             onClick={handlePurchaseLabel}
             disabled={!canPurchase || purchasing}
@@ -777,8 +777,9 @@ export default function CreateShipmentPage({ session }) {
               fontWeight: 700,
               cursor: canPurchase && !purchasing ? 'pointer' : 'not-allowed',
               fontFamily: 'inherit',
-              marginTop: 20,
+              marginTop: 16,
               opacity: purchasing ? 0.7 : 1,
+              flexShrink: 0,
             }}
           >
             {purchasing
