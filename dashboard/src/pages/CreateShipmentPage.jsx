@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 
 const WORKER_URL = 'https://netsuite-integration.josh-0da.workers.dev';
@@ -53,7 +53,12 @@ const US_STATES = [
 function formatServiceName(code) {
   if (!code) return '';
   if (SERVICE_NAMES[code]) return SERVICE_NAMES[code];
-  return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  // Title-case with carrier abbreviations kept uppercase
+  return code.replace(/_/g, ' ').replace(/\b\w+/g, w => {
+    const upper = w.toUpperCase();
+    if (['UPS', 'USPS', 'FEDEX', 'DHL', 'SMS', 'PO'].includes(upper)) return upper;
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  });
 }
 
 function formatCarrier(code) {
@@ -127,6 +132,8 @@ export default function CreateShipmentPage({ session }) {
   const [selectedRate, setSelectedRate] = useState(null);
   const [ratesLoading, setRatesLoading] = useState(false);
   const [ratesError, setRatesError] = useState(null);
+  const [carrierFilter, setCarrierFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('cost'); // 'cost' | 'transit'
 
   // Purchase state
   const [purchasing, setPurchasing] = useState(false);
@@ -325,7 +332,20 @@ export default function CreateShipmentPage({ session }) {
   // ── Main form ──────────────────────────────────────────────────────────
 
   return (
-    <div>
+    <div className="create-shipment-grid">
+      <style>{`
+        .create-shipment-grid {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 20px;
+          align-items: start;
+        }
+        @media (max-width: 900px) {
+          .create-shipment-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      {/* LEFT COLUMN — form */}
+      <div>
       {/* Ship From */}
       <div style={sectionStyle}>
         <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: '0 0 16px' }}>Ship From</h3>
@@ -546,7 +566,10 @@ export default function CreateShipmentPage({ session }) {
           {ratesLoading ? 'Getting Rates...' : 'Get Shipping Rates'}
         </button>
       )}
+      </div>
 
+      {/* RIGHT COLUMN — rates + purchase */}
+      <div style={{ position: 'sticky', top: 20 }}>
       {/* Rates Error */}
       {ratesError && (
         <div style={{
@@ -557,14 +580,74 @@ export default function CreateShipmentPage({ session }) {
         </div>
       )}
 
+      {/* Placeholder when no rates yet */}
+      {!rates && !ratesLoading && !ratesError && (
+        <div style={{
+          ...sectionStyle, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', padding: '60px 24px', textAlign: 'center', minHeight: 360,
+        }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 12, background: 'linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+          }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="#f37021">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+          </div>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: '0 0 6px' }}>Shipping Rates</h3>
+          <p style={{ fontSize: 13, color: '#667085', margin: 0, maxWidth: 280, lineHeight: 1.5 }}>
+            Fill in the ship-to address and package details, then click <strong style={{ color: '#344054' }}>Get Shipping Rates</strong> to see available options.
+          </p>
+        </div>
+      )}
+
+      {/* Loading placeholder */}
+      {ratesLoading && (
+        <div style={{
+          ...sectionStyle, display: 'flex', flexDirection: 'column', alignItems: 'center',
+          justifyContent: 'center', padding: '60px 24px', textAlign: 'center', minHeight: 360,
+        }}>
+          <div style={{
+            width: 36, height: 36, border: '3px solid #e4e7ec', borderTopColor: '#f37021',
+            borderRadius: '50%', animation: 'spin 0.8s linear infinite', marginBottom: 16,
+          }} />
+          <div style={{ fontSize: 13, color: '#667085' }}>Fetching rates from carriers…</div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       {/* Rate Cards */}
-      {rates && rates.length > 0 && (
+      {rates && rates.length > 0 && (() => {
+        // Detect carrier group: UPS/USPS/FedEx based on carrierCode
+        const carrierGroup = (r) => {
+          const c = (r.carrierCode || r.carrier_code || '').toLowerCase();
+          if (c.startsWith('ups')) return 'ups';
+          if (c.startsWith('fedex')) return 'fedex';
+          if (c === 'usps' || c === 'stamps_com' || c.startsWith('usps')) return 'usps';
+          return c;
+        };
+        const displayRates = rates
+          .filter(r => carrierFilter === 'all' || carrierGroup(r) === carrierFilter)
+          .slice()
+          .sort((a, b) => {
+            if (sortBy === 'transit') {
+              const da = a.deliveryDays ?? a.delivery_days ?? 999;
+              const db = b.deliveryDays ?? b.delivery_days ?? 999;
+              if (da !== db) return da - db;
+            }
+            const ca = a.markedUpRate ?? a.shipping_amount?.amount ?? a.cost ?? 0;
+            const cb = b.markedUpRate ?? b.shipping_amount?.amount ?? b.cost ?? 0;
+            return ca - cb;
+          });
+
+        return (
         <div style={sectionStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <h3 style={{ fontSize: 15, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
               Select a Rate
               <span style={{ fontSize: 12, fontWeight: 400, color: '#667085', marginLeft: 8 }}>
-                {rates.length} option{rates.length !== 1 ? 's' : ''}
+                {displayRates.length} option{displayRates.length !== 1 ? 's' : ''}
+                {displayRates.length !== rates.length && ` of ${rates.length}`}
               </span>
             </h3>
             <button
@@ -577,10 +660,46 @@ export default function CreateShipmentPage({ session }) {
               Edit Details
             </button>
           </div>
+
+          {/* Filter + Sort controls */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[
+                { k: 'all',   label: 'All' },
+                { k: 'ups',   label: 'UPS' },
+                { k: 'usps',  label: 'USPS' },
+                { k: 'fedex', label: 'FedEx' },
+              ].map(opt => {
+                const active = carrierFilter === opt.k;
+                return (
+                  <button key={opt.k} onClick={() => setCarrierFilter(opt.k)} style={{
+                    padding: '6px 12px', fontSize: 12, fontWeight: 600, borderRadius: 6,
+                    border: active ? '1px solid #f37021' : '1px solid #e4e7ec',
+                    background: active ? '#fff8f5' : '#fff',
+                    color: active ? '#f37021' : '#344054',
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}>{opt.label}</button>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 12, color: '#667085' }}>Sort by:</span>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{
+                padding: '6px 10px', fontSize: 12, fontWeight: 500, borderRadius: 6,
+                border: '1px solid #d0d5dd', background: '#fff', color: '#344054',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                <option value="cost">Lowest Cost</option>
+                <option value="transit">Fastest Transit</option>
+              </select>
+            </div>
+          </div>
+
           <div style={{ display: 'grid', gap: 10 }}>
-            {rates.map((rate, i) => {
+            {displayRates.map((rate, i) => {
               const isSelected = selectedRate === rate;
-              const cost = rate.markedUpRate ?? rate.shipping_amount?.amount ?? rate.cost;
+              const chargedCost = rate.markedUpRate ?? rate.shipping_amount?.amount ?? rate.cost;
+              const ourCost = rate.originalRate;
               const serviceCode = rate.serviceCode || rate.service_code;
               const carrierCode = rate.carrierCode || rate.carrier_code;
               const deliveryDays = rate.deliveryDays ?? rate.delivery_days;
@@ -627,8 +746,15 @@ export default function CreateShipmentPage({ session }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
-                    ${Number(cost).toFixed(2)}
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
+                      ${Number(chargedCost).toFixed(2)}
+                    </div>
+                    {ourCost != null && (
+                      <div style={{ fontSize: 11, color: '#98a2b3', marginTop: 2 }}>
+                        our cost ${Number(ourCost).toFixed(2)}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -670,7 +796,8 @@ export default function CreateShipmentPage({ session }) {
             </div>
           )}
         </div>
-      )}
+        );
+      })()}
 
       {/* No rates found */}
       {rates && rates.length === 0 && (
@@ -689,6 +816,7 @@ export default function CreateShipmentPage({ session }) {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

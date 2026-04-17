@@ -107,7 +107,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
       </div>
 
       {/* Main Content */}
-      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : activePage === 'create-shipment' ? 720 : 1100, margin: '0 auto', padding: activePage === 'home' ? '48px 24px 64px' : '24px 24px 64px' }}>
+      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : activePage === 'create-shipment' ? 1200 : 1100, margin: '0 auto', padding: activePage === 'home' ? '48px 24px 64px' : '24px 24px 64px' }}>
         {activePage === 'create-shipment' ? (
           <>
             <div style={{ marginBottom: 20 }}>
