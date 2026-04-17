@@ -58,7 +58,12 @@ function getTrackingUrl(carrier, tracking) {
 function formatServiceName(code) {
   if (!code) return '';
   if (SERVICE_NAMES[code]) return SERVICE_NAMES[code];
-  return code.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const WORD_CASING = { ups: 'UPS', usps: 'USPS', fedex: 'FedEx', dhl: 'DHL' };
+  return code.replace(/_/g, ' ').replace(/\b\w+/g, w => {
+    const lc = w.toLowerCase();
+    if (WORD_CASING[lc]) return WORD_CASING[lc];
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  });
 }
 
 function formatCarrier(code) {
@@ -633,11 +638,6 @@ export default function ShipmentsPage({ session }) {
                   )}
                 </div>
               )}
-              {selectedShipment.status !== 'purchased' && selectedShipment.status !== 'voided' && (
-                <div style={{ marginTop: 12, textAlign: 'center', fontSize: 11, color: '#98a2b3' }}>
-                  Voiding is only available before the package reaches the carrier.
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -675,7 +675,7 @@ export default function ShipmentsPage({ session }) {
               <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, marginBottom: 16, fontSize: 12 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
                   <span style={{ color: '#667085' }}>Carrier</span>
-                  <span style={{ color: '#1d2939', fontWeight: 500 }}>{(voidingShipment.carrier || '').toUpperCase()} {voidingShipment.service ? `· ${voidingShipment.service}` : ''}</span>
+                  <span style={{ color: '#1d2939', fontWeight: 500 }}>{formatCarrier(voidingShipment.carrier)} {voidingShipment.service ? `· ${formatServiceName(voidingShipment.service)}` : ''}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
                   <span style={{ color: '#667085' }}>Tracking</span>
@@ -692,19 +692,20 @@ export default function ShipmentsPage({ session }) {
               </div>
 
               <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#475467', marginBottom: 6 }}>
-                Type the tracking number to confirm:
+                Type <strong>CANCEL</strong> to confirm:
               </label>
               <input
                 type="text"
                 value={voidConfirmText}
-                onChange={e => setVoidConfirmText(e.target.value)}
-                placeholder={voidingShipment.tracking_number}
+                onChange={e => setVoidConfirmText(e.target.value.toUpperCase())}
+                placeholder="CANCEL"
                 disabled={voidLoading}
                 autoFocus
                 style={{
-                  width: '100%', padding: '8px 10px', fontSize: 13, fontFamily: 'monospace',
+                  width: '100%', padding: '8px 10px', fontSize: 13,
                   border: '1px solid #d0d5dd', borderRadius: 6, boxSizing: 'border-box',
                   background: voidLoading ? '#f9fafb' : '#fff',
+                  letterSpacing: 1,
                 }}
               />
 
@@ -727,13 +728,13 @@ export default function ShipmentsPage({ session }) {
               >Cancel</button>
               <button
                 onClick={confirmVoid}
-                disabled={voidLoading || voidConfirmText !== voidingShipment.tracking_number}
+                disabled={voidLoading || voidConfirmText !== 'CANCEL'}
                 style={{
                   padding: '8px 16px',
-                  background: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? '#b42318' : '#fee4e2',
-                  color: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? '#fff' : '#f97066',
+                  background: voidConfirmText === 'CANCEL' && !voidLoading ? '#b42318' : '#fee4e2',
+                  color: voidConfirmText === 'CANCEL' && !voidLoading ? '#fff' : '#f97066',
                   border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 600,
-                  cursor: voidConfirmText === voidingShipment.tracking_number && !voidLoading ? 'pointer' : 'not-allowed',
+                  cursor: voidConfirmText === 'CANCEL' && !voidLoading ? 'pointer' : 'not-allowed',
                   fontFamily: 'inherit',
                 }}
               >{voidLoading ? 'Voiding...' : 'Void Label'}</button>
