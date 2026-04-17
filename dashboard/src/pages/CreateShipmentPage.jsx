@@ -53,10 +53,11 @@ const US_STATES = [
 function formatServiceName(code) {
   if (!code) return '';
   if (SERVICE_NAMES[code]) return SERVICE_NAMES[code];
-  // Title-case with carrier abbreviations kept uppercase
+  // Custom casing for known carrier words; title-case everything else
+  const WORD_CASING = { ups: 'UPS', usps: 'USPS', fedex: 'FedEx', dhl: 'DHL' };
   return code.replace(/_/g, ' ').replace(/\b\w+/g, w => {
-    const upper = w.toUpperCase();
-    if (['UPS', 'USPS', 'FEDEX', 'DHL', 'SMS', 'PO'].includes(upper)) return upper;
+    const lc = w.toLowerCase();
+    if (WORD_CASING[lc]) return WORD_CASING[lc];
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   });
 }
@@ -748,11 +749,11 @@ export default function CreateShipmentPage({ session }) {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: '#1a1a1a' }}>
-                      ${Number(chargedCost).toFixed(2)}
+                      ${Number(ourCost ?? chargedCost).toFixed(2)}
                     </div>
-                    {ourCost != null && (
+                    {ourCost != null && chargedCost != null && (
                       <div style={{ fontSize: 11, color: '#98a2b3', marginTop: 2 }}>
-                        our cost ${Number(ourCost).toFixed(2)}
+                        charge ${Number(chargedCost).toFixed(2)}
                       </div>
                     )}
                   </div>
