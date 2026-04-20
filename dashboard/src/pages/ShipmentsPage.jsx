@@ -625,7 +625,7 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Bill-To ZIP" value={selectedShipment.bill_to_zip} />
                 <DetailRow label="Order #" value={selectedShipment.order_number || selectedShipment.netsuite_so_number || selectedShipment.netsuite_so_id || '—'} />
                 <DetailRow label="IF #" value={selectedShipment.netsuite_if_number || selectedShipment.netsuite_if_id || '—'} />
-                <DetailRow label="ShipStation ID" value={selectedShipment.shipstation_shipment_id} />
+                <DetailRow label="Label ID" value={selectedShipment.shipstation_shipment_id} />
                 <DetailRow label="Purchased By" value={selectedShipment.purchased_by_email} />
                 <DetailRow label="Purchased At" value={selectedShipment.purchased_at ? new Date(selectedShipment.purchased_at).toLocaleString() : '—'} />
                 <DetailRow label="Last Checked" value={selectedShipment.last_status_check ? new Date(selectedShipment.last_status_check).toLocaleString() : '—'} />
@@ -637,7 +637,7 @@ export default function ShipmentsPage({ session }) {
                       style={{ display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
                     >View / Reprint Label</a>
                   )}
-                  {selectedShipment.status === 'purchased' && (
+                  {selectedShipment.status === 'purchased' && selectedShipment.label_source === 'shipengine' && (
                     <button
                       onClick={() => openVoidDialog(selectedShipment)}
                       style={{
