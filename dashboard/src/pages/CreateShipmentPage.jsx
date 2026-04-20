@@ -211,6 +211,8 @@ export default function CreateShipmentPage({ session }) {
         carrierCode: selectedRate.carrierCode || selectedRate.carrier_code,
         serviceCode: selectedRate.serviceCode || selectedRate.service_code,
         chargedCost,
+        // Only pass customer email if user opted in to notifications
+        customerEmail: sendNotifications && toEmail.trim() ? toEmail.trim() : undefined,
         packages: [pkg],
         ...(isCustomOrigin
           ? { shipFrom: { name: customFromName, street1: customFromStreet, city: customFromCity, state: customFromState, zip: customFromZip, phone: customFromPhone || undefined } }
