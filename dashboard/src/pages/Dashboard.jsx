@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { formatName } from '../utils/formatName';
 import ShipmentsPage from './ShipmentsPage';
+import CreateShipmentPage from './CreateShipmentPage';
 
 export default function Dashboard({ session, activePage = 'home' }) {
   const [showSettings, setShowSettings] = useState(false);
@@ -106,12 +107,37 @@ export default function Dashboard({ session, activePage = 'home' }) {
       </div>
 
       {/* Main Content */}
-      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : 1100, margin: '0 auto', padding: activePage === 'shipments' ? '24px 24px 64px' : '48px 24px 64px' }}>
-        {activePage === 'shipments' ? (
+      <main style={{ maxWidth: activePage === 'shipments' ? 1400 : activePage === 'create-shipment' ? 1200 : 1100, margin: '0 auto', padding: activePage === 'home' ? '48px 24px 64px' : '24px 24px 64px' }}>
+        {activePage === 'create-shipment' ? (
           <>
             <div style={{ marginBottom: 20 }}>
-              <a href="#/" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Tools</a>
-              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Shipments</h2>
+              <a href="#/shipments" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Shipments</a>
+              <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Create Shipment</h2>
+              <p style={{ fontSize: 13, color: '#667085', margin: '4px 0 0' }}>Ship a package via ShipStation outside of NetSuite</p>
+            </div>
+            <CreateShipmentPage session={session} />
+          </>
+        ) : activePage === 'shipments' ? (
+          <>
+            <div style={{ marginBottom: 20, display: 'flex', alignItems: 'start', justifyContent: 'space-between' }}>
+              <div>
+                <a href="#/" style={{ fontSize: 13, color: '#667085', textDecoration: 'none' }}>&larr; Back to Tools</a>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: '8px 0 0' }}>Shipments</h2>
+              </div>
+              <a
+                href="#/create-shipment"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '9px 16px', background: '#f37021', border: 'none', borderRadius: 8,
+                  color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none',
+                  marginTop: 16,
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Create Shipment
+              </a>
             </div>
             <ShipmentsPage session={session} />
           </>
@@ -143,7 +169,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -155,7 +182,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -176,7 +203,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Create branded email signatures for Outlook and NetSuite with your contact info, complete with live preview and one-click copy.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -201,7 +228,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -213,7 +241,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -234,7 +262,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Design and visualize heater placement layouts for buildings. Draw walls, place heaters, and export professional layout drawings.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
@@ -254,7 +282,8 @@ export default function Dashboard({ session, activePage = 'home' }) {
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               textDecoration: 'none',
               color: 'inherit',
-              display: 'block',
+              display: 'flex',
+              flexDirection: 'column',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -266,7 +295,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
             }}
           >
             <div style={{ height: 4, background: '#f37021' }} />
-            <div style={{ padding: '28px 28px 32px' }}>
+            <div style={{ padding: '28px 28px 32px', display: 'flex', flexDirection: 'column', flex: 1 }}>
               <div style={{
                 width: 56,
                 height: 56,
@@ -287,7 +316,7 @@ export default function Dashboard({ session, activePage = 'home' }) {
               <p style={{ fontSize: 14, color: '#666', lineHeight: 1.55, marginBottom: 20 }}>
                 Track all parcel shipments with live carrier status updates, label management, and cost reporting by warehouse location.
               </p>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 600, color: '#f37021', marginTop: 'auto' }}>
                 Open Tool
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />

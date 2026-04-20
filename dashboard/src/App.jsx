@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from './lib/supabase';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
-import ShipmentsPage from './pages/ShipmentsPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 
 export default function App() {
@@ -12,6 +11,7 @@ export default function App() {
   const [page, setPage] = useState(() => {
     // Simple hash-based routing: #/shipments
     const hash = window.location.hash.replace('#', '');
+    if (hash.startsWith('/create-shipment')) return 'create-shipment';
     if (hash.startsWith('/shipments')) return 'shipments';
     return 'home';
   });
@@ -37,7 +37,8 @@ export default function App() {
     // Listen for hash changes
     const onHash = () => {
       const hash = window.location.hash.replace('#', '');
-      if (hash.startsWith('/shipments')) setPage('shipments');
+      if (hash.startsWith('/create-shipment')) setPage('create-shipment');
+      else if (hash.startsWith('/shipments')) setPage('shipments');
       else setPage('home');
     };
     window.addEventListener('hashchange', onHash);
@@ -65,6 +66,7 @@ export default function App() {
 
   if (!session) return <LoginPage />;
 
+  if (page === 'create-shipment') return <Dashboard session={session} activePage="create-shipment" />;
   if (page === 'shipments') return <Dashboard session={session} activePage="shipments" />;
   return <Dashboard session={session} activePage="home" />;
 }
