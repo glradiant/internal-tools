@@ -625,15 +625,15 @@ export default function ShipmentsPage({ session }) {
                 <DetailRow label="Bill-To ZIP" value={selectedShipment.bill_to_zip} />
                 <DetailRow label="Order #" value={selectedShipment.order_number || selectedShipment.netsuite_so_number || selectedShipment.netsuite_so_id || '—'} />
                 <DetailRow label="IF #" value={selectedShipment.netsuite_if_number || selectedShipment.netsuite_if_id || '—'} />
-                <DetailRow label="Label ID" value={selectedShipment.shipstation_shipment_id} />
+                <DetailRow label="Label ID" value={selectedShipment.source_shipment_id} />
                 <DetailRow label="Purchased By" value={selectedShipment.purchased_by_email} />
                 <DetailRow label="Purchased At" value={selectedShipment.purchased_at ? new Date(selectedShipment.purchased_at).toLocaleString() : '—'} />
                 <DetailRow label="Last Checked" value={selectedShipment.last_status_check ? new Date(selectedShipment.last_status_check).toLocaleString() : '—'} />
               </DetailSection>
-              {(selectedShipment.shipstation_label_url || selectedShipment.status === 'purchased') && (
+              {(selectedShipment.source_label_url || selectedShipment.status === 'purchased') && (
                 <div style={{ marginTop: 16, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  {selectedShipment.shipstation_label_url && (
-                    <a href={selectedShipment.shipstation_label_url} target="_blank" rel="noopener noreferrer"
+                  {selectedShipment.source_label_url && (
+                    <a href={selectedShipment.source_label_url} target="_blank" rel="noopener noreferrer"
                       style={{ display: 'inline-block', padding: '8px 20px', background: '#0D5C82', color: '#fff', borderRadius: 6, fontSize: 13, fontWeight: 600, textDecoration: 'none' }}
                     >View / Reprint Label</a>
                   )}
